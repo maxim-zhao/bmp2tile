@@ -1,5 +1,5 @@
-BMP to SMS/GG tile converter 0.3
-================================
+BMP to SMS/GG tile converter 0.31
+=================================
 
 by Maxim in 2002-2004
 
@@ -80,11 +80,11 @@ with this in mind you can save a lot of graphics space.
 Click on "Save" to save the tile data to a file. You have three choices
 for the format to save in:
 
-  - WLA DX include format. This is the format shown in the box, and can 
+  - WLA DX include format. This is the format shown in the box, and can
     either be included in your source with
       .include "filename.inc"
     or simply pasted in.
-  - Binary format. This is raw binary data, and can be included in your 
+  - Binary format. This is raw binary data, and can be included in your
     source with
       .incbin "filename.bin"
   - Phantasy Star compressed format. This is compresed data suitable for
@@ -92,7 +92,7 @@ for the format to save in:
     include it with
       .incbin "filename.bin"
     and also include the code from "Phantasy Star decompressors.inc" -
-    read that file for more information. Note that you must choose 4 
+    read that file for more information. Note that you must choose 4
     bit, word sized data for this to work properly.
 
 Note that the program does not enforce the SMS's limitations on the
@@ -160,11 +160,10 @@ At the top you're shown the current palette - or rather, just the
 colours that are used.
 
 There are a few options for the text output. If you want plain hex
-values then choose "Output hex (SMS)". If you want values like I use in
-my programs, use "Output cl123 (SMS)". You can then use WLA DX's .enum
-function and a suitable list of values to produce a list of constants
-which will mean that when reading the palette in the code, you can see
-"cl123" and know its red component is 1, green is 2 and blue is 3.
+values then choose "Output hex (SMS)". If you choose "Output cl123 (SMS)"
+then you can include the "colours.inc" file in your project to define 
+the constants used; it makes it easier to tell what colour each value 
+represents (see colours.inc for more description).
 
 There's also an option to "Output hex (GG)" which will output 12-bit
 Game Gear palette data. This one doesn't attempt to handle different
@@ -178,9 +177,11 @@ Commandline mode
 ================
 
 Pass the following on the commandline to make the corresponding option/
-action choices:
+action choices. The order has no effect.
 
 Command switch      Effect
+<filename>          Load the specified bitmap. Note that the format
+                    restrictions are the same as before.
 -1bit               Treat input data as 1bpp
 -2bit               Treat input data as 2bpp
 -3bit               Treat input data as 3bpp
@@ -195,9 +196,11 @@ smallest one that will contain all the colour indices used.
 
 -tileoffset         The starting index of the first tile, in the tilemap
                     data. 0 if unspecified.
--pad                Add this parameter to pad the tilemap data to 32
+-pad<n>             Add this parameter to pad the tilemap data to 32
                     columns, to make smaller bitmaps produce full-width
-                    tilemap data.
+                    tilemap data. The tile number to pad with must be
+                    given (in decimal or $-prefixed hex), with no space
+                    between it and the 'd', eg. -pad0
 -bytes              Produce only the low byte of the tilemap data - this
                     restricts the number of tiles possible and stops the
                     next two options having any effect.
@@ -209,17 +212,33 @@ smallest one that will contain all the colour indices used.
 -palsms             Output the palette in SMS colour format
 -palgg              Output the palette in GG colour format
 -palcl123           Output the palette in SMS colour format, using
-                    constants of the form clrgb where r, g and b are
-                    red, green and blue components in the range 0 to 2.
-                    (It's a way I like to make colour values readable.)
+                    constants of the form cl123 (see above).
 
--savetilesinc       Save tile data in WLA DX include format
--savetilesbin       Save tile data in binary format
--savetilespscompr   Save tile data in Phantasy Star compressed format
--savetilemapinc     Save tilemap data in WLA DX include format
--savetilemapbin     Save tilemap data in binary format
--savetilemappscompr Save tilemap data in Phantasy Star compressed format
--savepaletteinc     Save palette data in WLA DX include format
+-savetilesinc [filename]
+-savetilesbin [filename]
+-savetilespscompr [filename]
+                    Save tile data in WLA DX include format, binary
+                    format or Phantasy Star compressed format
+                    respectively, to [filename]. If [filename] is
+                    omitted then one will be automatically generated
+                    from the input filename.
+-savetilemapinc [filename]
+-savetilemapbin [filename]
+-savetilemappscompr [filename]
+                    Save tilemap data in WLA DX include format, binary
+                    format or Phantasy Star compressed format
+                    respectively, to [filename]. If [filename] is
+                    omitted then one will be automatically generated
+                    from the input filename.
+-savepaletteinc [filename]
+-savepalettebin [filename]
+                    Save palette data in WLA DX include format or binary
+                    respectively, to [filename]. If [filename] is
+                    omitted then one will be automatically generated
+                    from the input filename.
+
+If you specify more than one item from each group above then only the
+last will have any effect.
 
 -exit               Exit the program after doing all the above
 
@@ -239,3 +258,4 @@ Dedication
 ==========
 
 To my beautiful wife :)
+

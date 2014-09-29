@@ -470,15 +470,20 @@ begin
   SetHint('Saved in PS compressed format (interleaving '+IntToStr(interleaving)+') to '+filename);
 end;
 
+procedure SaveTiles(filename:string;format:integer);
+begin
+  case format of
+  1: SaveText(Form1.mmResults.Lines,filename);
+  2: SaveBinary(Form1.mmResults.Lines,filename);
+  3: SavePSCompressed(Form1.mmResults.Lines,filename,4);
+  end;
+end;
+
 procedure TForm1.btnSaveTilesRawClick(Sender: TObject);
 begin
   SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tiles).inc');
   SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then begin
-    if ExtractFileExt(SaveDialog1.FileName)='.bin' then SaveBinary(mmResults.Lines,SaveDialog1.FileName)
-    else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then SavePSCompressed(mmResults.Lines,SaveDialog1.FileName,4)
-    else SaveText(mmResults.Lines,SaveDialog1.FileName);
-  end;
+  if (sender=nil) or SaveDialog1.Execute then SaveTiles(SaveDialog1.FileName,SaveDialog1.FilterIndex);
 end;
 
 procedure TForm1.rb2bitClick(Sender: TObject);
@@ -641,15 +646,20 @@ begin
   );
 end;
 
+procedure SaveTilemap(filename:string;format:integer);
+begin
+  case format of
+  1: SaveText(Form1.mmReconstData.Lines,filename);
+  2: SaveBinary(Form1.mmReconstData.Lines,filename);
+  3: SavePSCompressed(Form1.mmReconstData.Lines,filename,2);
+  end;
+end;
+
 procedure TForm1.btnSaveReconstClick(Sender: TObject);
 begin
   SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tile numbers).inc');
   SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then begin
-    if ExtractFileExt(SaveDialog1.FileName)='.bin' then SaveBinary(mmReconstData.Lines,SaveDialog1.FileName)
-    else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then SavePSCompressed(mmReconstData.Lines,SaveDialog1.FileName,2)
-    else SaveText(mmReconstData.Lines,SaveDialog1.FileName);
-  end;
+  if (sender=nil) or SaveDialog1.Execute then SaveTilemap(SaveDialog1.FileName,SaveDialog1.FilterIndex);
 end;
 
 procedure TForm1.edTileOffsetChange(Sender: TObject);
@@ -669,7 +679,7 @@ end;
 procedure TForm1.btnLoadPaletteClick(Sender: TObject);
 var
   hpal:HPALETTE;
-  palette:array[0..15*4] of byte;
+  palette:array[0..16*4-1] of byte;
   s:string;
   i,j:integer;
   colours:array[0..2] of integer;
@@ -738,17 +748,22 @@ begin
   mmPalette.Text:=s;
 end;
 
+procedure SavePalette(filename:string;format:integer);
+begin
+  case format of
+  1: SaveText(Form1.mmPalette.Lines,filename);
+  2: if Form1.rbPalConst.Checked
+     then Application.MessageBox('If you choose cl123 style output then not only is there no sense choosing to save it as binary, but also this program can''t do it due to the hacky way it''s written! You''d better try again.',nil,MB_ICONERROR)
+     else SaveBinary(Form1.mmPalette.Lines,filename);
+  3: Application.MessageBox('Phantsay Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
+  end;
+end;
+
 procedure TForm1.btnSavePaletteClick(Sender: TObject);
 begin
   SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (palette).inc');
   SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then begin
-    if ExtractFileExt(SaveDialog1.FileName)='.bin' then begin
-      if rbPalConst.Checked then Application.MessageBox('If you choose cl123 style output then not only is there no sense choosing to save it as binary, but also this program can''t do it due to the hacky way it''s written! You''d better try again.',nil,MB_ICONERROR)
-      else SaveBinary(mmPalette.Lines,SaveDialog1.FileName)
-    end else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then Application.MessageBox('Phantsay Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
-    else SaveText(mmPalette.Lines,SaveDialog1.FileName);
-  end;
+  if (sender=nil) or SaveDialog1.Execute then SavePalette(SaveDialog1.FileName,SaveDialog1.FilterIndex);
 end;
 
 procedure TForm1.SaveDialog1TypeChange(Sender: TObject);
@@ -774,17 +789,22 @@ end;
 procedure TForm1.FormShow(Sender: TObject);
 var
   i:integer;
-  s,filename:string;
+  s,filename,tilefilename,tilemapfilename,palettefilename:string;
   tileformat,tilemapformat,paletteformat:integer;
-  quitafter:boolean;
+  quitafter,ignorenext:boolean;
 begin
   tileformat:=0;
   tilemapformat:=0;
   paletteformat:=0;
   filename:='';
   quitafter:=false;
+  ignorenext:=false;
   // command-line handling
   for i:=1 to ParamCount do begin
+    if ignorenext then begin // flag set to skip the next
+      ignorenext:=false;
+      continue;
+    end;
     s:=ParamStr(i);
     if (s[1]<>'-') and FileExists(s) then begin
       Form1.FileName.Text:=s;
@@ -807,30 +827,70 @@ begin
     else if s='-palsms' then rbPalHex.Checked:=true
     else if s='-palgg' then rbPalGG.Checked:=true
     else if s='-palcl123' then rbPalConst.Checked:=true
-    else if s='-savetilesinc' then tileformat:=1
-    else if s='-savetilesbin' then tileformat:=2
-    else if s='-savetilespscompr' then tileformat:=3
-    else if s='-savetilemapinc' then tilemapformat:=1
-    else if s='-savetilemapbin' then tilemapformat:=2
-    else if s='-savetilemappscompr' then tilemapformat:=3
-    else if s='-savepaletteinc' then paletteformat:=1
-    else if s='-exit' then quitafter:=true
+    else if s='-savetilesinc' then begin
+      tileformat:=1;
+      tilefilename:=paramstr(i+1);
+      if tilefilename='' then tilefilename:='-';
+      ignorenext:=tilefilename[1]<>'-';
+    end else if s='-savetilesbin' then begin
+      tileformat:=2;
+      tilefilename:=paramstr(i+1);
+      if tilefilename='' then tilefilename:='-';
+      ignorenext:=tilefilename[1]<>'-';
+    end else if s='-savetilespscompr' then begin
+      tileformat:=3;
+      tilefilename:=paramstr(i+1);
+      if tilefilename='' then tilefilename:='-';
+      ignorenext:=tilefilename[1]<>'-';
+    end else if s='-savetilemapinc' then begin
+      tilemapformat:=1;
+      tilemapfilename:=paramstr(i+1);
+      if tilemapfilename='' then tilemapfilename:='-';
+      ignorenext:=tilemapfilename[1]<>'-';
+    end else if s='-savetilemapbin' then begin
+      tilemapformat:=2;
+      tilemapfilename:=paramstr(i+1);
+      if tilemapfilename='' then tilemapfilename:='-';
+      ignorenext:=tilemapfilename[1]<>'-';
+    end else if s='-savetilemappscompr' then begin
+      tilemapformat:=3;
+      tilemapfilename:=paramstr(i+1);
+      if tilemapfilename='' then tilemapfilename:='-';
+      ignorenext:=tilemapfilename[1]<>'-';
+    end else if s='-savepaletteinc' then begin
+      paletteformat:=1;
+      palettefilename:=paramstr(i+1);
+      if palettefilename='' then palettefilename:='-';
+      ignorenext:=palettefilename[1]<>'-';
+    end else if s='-savepalettebin' then begin
+      paletteformat:=2;
+      palettefilename:=paramstr(i+1);
+      if palettefilename='' then palettefilename:='-';
+      ignorenext:=palettefilename[1]<>'-';
+    end else if s='-exit' then quitafter:=true
     else Application.MessageBox(PAnsiChar('Unknown parameter:'#13#10+s),nil);
   end;
 
   if tileformat>0 then begin
-    SaveDialog1.FilterIndex:=tileformat;
-    btnSaveTilesRawClick(nil);
+    if tilefilename[1]='-'
+    then begin
+      SaveDialog1.FilterIndex:=tileformat;
+      btnSaveTilesRawClick(nil);
+    end else SaveTiles(tilefilename,tileformat);
   end;
-
   if tilemapformat>0 then begin
-    SaveDialog1.FilterIndex:=tilemapformat;
-    btnSaveReconstClick(nil);
+    if tilemapfilename[1]='-'
+    then begin
+      SaveDialog1.FilterIndex:=tilemapformat;
+      btnSaveReconstClick(nil);
+    end else SaveTilemap(tilemapfilename,tilemapformat);
   end;
-
   if paletteformat>0 then begin
-    SaveDialog1.FilterIndex:=paletteformat;
-    btnSavePaletteClick(nil);
+    if palettefilename[1]='-'
+    then begin
+      SaveDialog1.FilterIndex:=paletteformat;
+      btnSavePaletteClick(nil);
+    end else SavePalette(palettefilename,paletteformat);
   end;
 
   if quitafter then Application.Terminate;

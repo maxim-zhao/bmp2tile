@@ -22,20 +22,38 @@
 ;
 ; I haven't supplied the code to do the copying from RAM to VRAM.
 
+; In Phantasy Star it has SetVRAMAddressToDE at offset $0008 so it can
+; do rst $08 instead of call SetVRAMAddressToDE. Uncomment this define
+; if you are doing that.
+
+; NB. WLA DX currently (14/8/04) doesn't handle anonymous labels
+; properly. I've used local labels to fix it.
+
+;.define UseRst 1
+
+.section "SetVRAMAddressToDE" free
+SetVRAMAddressToDE:
+  ld a,e
+  out ($bf),a
+  ld a,d
+  out ($bf),a
+  ret
+.ends
+
 .section "Tile loader (4 bpp RLE, no di/ei)" free
 ; Decompresses tile data from hl to VRAM address de
 LoadTiles4BitRLENoDI:
     ld b,$04
   -:push bc
         push de
-            call + ; called 4 times for 4 bitplanes
+            call _DecompressBitplane ; called 4 times for 4 bitplanes
         pop de
         inc de
     pop bc
     djnz -
     ret
-  +:
- --:ld a,(hl)          ; read count byte <----+
+_DecompressBitplane:
+    ld a,(hl)          ; read count byte <----+
     inc hl             ; increment pointer    |
     or a               ; return if zero       |
     ret z              ;                      |
@@ -46,9 +64,14 @@ LoadTiles4BitRLENoDI:
     ld a,c             ; set z flag if high   |
     and $80            ; bit = 0              |
                        ;                      |
-  -:rst $08            ; SetVRAMAddressToDE<+ |
+_writebyte:            ;                      |
+.ifdef UseRst          ; SetVRAMAddressToDE<+ |
+    rst $08            ;                    | |
+.else                  ;                    | |
+    call SetVRAMAddressToDE ;               | |
+.endif                 ;                    | |
     ld a,(hl)          ; Get data byte in a | |
-    out (VDPData),a    ; Write it to VRAM   | |
+    out ($be),a        ; Write it to VRAM   | |
     jp z,+             ; If z flag then  -+ | |
                        ; skip inc hl      | | |
     inc hl             ;                  | | |
@@ -57,11 +80,11 @@ LoadTiles4BitRLENoDI:
     inc de             ;                    | |
     inc de             ;                    | |
     inc de             ;                    | |
-    djnz -             ; repeat block  -----+ |
+    djnz _writebyte    ; repeat block  -----+ |
                        ; b times              |
-    jp nz,--           ; If not z flag then --+
+    jp nz,_DecompressBitplane ; If not z flag-+
     inc hl             ; inc hl here instead  |
-    jp --              ; repeat forever ------+
+    jp _DecompressBitplane ; repeat forever --+
                        ; (zero count byte quits)
 .ends
 
@@ -70,14 +93,14 @@ LoadTiles4BitRLE:      ; Same as NoDI only with a di/ei around the VRAM access (
     ld b,$04           ; 4 bitplanes
   -:push bc
         push de
-            call +
+            call _DecompressBitplane
         pop de
         inc de
     pop bc
     djnz -
     ret
- --:
-  +:ld a,(hl)          ; header byte
+ _DecompressBitplane:
+    ld a,(hl)          ; header byte
     inc hl             ; data byte
     or a
     ret z              ; exit at zero terminator
@@ -86,10 +109,14 @@ LoadTiles4BitRLE:      ; Same as NoDI only with a di/ei around the VRAM access (
     ld b,a             ; b = count
     ld a,c
     and $80            ; z flag = high bit
-  -:di
-    rst $08            ; SetVRAMAddressToDE
+  _writebyte:di
+.ifdef UseRst
+    rst $08
+.else
+    call SetVRAMAddressToDE
+.endif
     ld a,(hl)
-    out (VDPData),a    ; output data
+    out ($be),a        ; output data
     ei
     jp z,+             ; if z flag then don't move to next data byte
     inc hl
@@ -97,10 +124,10 @@ LoadTiles4BitRLE:      ; Same as NoDI only with a di/ei around the VRAM access (
     inc de
     inc de
     inc de
-    djnz -             ; repeat b times
-    jp nz,--
+    djnz _writebyte             ; repeat b times
+    jp nz,_DecompressBitplane
     inc hl
-    jp --
+    jp _DecompressBitplane
 .ends
 
 .section "Decompress to TileMapData" free
