@@ -1,3 +1,6 @@
+; uncomment to skip first 2 pictures
+;.define skipfirsttwopictures 1
+
 ;==============================================================
 ; WLA-DX banking setup
 ;==============================================================
@@ -63,6 +66,7 @@ main:
   call NoSprites ; they mess things up
 
 picture1:
+.ifndef skipfirsttwopictures
   ;==============================================================
   ; Picture 1: WLA DX includes
   ;==============================================================
@@ -146,7 +150,7 @@ picture1:
   out ($bf),a
   ld a,$81
   out ($bf),a
-
+.endif
   ;==============================================================
   ; Picture 3: PS compressed
   ;==============================================================

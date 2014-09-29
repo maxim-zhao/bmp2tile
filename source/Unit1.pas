@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan, CommDlg, Menus;
+  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan, CommDlg, Menus, GraphicEx;
 
 type
   TForm1 = class(TForm)
@@ -119,7 +119,11 @@ begin
   // Load bitmap
   bm:=TBitmap.Create;
   try
-    bm.LoadFromFile(FileName.Text);
+//    bm.LoadFromFile(FileName.Text);
+    imgOriginal.Picture.LoadFromFile(FileName.Text);
+    bm.Assign(imgOriginal.Picture.Bitmap);
+    imgOriginal.Center:=((bm.width<imgOriginal.width) and (bm.height<imgOriginal.height));
+//    imgOriginal.Stretch:=not imgOriginal.Center;
 
     if (bm.Width>256)
     or (bm.Height>256)
@@ -130,11 +134,12 @@ begin
     // Check bitmap pixel format
     case bm.PixelFormat of
     pf1bit:begin EnableGroupBox(gb1bit,true ); EnableGroupBox(gb4bit,false); end;
+    pf8bit,
     pf4bit:begin EnableGroupBox(gb1bit,false); EnableGroupBox(gb4bit,true);  end;
     else
       EnableGroupBox(gb1bit,false);
       EnableGroupBox(gb4bit,false);
-      Application.MessageBox('Bitmap is not 1 bit or 4 bit! Can''t process it.',nil,MB_ICONERROR);
+      Application.MessageBox('Image format not supported! Can''t process it.',nil,MB_ICONERROR);
       Exit;
     end;
 
@@ -150,6 +155,7 @@ begin
     w:=bm.width  div 8;
     h:=bm.height div 8;
 
+    SetHint('Decomposing to tiles...');
     with imgColumn.Picture.Bitmap do begin
       Assign(bm);
       Width:=8;
@@ -162,23 +168,25 @@ begin
             Rect(x*8,y*8,x*8+8,y*8+8)
           );
     end;
-    imgOriginal.Center:=((bm.width<imgOriginal.width) and (bm.height<imgOriginal.height));
-    imgOriginal.Stretch:=not imgOriginal.Center;
-    imgOriginal.picture.assign(bm);
+//    imgOriginal.picture.assign(bm);
   finally
     bm.free;
   end;
 
-  // Check how many colours are used if 4bpp
+  btnProcess.Enabled:=false;
+  // Check how many colours are used if 4bpp or 8bpp
   if gb4bit.Enabled then begin
+    SetHint('Decomposing to tiles...');
     h:=0; // h = highest
     for y:=0 to imgColumn.Picture.Bitmap.height-1 do begin
       p:=imgColumn.Picture.Bitmap.ScanLine[y];
-      Move(p[0],w,4); // w contains 4 bytes = 8 pixels
-      for x:=0 to 7 do begin
-        if (w shr (4*x) and $f)>h then h:=w shr (4*x) and $f;
-        if (w and $f)>h then h:=w and $f;
-      end;
+      if imgColumn.Picture.Bitmap.PixelFormat=pf4bit then
+        for x:=0 to 3 do begin
+          if (p[x] and $f)>h then h:=p[x] and $f;
+          if (p[x] shr 4 and $f)>h then h:=p[x] shr 4 and $f;
+        end
+      else // 8 bit
+        for x:=0 to 7 do if p[x]>h then h:=p[x]
     end;
     NumColours:=h+1;
     lblNumColours.Caption:=Format('BMP uses %d colours',[NumColours]);
@@ -188,10 +196,24 @@ begin
       4..7: rb3bit.Checked:=True;
       8..15:rb4bit.Checked:=True;
     end;
+  end else begin
+    // 1 bit
+    NumColours:=2;
   end;
 
+  Application.ProcessMessages;
+  btnProcess.Enabled:=True;
+  
+  if NumColours>16 then begin
+    SetHint('Error converting bitmap');
+    Application.MessageBox('Too many colours! This bitmap can''t be processed.',nil,MB_ICONERROR+MB_OK);
+    exit;
+  end;
+
+  SetHint('Reading palette...');
   btnLoadPalette.Click;
-  WriteReconstData;
+
+  btnProcess.Click;
 end;
 
 function Swap32(value:DWORD):DWORD; assembler;
@@ -268,6 +290,9 @@ var
   wa:pWordArray;
   currentline:string;
 begin
+  if not btnProcess.Enabled then exit;
+  SetHint('Converting tiles...');
+  cbUseMirroring.Enabled:=cbRemoveDupes.Checked;
   sl:=TStringList.Create;
   for row:=0 to (imgColumn.Picture.Bitmap.Height div 8)-1 do begin
     sl.Add('; Tile number 0x'+IntToHex(row,3));
@@ -281,12 +306,28 @@ begin
         currentline:=currentline+'$'+IntToHex(b,2)+',';
       end;
     end else begin
-      for i:=0 to 7 do begin
+      if imgColumn.Picture.Bitmap.PixelFormat=pf4bit then
+      for i:=0 to 7 do begin // 4bpp version
         p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
         move(p^[0],Tile[i],4);
         Tile[i]:=swap32(Tile[i]); // Tile[i] now contains $01234567 where each digit is each pixel's index
         ProcessedTile[i]:=0;
+      end
+      else
+      for i:=0 to 7 do begin // 8bpp version
+        p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
+        Tile[i]:=((p[0] and $f) shl  0) or
+                 ((p[1] and $f) shl  4) or
+                 ((p[2] and $f) shl  8) or
+                 ((p[3] and $f) shl 12) or
+                 ((p[4] and $f) shl 16) or
+                 ((p[5] and $f) shl 20) or
+                 ((p[6] and $f) shl 24) or
+                 ((p[7] and $f) shl 28);
+        // Tile[i] now contains $01234567 where each digit is each pixel's index
+        ProcessedTile[i]:=0;
       end;
+
       for i:=0 to 7 do // for each line in the tile
         for j:=0 to 7 do begin // for each pixel on the line
           pixelvalue:=Tile[i] shr (4*(7-j)) and $f;
@@ -322,12 +363,15 @@ begin
 
   sl.free;
 
-  SetHint(Format('%d tiles converted',[imgColumn.Picture.Bitmap.Height div 8]));
-
   HighestTileIndex:=(imgColumn.Picture.Bitmap.Height div 8)-1;
 
-  if cbRemoveDupes.Checked then btnRemoveDupes.Click;
-  WriteReconstData;
+  if cbRemoveDupes.Checked
+  then btnRemoveDupes.Click
+  else begin
+    SetHint('Calculating tilemap...');
+    WriteReconstData;
+    SetHint(Format('%d tiles converted',[imgColumn.Picture.Bitmap.Height div 8]));
+  end;
 end;
 
 procedure SaveText(lines:TStrings;filename:string);
@@ -596,6 +640,7 @@ begin
   wa:=@ReconstData[1];
 
   i:=0;
+  sl.BeginUpdate;
   while i<sl.Count-1 do begin
     s:=sl[i];
     if s[1]<>'.' then begin // Not a data line
@@ -606,6 +651,7 @@ begin
     OriginalTileNumber:=StrToInt('$'+Copy(sl[i-1],17,3)); // Get original tile number
     sl[i]:='';
     // find duplicates
+    SetHint('Removing duplicate tiles... '+IntToStr(OriginalTileNumber));
     RemoveDupes(sl,s,wa,OriginalTileNumber);
     sl[i]:=s;
     Inc(i);
@@ -624,6 +670,7 @@ begin
       Inc(j);
     end;
   HighestTileIndex:=j-1;
+  sl.EndUpdate;
 
   // process my "moved" mirror bits
   for i:=0 to (Length(ReconstData) div 2)-1 do

@@ -1,4 +1,4 @@
-BMP to SMS/GG tile converter 0.31
+BMP to SMS/GG tile converter 0.32
 =================================
 
 by Maxim in 2002-2004
@@ -20,18 +20,23 @@ Requirement 1: The image should have a width and height that are
   multiples of 8. If it's not, the program can handle that (adding
   padding) but it's not ideal.
 
-Requirement 2: The image must be in the normal Windows BMP format. Weird
-  format settings (RLE mostly) will make it choke gracefully.
+Requirement 2: The image must be in one of these formats:
+  BMP (not RLE)
+  GIF
+  PNG (no transparency)
+  PCX
 
-Requirement 3: The image MUST be either in 1bpp format or in 4bpp
-  format. 8bpp and higher are not acceptable. So there. The reason for
-  this is because you (should) want to control your palette, since it
-  will be shared among all the images you display. Your image editor
-  should have facilities to save a palette and apply it to all the
-  images you want to use. Since a given tile is limited to one of the
-  two 16-colour palettes, there is no use for any higher colour depth
-  and by removing the possibility I remove the chance of accidentally
-  having higher indices.
+Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
+  Higher bit depths are not acceptable. So there. The reason for this
+  is because you (should) want to control your palette, since it will
+  be shared among all the images you display. Your image editor should
+  have facilities to save a palette and apply it to all the images you
+  want to use. Since a given tile is limited to one of the two 16-
+  colour palettes, there is no use for any higher colour depth and by
+  removing the possibility I remove the chance of accidentally having
+  higher indices. If you are using an 8-bit image and you use too many 
+  colours, the program will not process it. You can define colours 
+  beyond index 15, just don't use them.
 
 So, once you've got that all sussed, save your image to a file and then
 drag and drop it onto the program. (You can type or paste the filename
@@ -48,16 +53,16 @@ If your image is 1-bit, there is an option to invert the colour indices.
 Everything that is colour 1 will become colour 0 and vice versa. This is
 useful if your image has its colours in the wrong order - perhaps your
 image editor doesn't give you control over the palette in 1-bit images.
-You can always just use the first two colours in a 4-bit image for
-exactly the same effect.
+You can always just use the first two colours in a 4-bit or 8-bit image
+for exactly the same effect.
 
-If your image is 4-bit then it will count how many colours are actually
-used. Depending on how many are used, it will choose the minimum number
-of bits (bitplanes) needed to represent your image. Note, however, that
-only 4-bit data is suitable for writing directly to VRAM - less bits
-will save ROM space, but will require some handling by your code to
-output zeroes in place of the missing bitplanes. If you don't understand
-that then crank it up to 4-bit each time.
+If your image is 4-bit or 8-bit then it will count how many colours are
+actually used. Depending on how many are used, it will choose the
+minimum number of bits (bitplanes) needed to represent your image. Note,
+however, that only 4-bit data is suitable for writing directly to VRAM -
+less bits will save ROM space, but will require some handling by your
+code to output zeroes in place of the missing bitplanes. If you don't
+understand that then crank it up to 4-bit each time.
 
 Tiles tab
 =========
