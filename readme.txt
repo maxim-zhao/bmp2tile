@@ -1,10 +1,10 @@
-BMP to SMS/GG tile converter 0.33
+BMP to SMS/GG tile converter 0.34
 =================================
 
-by Maxim in 2002-2004
+by Maxim in 2002-2005
 
-This program converts images from BMP format to SMS/GG tile, tilemap
-and palette data.
+This program converts images from BMP, PNG, PCX and GIF format to SMS/GG 
+tile, tilemap and palette data.
 
 Instructions
 ============
@@ -34,9 +34,20 @@ Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
   want to use. Since a given tile is limited to one of the two 16-
   colour palettes, there is no use for any higher colour depth and by
   removing the possibility I remove the chance of accidentally having
-  higher indices. If you are using an 8-bit image and you use too many 
-  colours, the program will not process it. You can define colours 
+  higher indices. If you are using an 8-bit image and you use too many
+  colours, the program will not process it. You can define colours
   beyond index 15, just don't use them.
+
+Requirement 4: The image must not be more than 256 pixels wide. This is
+  due to various internal limitations because it's only designed to
+  create tilemaps for display, not for handling huge scrolling areas.
+
+Requirement 5: The total area of the image must not be more than 4096
+  tiles (that's 262144 pixels, or 256x1024 or 128x2048, etc). You can
+  only have 448 tiles on the SMS anyway (unless you cheat a bit, but
+  then you only gain a few more). If you have 2000 tiles after
+  optimisation, you're just screwed. This is another internal
+  limitation.
 
 So, once you've got that all sussed, save your image to a file and then
 drag and drop it onto the program. (Alternatively, you can find your
@@ -44,8 +55,8 @@ file the old-fashioned way with the Browse button.) Then it'll load it
 and process it for you. Then you have some options depending on what
 you want...
 
-Settings tab
-============
+Source tab
+==========
 
 First of all, this will show you your image. Isn't that nice?
 
@@ -166,8 +177,8 @@ colours that are used.
 
 There are a few options for the text output. If you want plain hex
 values then choose "Output hex (SMS)". If you choose "Output cl123 (SMS)"
-then you can include the "colours.inc" file in your project to define 
-the constants used; it makes it easier to tell what colour each value 
+then you can include the "colours.inc" file in your project to define
+the constants used; it makes it easier to tell what colour each value
 represents (see colours.inc for more description).
 
 There's also an option to "Output hex (GG)" which will output 12-bit

@@ -157,8 +157,8 @@ picture1:
   ; Load palette
   ld hl,$c000                     ; palette index 0 write address
   call VRAMToHL
-  ld hl,pspalette               ; data
-  ld bc,pspaletteend-pspalette ; size
+  ld hl,pspalette                 ; data
+  ld bc,pspalettesize             ; size
   call WriteToVRAM
 
   ; Load tiles
@@ -168,7 +168,7 @@ picture1:
 
   ; Load tilemap
   ld hl,pstilemap
-  call DecompressToTileMapData
+  call LoadTilemapToTileMapData
 
   ; Copy it to VRAM (normally you'd do this in the VBlank)
   ld hl,$3800 | $4000     ; Tilemap (0,0) write address
@@ -176,6 +176,40 @@ picture1:
   ld hl,TileMapData
   ld bc,32*24*2
   call WriteToVRAM
+
+  ; Turn screen on
+  ld a,$c4
+  out ($bf),a
+  ld a,$81
+  out ($bf),a
+
+  call WaitForButton
+
+  ; Turn screen off
+  ld a,$84
+  out ($bf),a
+  ld a,$81
+  out ($bf),a
+
+  ;==============================================================
+  ; Picture 4: PS compressed (again)
+  ;==============================================================
+  ; Load palette
+  ld hl,$c000                     ; palette index 0 write address
+  call VRAMToHL
+  ld hl,bbrpalette               ; data
+  ld bc,bbrpalettesize           ; size
+  call WriteToVRAM
+
+  ; Load tiles
+  ld de,$4000
+  ld hl,bbrtiles
+  call LoadTiles4BitRLENoDI
+
+  ; Load tilemap (direct to VRAM)
+  ld hl,bbrtilemap
+  ld de,$3800 | $4000
+  call LoadTilemapToVRAM
 
   ; Turn screen on
   ld a,$c4
@@ -219,8 +253,14 @@ picture1:
   pstilemap:
   .incbin "ps (tile numbers).pscompr"
   pspalette:
-  .incbin "ps (palette).bin" fsize pstilessize
-  pspaletteend:
+  .incbin "ps (palette).bin" fsize pspalettesize
+
+  bbrtiles:
+  .incbin "BBR (tiles).pscompr"
+  bbrtilemap:
+  .incbin "BBR (tile numbers).pscompr"
+  bbrpalette:
+  .incbin "BBR (palette).bin" fsize bbrpalettesize
 .ends
 
 
@@ -231,7 +271,7 @@ picture1:
 ;==============================================================
 ; Call DefaultInitialiseVDP to set up VDP to default values.
 ; Also defines NameTableAddress, SpriteTableAddress and SpriteSet
-; which can be used elsewhere.
+; which can be used after this code in the source file.
 ; To change the values used, copy and paste the modified data
 ; and code into the main source. Data is commented to help.
 ;==============================================================
