@@ -1,7 +1,7 @@
-BMP to SMS/GG tile converter 0.22
-=================================
+BMP to SMS/GG tile converter 0.3
+================================
 
-by Maxim in 2002 and 2003
+by Maxim in 2002-2004
 
 This program converts images from BMP format to SMS/GG tile, tilemap
 and palette data.
@@ -77,8 +77,23 @@ vertical mirror images of others will be removed. This requires the
 tilemap data to be in word form (see later). If you design your graphics
 with this in mind you can save a lot of graphics space.
 
-Click on "Save" to save the tile data to a text file. Alternatively, you
-can copy and paste it into your source however you like it.
+Click on "Save" to save the tile data to a file. You have three choices
+for the format to save in:
+
+  - WLA DX include format. This is the format shown in the box, and can 
+    either be included in your source with
+      .include "filename.inc"
+    or simply pasted in.
+  - Binary format. This is raw binary data, and can be included in your 
+    source with
+      .incbin "filename.bin"
+  - Phantasy Star compressed format. This is compresed data suitable for
+    running through Phantasy Star's tile loader routines. You need to
+    include it with
+      .incbin "filename.bin"
+    and also include the code from "Phantasy Star decompressors.inc" -
+    read that file for more information. Note that you must choose 4 
+    bit, word sized data for this to work properly.
 
 Note that the program does not enforce the SMS's limitations on the
 number of tiles that can be defined - the SMS is practically limited to
@@ -121,8 +136,8 @@ If "Use sprite palette" or "In front of sprites" are checked then the
 appropriate bits will be set in the tile data for all tiles. It is not
 possible to do this on a tile-by-tile basis.
 
-"Save" does much the same as before. Notice how it automatically chooses
-filenames to avoid clashes?
+"Save" does much the same as before. Note that Phantasy Star compressed
+data has an interleaving of 4 for tiles and 2 for tilemaps.
 
 Palette tab
 ===========
@@ -156,21 +171,69 @@ Game Gear palette data. This one doesn't attempt to handle different
 palette systems, it just shifts colours to their high 4 bits so you'd
 better make sure white is 255,255,255.
 
-"Save" works again.
+"Save" works again, but saving as binary or Phantasy Star compressed
+doesn't make sense.
+
+Commandline mode
+================
+
+Pass the following on the commandline to make the corresponding option/
+action choices:
+
+Command switch      Effect
+-1bit               Treat input data as 1bpp
+-2bit               Treat input data as 2bpp
+-3bit               Treat input data as 3bpp
+-4bit               Treat input data as 4bpp
+
+If you don't specify the bitdepth, the program automatically chooses the
+smallest one that will contain all the colour indices used.
+
+-noremovedupes      Do not optimise out duplicate tiles
+-nomirror           Do not use tile mirroring to further optimise
+                    duplicates
+
+-tileoffset         The starting index of the first tile, in the tilemap
+                    data. 0 if unspecified.
+-pad                Add this parameter to pad the tilemap data to 32
+                    columns, to make smaller bitmaps produce full-width
+                    tilemap data.
+-bytes              Produce only the low byte of the tilemap data - this
+                    restricts the number of tiles possible and stops the
+                    next two options having any effect.
+-spritepalette      Set the tilemap bits to make tiles use the sprite
+                    palette
+-infrontofsprites   Set the tilemap bits to make tiles appear in front
+                    of sprites
+
+-palsms             Output the palette in SMS colour format
+-palgg              Output the palette in GG colour format
+-palcl123           Output the palette in SMS colour format, using
+                    constants of the form clrgb where r, g and b are
+                    red, green and blue components in the range 0 to 2.
+                    (It's a way I like to make colour values readable.)
+
+-savetilesinc       Save tile data in WLA DX include format
+-savetilesbin       Save tile data in binary format
+-savetilespscompr   Save tile data in Phantasy Star compressed format
+-savetilemapinc     Save tilemap data in WLA DX include format
+-savetilemapbin     Save tilemap data in binary format
+-savetilemappscompr Save tilemap data in Phantasy Star compressed format
+-savepaletteinc     Save palette data in WLA DX include format
+
+-exit               Exit the program after doing all the above
+
 
 Still to come
 =============
 
-I will probably try to add in a compressor for the format used in some
-Sega games, if only because that saves me having to write a decompressor
-in asm and I want to have a compressed format available for graphics.
-Until then, my snappily-titled "Sega 8-bit compression scheme A decoder/
-encoder" can do that, albeit in a less handy way.
+Any suggestions? I ought to make it faster, the way it's done now is
+very slow...
 
 Source
 ======
 
-Included. It's not that great though. Delphi 6 it is.
+Included. It's not that great though. Delphi 7 it is.
 
 Dedication
 ==========

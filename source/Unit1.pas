@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan;
+  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan, CommDlg, Menus;
 
 type
   TForm1 = class(TForm)
@@ -28,7 +28,7 @@ type
     imgOriginal: TImage;
     imgColumn: TImage;
     btnRemoveDupes: TButton;
-    btnSave: TButton;
+    btnSaveTilesRaw: TButton;
     TabSheet2: TTabSheet;
     mmReconstData: TRichEdit;
     Label3: TLabel;
@@ -56,7 +56,7 @@ type
     btnSavePalette: TButton;
     procedure btnLoadClick(Sender: TObject);
     procedure btnProcessClick(Sender: TObject);
-    procedure btnSaveClick(Sender: TObject);
+    procedure btnSaveTilesRawClick(Sender: TObject);
     procedure rb2bitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
 //    procedure btnBitsToBytesClick(Sender: TObject);
@@ -66,6 +66,8 @@ type
     procedure btnLoadPaletteClick(Sender: TObject);
     procedure WriteReconstData;
     procedure btnSavePaletteClick(Sender: TObject);
+    procedure SaveDialog1TypeChange(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
     procedure WMDROPFILES(var Message: TWMDROPFILES); message WM_DROPFILES;
@@ -328,10 +330,155 @@ begin
   WriteReconstData;
 end;
 
-procedure TForm1.btnSaveClick(Sender: TObject);
+procedure SaveText(lines:TStrings;filename:string);
 begin
-  SaveDialog1.FileName:=ChangeFileExt(FileName.Text,'.inc');
-  if SaveDialog1.Execute then mmResults.Lines.SaveToFile(SaveDialog1.FileName);
+  lines.SaveToFile(filename);
+  SetHint('Saved in text format to '+filename);
+end;
+
+procedure SaveBinary(lines:TStrings;filename:string);
+var
+  i,j,n:integer;
+  s:string;
+  values:TStringList;
+  fs:TFileStream;
+  size:integer;
+begin
+  values:=TStringList.Create;
+  fs:=TFileStream.Create(filename,fmCreate);
+
+  size:=0;
+
+  for i:=0 to lines.Count-1 do begin
+    s:=lines[i];
+    values.Clear;
+    ExtractStrings( [',',' '], [], PChar(s),values);
+    for j:=0 to values.Count-1 do begin
+      if values[j]='.dw' then size:=2;
+      if values[j]='.db' then size:=1;
+      if pos(';',values[j])>0 then break; // stop parsing line when ; encountered
+      n:=StrToIntDef(values[j],-1);
+      if n>-1 then fs.Write(n,size);
+    end;
+  end;
+  fs.free;
+  values.free;
+  SetHint('Saved in binary format to '+filename);
+end;
+
+procedure SavePSCompressed(lines:TStrings;filename:string;interleaving:integer);
+var
+  i,j,k,n,bitplane,blocksize:integer;
+  Buffer,Buffer2:PByteArray;
+  ch:byte;
+
+  s:string;
+  values:TStringList;
+  ms:TMemoryStream;
+  size:integer;
+begin
+  // Get binary data
+  values:=TStringList.Create;
+  ms:=TMemoryStream.Create();
+
+  size:=0;
+
+  for i:=0 to lines.Count-1 do begin
+    s:=lines[i];
+    values.Clear;
+    ExtractStrings( [',',' '], [], PChar(s),values);
+    for j:=0 to values.Count-1 do begin
+      if values[j]='.dw' then size:=2;
+      if values[j]='.db' then size:=1;
+      if pos(';',values[j])>0 then break; // stop parsing line when ; encountered
+      n:=StrToIntDef(values[j],-1);
+      if n>-1 then ms.Write(n,size);
+    end;
+  end;
+  values.free;
+
+  // Compress it
+
+  // 1. Make memory block same size as # of tiles
+  Buffer:=allocmem(ms.Size); // 8 lines per tile, 4 bytes per line
+  try
+    // 2. Copy data into Buffer, interleaving
+//    for i:=0 to ms.Size-1 do
+//      Buffer[i]:=VRAM[4*(i mod (NumTiles*8))+(i div (NumTiles*8))];
+    ms.Seek(0,soFromBeginning);
+    blocksize:=ms.size div interleaving; // size of each plane
+    for i:=0 to ms.Size-1 do begin
+      k:=blocksize*(i mod interleaving) + (i div interleaving); // where to write this byte to
+      ms.Read(Buffer[k],1);
+//      Buffer[i]:=VRAM[4*(i mod (NumTiles*8))+(i div (NumTiles*8))];
+    end;
+{
+    // Test: save to file
+    with TFileStream.Create(extractfilepath(paramstr(0))+'out.dat',fmCreate) do begin
+      Write(Buffer[0],ms.Size);
+      free;
+    end;
+}
+    // 3. Copy to second buffer in 4 blocks, checking for repeated bytes
+    Buffer2:=allocmem(ms.size+128); // +128 bytes in case it gets bigger
+    try
+//      i:=0; // i is index into buffer
+      j:=0; // j is index into buffer2
+      for bitplane:=0 to interleaving-1 do begin
+        // Copy the relevant bitplane to the start of Buffer
+        if bitplane<>0 then move(Buffer[bitplane*blocksize],Buffer[0],blocksize);
+        i:=0;
+        repeat
+          ch:=Buffer[i]; // Run through buffer, compare to next (2) bytes
+          if (ch=Buffer[i+1]) and (ch=Buffer[i+2]) then begin // Same! Let's see how many...
+            k:=1; while (i+k<blocksize) and (Buffer[i+k]=ch) and (k<127) do Inc(k);
+            Buffer2[j]:=k; // So there's k identical bytes, let's write that
+            Buffer2[j+1]:=ch;
+            Inc(j,2);
+          end else begin // Non-identical bytes! Let's see how many there are
+            k:=1;
+            while (i+k+2<=blocksize)
+              and not (
+                    (Buffer[i+k]=Buffer[i+k+1])
+                and (Buffer[i+k]=Buffer[i+k+2])
+              )
+              and (k<127)
+               do Inc(k);
+            Buffer2[j]:=$80 or k; // So there's k non-identical bytes, let's write that
+            Move(Buffer[i],Buffer2[j+1],k);
+            Inc(j,k+1);
+          end;
+          inc(i,k);
+        until i=blocksize; // repeat for one block
+        Buffer2[j]:=0; Inc(j); // Write block terminator
+      end;
+
+      // Save to file
+      with TFileStream.Create(filename,fmCreate) do begin
+        Write(Buffer2[0],j);
+        free;
+      end;
+//      Application.MessageBox(PChar('Compressed data saved as '+extractfilepath(paramstr(0))+'compr.dat'),'Compressed',MB_ICONINFORMATION+MB_OK);
+
+    finally
+      FreeMem(Buffer2);
+    end;
+  finally
+    FreeMem(Buffer);
+  end;
+  ms.free;
+  SetHint('Saved in PS compressed format (interleaving '+IntToStr(interleaving)+') to '+filename);
+end;
+
+procedure TForm1.btnSaveTilesRawClick(Sender: TObject);
+begin
+  SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tiles).inc');
+  SaveDialog1.OnTypeChange(SaveDialog1);
+  if (sender=nil) or SaveDialog1.Execute then begin
+    if ExtractFileExt(SaveDialog1.FileName)='.bin' then SaveBinary(mmResults.Lines,SaveDialog1.FileName)
+    else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then SavePSCompressed(mmResults.Lines,SaveDialog1.FileName,4)
+    else SaveText(mmResults.Lines,SaveDialog1.FileName);
+  end;
 end;
 
 procedure TForm1.rb2bitClick(Sender: TObject);
@@ -497,7 +644,12 @@ end;
 procedure TForm1.btnSaveReconstClick(Sender: TObject);
 begin
   SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tile numbers).inc');
-  if SaveDialog1.Execute then mmReconstData.Lines.SaveToFile(SaveDialog1.FileName);
+  SaveDialog1.OnTypeChange(SaveDialog1);
+  if (sender=nil) or SaveDialog1.Execute then begin
+    if ExtractFileExt(SaveDialog1.FileName)='.bin' then SaveBinary(mmReconstData.Lines,SaveDialog1.FileName)
+    else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then SavePSCompressed(mmReconstData.Lines,SaveDialog1.FileName,2)
+    else SaveText(mmReconstData.Lines,SaveDialog1.FileName);
+  end;
 end;
 
 procedure TForm1.edTileOffsetChange(Sender: TObject);
@@ -589,7 +741,99 @@ end;
 procedure TForm1.btnSavePaletteClick(Sender: TObject);
 begin
   SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (palette).inc');
-  if SaveDialog1.Execute then mmPalette.Lines.SaveToFile(SaveDialog1.FileName);
+  SaveDialog1.OnTypeChange(SaveDialog1);
+  if (sender=nil) or SaveDialog1.Execute then begin
+    if ExtractFileExt(SaveDialog1.FileName)='.bin' then begin
+      if rbPalConst.Checked then Application.MessageBox('If you choose cl123 style output then not only is there no sense choosing to save it as binary, but also this program can''t do it due to the hacky way it''s written! You''d better try again.',nil,MB_ICONERROR)
+      else SaveBinary(mmPalette.Lines,SaveDialog1.FileName)
+    end else if ExtractFileExt(SaveDialog1.FileName)='.pscompr' then Application.MessageBox('Phantsay Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
+    else SaveText(mmPalette.Lines,SaveDialog1.FileName);
+  end;
+end;
+
+procedure TForm1.SaveDialog1TypeChange(Sender: TObject);
+var
+  DlgParent: HWND;
+  StrFileName, StrExt: string;
+begin
+  DlgParent := GetParent(TSaveDialog(Sender).Handle);
+
+  case SaveDialog1.FilterIndex of
+    1: StrExt := '.inc';
+    2: StrExt := '.bin';
+    3: StrExt := '.pscompr';
+  end;
+
+  StrFileName := ChangeFileExt(ExtractFileName(TSaveDialog(Sender).FileName), StrExt);
+
+  if (DlgParent>0)
+  then SendMessage(DlgParent, CDM_SETCONTROLTEXT, 1152, Longint(PChar(StrFileName)))
+  else TSaveDialog(Sender).FileName:=StrFileName;
+end;
+
+procedure TForm1.FormShow(Sender: TObject);
+var
+  i:integer;
+  s,filename:string;
+  tileformat,tilemapformat,paletteformat:integer;
+  quitafter:boolean;
+begin
+  tileformat:=0;
+  tilemapformat:=0;
+  paletteformat:=0;
+  filename:='';
+  quitafter:=false;
+  // command-line handling
+  for i:=1 to ParamCount do begin
+    s:=ParamStr(i);
+    if (s[1]<>'-') and FileExists(s) then begin
+      Form1.FileName.Text:=s;
+      btnLoad.Click;
+    end else if s='-invert' then cbInvert.Checked:=true
+    else if s='-1bit' then rb1bit.Checked:=true
+    else if s='-2bit' then rb2bit.Checked:=true
+    else if s='-3bit' then rb3bit.Checked:=true
+    else if s='-4bit' then rb4bit.Checked:=true
+    else if s='-nomirror' then cbUseMirroring.Checked:=false
+    else if s='-noremovedupes' then cbRemoveDupes.Checked:=false
+    else if pos('-tileoffset',s)=1 then edTileOffset.Text:=copy(s,12,MaxInt)
+    else if pos('-pad',s)=1 then begin
+      edBlankTile.Text:=copy(s,5,MaxInt);
+      cbPad.Checked:=true;
+    end
+    else if s='-bytes' then cbBytes.Checked:=true
+    else if s='-spritepalette' then cbSpritePalette.Checked:=true
+    else if s='-infrontofsprites' then cbInFront.Checked:=true
+    else if s='-palsms' then rbPalHex.Checked:=true
+    else if s='-palgg' then rbPalGG.Checked:=true
+    else if s='-palcl123' then rbPalConst.Checked:=true
+    else if s='-savetilesinc' then tileformat:=1
+    else if s='-savetilesbin' then tileformat:=2
+    else if s='-savetilespscompr' then tileformat:=3
+    else if s='-savetilemapinc' then tilemapformat:=1
+    else if s='-savetilemapbin' then tilemapformat:=2
+    else if s='-savetilemappscompr' then tilemapformat:=3
+    else if s='-savepaletteinc' then paletteformat:=1
+    else if s='-exit' then quitafter:=true
+    else Application.MessageBox(PAnsiChar('Unknown parameter:'#13#10+s),nil);
+  end;
+
+  if tileformat>0 then begin
+    SaveDialog1.FilterIndex:=tileformat;
+    btnSaveTilesRawClick(nil);
+  end;
+
+  if tilemapformat>0 then begin
+    SaveDialog1.FilterIndex:=tilemapformat;
+    btnSaveReconstClick(nil);
+  end;
+
+  if paletteformat>0 then begin
+    SaveDialog1.FilterIndex:=paletteformat;
+    btnSavePaletteClick(nil);
+  end;
+
+  if quitafter then Application.Terminate;
 end;
 
 end.
