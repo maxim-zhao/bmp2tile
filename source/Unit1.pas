@@ -54,6 +54,7 @@ type
     SaveDialog1: TSaveDialog;
     Label1: TLabel;
     btnSavePalette: TButton;
+    OpenDialog1: TOpenDialog;
     procedure btnLoadClick(Sender: TObject);
     procedure btnProcessClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
@@ -110,6 +111,12 @@ var
   w,h,x,y:integer;
   p:pByteArray;
 begin
+  if (Sender=btnLoad) then begin
+    if OpenDialog1.Execute
+    then FileName.Text:=OpenDialog1.FileName
+    else exit;
+  end;
+
   // Exit if file does not exist
   if not fileexists(FileName.Text) then begin
     Application.MessageBox('File not found',nil,MB_OK+MB_ICONERROR);
@@ -119,11 +126,9 @@ begin
   // Load bitmap
   bm:=TBitmap.Create;
   try
-//    bm.LoadFromFile(FileName.Text);
     imgOriginal.Picture.LoadFromFile(FileName.Text);
     bm.Assign(imgOriginal.Picture.Bitmap);
     imgOriginal.Center:=((bm.width<imgOriginal.width) and (bm.height<imgOriginal.height));
-//    imgOriginal.Stretch:=not imgOriginal.Center;
 
     if (bm.Width>256)
     or (bm.Height>256)

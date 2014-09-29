@@ -1,4 +1,4 @@
-BMP to SMS/GG tile converter 0.32
+BMP to SMS/GG tile converter 0.33
 =================================
 
 by Maxim in 2002-2004
@@ -39,10 +39,10 @@ Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
   beyond index 15, just don't use them.
 
 So, once you've got that all sussed, save your image to a file and then
-drag and drop it onto the program. (You can type or paste the filename
-into the box if you prefer to be keyboardy.) Then it'll load it and
-process it for you. Then you have some options depending on what you
-want...
+drag and drop it onto the program. (Alternatively, you can find your
+file the old-fashioned way with the Browse button.) Then it'll load it
+and process it for you. Then you have some options depending on what
+you want...
 
 Settings tab
 ============

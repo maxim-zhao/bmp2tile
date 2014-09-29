@@ -43,13 +43,15 @@ LoadTiles4BitRLENoDI:
   ld b,$04
 -:push bc
     push de
-      call _f ; called 4 times for 4 bitplanes
+;      call _f ; called 4 times for 4 bitplanes
+      call _NotAnonymous ; WLA DX anonymous label bug workaround :(
     pop de
     inc de
   pop bc
   djnz -
   ret
 
+_NotAnonymous:
 __:
   ld a,(hl)          ; read count byte <----+
   inc hl             ; increment pointer    |
@@ -91,13 +93,15 @@ LoadTiles4BitRLE:      ; Same as NoDI only with a di/ei around the VRAM access (
   ld b,$04           ; 4 bitplanes
 -:push bc
     push de
-      call _f
+;      call _f ; called 4 times for 4 bitplanes
+      call _NotAnonymous ; WLA DX anonymous label bug workaround :(
     pop de
     inc de
   pop bc
   djnz -
   ret
 
+_NotAnonymous:
 __:
   ld a,(hl)          ; header byte
   inc hl             ; data byte

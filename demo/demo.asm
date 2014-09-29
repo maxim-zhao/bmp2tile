@@ -359,9 +359,14 @@ NoSprites:
 ; Wait for button press
 ;==============================================================
 ; Clobbers A
+; Not very efficient, I'm aiming for simplicity here
 ;==============================================================
 .section "Wait for button press" free
 WaitForButton:
+-:in a,$dc ; get input
+  cpl      ; invert bits
+  or a     ; test bits
+  jr nz,-  ; wait for no button press
 -:in a,$dc ; get input
   cpl      ; invert bits
   or a     ; see if any are set
