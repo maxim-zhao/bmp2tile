@@ -1,19 +1,21 @@
 ; uncomment to skip first 2 pictures
-;.define skipfirsttwopictures 1
+;.define skipfirsttwopictures
 
 ;==============================================================
 ; WLA-DX banking setup
 ;==============================================================
 .memorymap
-defaultslot 0
-slotsize $8000
+defaultslot 2
+slotsize $4000
 slot 0 $0000
+slot 1 $4000
+slot 2 $8000
 .endme
 
 .rombankmap
-bankstotal 1
-banksize $8000
-banks 1
+bankstotal 3
+banksize $4000
+banks 3
 .endro
 
 ; Memory map (for Phantasy Star tilemap decompression)
@@ -70,6 +72,9 @@ picture1:
   ;==============================================================
   ; Picture 1: WLA DX includes
   ;==============================================================
+  ld a,:akmwtiles
+  ld ($ffff),a
+
   ; Load palette
   ld hl,$c000                     ; palette index 0 write address
   call VRAMToHL
@@ -115,6 +120,9 @@ picture1:
   ;==============================================================
   ; Picture 2: binary
   ;==============================================================
+  ld a,:sonictiles
+  ld ($ffff),a
+
   ; Load palette
   ld hl,$c000                     ; palette index 0 write address
   call VRAMToHL
@@ -154,6 +162,9 @@ picture1:
   ;==============================================================
   ; Picture 3: PS compressed
   ;==============================================================
+  ld a,:pstiles
+  ld ($ffff),a
+
   ; Load palette
   ld hl,$c000                     ; palette index 0 write address
   call VRAMToHL
@@ -194,6 +205,9 @@ picture1:
   ;==============================================================
   ; Picture 4: PS compressed (again)
   ;==============================================================
+  ld a,:bbrtiles
+  ld ($ffff),a
+
   ; Load palette
   ld hl,$c000                     ; palette index 0 write address
   call VRAMToHL
@@ -232,7 +246,8 @@ picture1:
 ;==============================================================
 ; Data
 ;==============================================================
-.section "Data" FREE
+.slot 2
+.section "AKMW data" superfree
   akmwtiles:
   .include "akmwtiles.inc"
   akmwtilemap:
@@ -240,32 +255,43 @@ picture1:
   akmwpalette:
   .include "akmw (palette).inc"
   akmwpaletteend:
-
+.ends
+.section "Sonic data" superfree
   sonictiles:
   .incbin "sonictiles.bin" fsize sonictilessize
   sonictilemap:
   .incbin "sonictilemap.bin" fsize sonictilemapsize
   sonicpalette:
   .incbin "sonicpalette.bin" fsize sonicpalettesize
-
+.ends
+.section "PS data" superfree
   pstiles:
   .incbin "ps (tiles).pscompr"
   pstilemap:
-  .incbin "ps (tile numbers).pscompr"
+  .incbin "ps (tilemap).pscompr"
   pspalette:
   .incbin "ps (palette).bin" fsize pspalettesize
-
+.ends
+.section "BBR data" superfree
   bbrtiles:
   .incbin "BBR (tiles).pscompr"
   bbrtilemap:
-  .incbin "BBR (tile numbers).pscompr"
+  .incbin "BBR (tilemap).pscompr"
   bbrpalette:
   .incbin "BBR (palette).bin" fsize bbrpalettesize
+.ends
+.section "BBR data 2" superfree
+  bbrtiles2:
+  .incbin "BBR (tiles).pscompr"
+  bbrtilemap2:
+  .incbin "BBR (tilemap).pscompr"
+  bbrpalette2:
+  .incbin "BBR (palette).bin" fsize bbrpalettesize2
 .ends
 
 
 
-
+.slot 0
 ;==============================================================
 ; Set up VDP registers (default values)
 ;==============================================================

@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan, CommDlg, Menus, GraphicEx;
+  StdCtrls, ExtCtrls, ComCtrls, Math, ShellAPI, XPMan, CommDlg, GraphicEx;
 
 type
   TForm1 = class(TForm)
@@ -13,62 +13,53 @@ type
     btnLoad: TButton;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
-    gb1bit: TGroupBox;
-    cbInvert: TCheckBox;
     btnProcess: TButton;
-    gb4bit: TGroupBox;
-    Label2: TLabel;
-    rb2bit: TRadioButton;
-    rb3bit: TRadioButton;
-    rb4bit: TRadioButton;
-    rb1bit: TRadioButton;
     XPManifest1: TXPManifest;
     TabSheet3: TTabSheet;
-    mmResults: TRichEdit;
-    imgColumn: TImage;
-    btnRemoveDupes: TButton;
+    mmResults: TMemo;
     btnSaveTilesRaw: TButton;
     TabSheet2: TTabSheet;
-    mmReconstData: TRichEdit;
-    Label3: TLabel;
-    edTileOffset: TEdit;
-    cbPad: TCheckBox;
-    edBlankTile: TEdit;
-    cbBytes: TCheckBox;
-    cbSpritePalette: TCheckBox;
-    cbInFront: TCheckBox;
+    mmReconstData: TMemo;
     btnSaveReconst: TButton;
     StatusBar1: TStatusBar;
-    cbRemoveDupes: TCheckBox;
-    cbUseMirroring: TCheckBox;
     TabSheet4: TTabSheet;
     mmPalette: TMemo;
     btnLoadPalette: TButton;
     rbPalHex: TRadioButton;
     rbPalConst: TRadioButton;
-    lblNumColours: TLabel;
     rbPalGG: TRadioButton;
     imgPalette: TImage;
     Bevel1: TBevel;
     SaveDialog1: TSaveDialog;
-    Label1: TLabel;
     btnSavePalette: TButton;
     OpenDialog1: TOpenDialog;
     imgOriginal: TImage;
+    imgColumn: TImage;
+    cbSpritePalette: TCheckBox;
+    cbInFront: TCheckBox;
+    cbRemoveDupes: TCheckBox;
+    cbUseMirroring: TCheckBox;
+    Label3: TLabel;
+    edTileOffset: TEdit;
+    cbPlanar: TCheckBox;
+    cb8x16: TCheckBox;
+    TabSheet5: TTabSheet;
+    mmMessages: TMemo;
     procedure btnLoadClick(Sender: TObject);
     procedure btnProcessClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
     procedure rb2bitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-//    procedure btnBitsToBytesClick(Sender: TObject);
-    procedure btnRemoveDupesClick(Sender: TObject);
     procedure btnSaveReconstClick(Sender: TObject);
     procedure edTileOffsetChange(Sender: TObject);
     procedure btnLoadPaletteClick(Sender: TObject);
-    procedure WriteReconstData;
     procedure btnSavePaletteClick(Sender: TObject);
     procedure SaveDialog1TypeChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure cb8x16Click(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure PopulateTileDataMemo;
+    procedure PopulateTilemapDataMemo;
   private
     { Private declarations }
     procedure WMDROPFILES(var Message: TWMDROPFILES); message WM_DROPFILES;
@@ -82,18 +73,102 @@ var
 
 implementation
 
+uses StrUtils;
+
 {$R *.DFM}
 
+type
+  TGetName = function:PChar; cdecl;
+  TGetExt = function:PChar; cdecl;
+  TCompressTiles = function(source: PChar; numTiles: integer; dest:PChar; destLen:integer):integer; cdecl;
+  TCompressTilemap = function(source: PChar; width, height: integer; dest:PChar; destLen:integer):integer; cdecl;
+
+  TPlugin = record
+    Name: string;
+    Ext: string;
+    CompressTiles: TCompressTiles;
+    CompressTilemap: TCompressTilemap;
+    Handle: THandle;
+  end;
+
 var
-  ReconstData:string;
-  HighestTileIndex:integer;
+  plugins:array of TPlugin;
   OldHint:string;
   NumColours:integer;
+  tilehexcodes:TStringList;
+  tiledata:PByteArray; // pointer to allocated memory
+  tiledatasize:Integer;
+  tilemap:PWordArray;
+  tilemapheight:integer;
+  tilemapwidth:integer;
 
 procedure SetHint(s:string);
 begin
   OldHint:=s;
   Form1.StatusBar1.SimpleText:=s;
+  Form1.mmMessages.Lines.Add(s);
+end;
+
+procedure CompressTiles(data:PByteArray; numTiles:integer; compressor:TCompressTiles; filename:string);
+var
+  buf:PByteArray;
+  bufsize,result:integer;
+  size:integer;
+begin
+  // Try to compress to memory
+  bufsize := 16384; // hope it fits...
+
+  GetMem(buf, bufsize);
+  while (bufsize < 1024*1024) do begin
+    result:=compressor(PChar(@data^[0]), numTiles, PChar(@buf^[0]), bufsize);
+    if (result < 0) then break; // cannot compress
+    if (result > 0) then begin
+      // save to file
+      with TFileStream.Create(filename, fmCreate) do begin
+        WriteBuffer(buf^, result);
+        Free;
+      end;
+      // report
+      size := numTiles * 32;
+      SetHint(Format('Saved %d tiles to "%s" (%.2f%% compression)',[numTiles, ExtractFileName(filename), (size-result)*100.0/size]));
+      break;
+    end;
+    // else try again with more memory
+    bufsize:=bufsize*2;
+    ReallocMem(buf, bufsize);
+  end;
+  FreeMem(buf);
+end;
+
+procedure CompressTilemap(data:PByteArray; width, height:integer; compressor:TCompressTilemap; filename:string);
+var
+  buf:PByteArray;
+  bufsize,result:integer;
+  size:integer;
+begin
+  // Try to compress to memory
+  bufsize := 16384; // hope it fits...
+
+  GetMem(buf, bufsize);
+  while (bufsize < 1024*1024) do begin
+    result:=compressor(PChar(@data^[0]), width, height, PChar(@buf^[0]), bufsize);
+    if (result < 0) then break; // cannot compress
+    if (result > 0) then begin
+      // save to file
+      with TFileStream.Create(filename, fmCreate) do begin
+        WriteBuffer(buf^, result);
+        Free;
+      end;
+      // report
+      size := width * height * SizeOf(Word);
+      SetHint(Format('Saved %dx%d tilemap to "%s" (%.2f%% compression)',[width, height, ExtractFilename(filename), (size-result)*100.0/size]));
+      break;
+    end;
+    // else try again with more memory
+    bufsize:=bufsize*2;
+    ReallocMem(buf, bufsize);
+  end;
+  FreeMem(buf);
 end;
 
 procedure EnableGroupBox(const gb:TGroupBox;const enabled:boolean);
@@ -123,28 +198,18 @@ begin
     exit;
   end;
 
+  SetHint('Loading "' + FileName.Text + '"');
+
   // Load bitmap
   bm:=TBitmap.Create;
   try
     imgOriginal.Picture.LoadFromFile(FileName.Text);
     bm.Assign(imgOriginal.Picture.Bitmap);
-    imgOriginal.Center:=((bm.width<imgOriginal.width) and (bm.height<imgOriginal.height));
 
-    if (bm.Width>256)
-    or ((bm.Width div 8) * (bm.Height div 8) > 4096)
-    then begin
-      Application.MessageBox('Sorry, I can''t process bitmaps wider than 256 pixels, or with more than 4096 tiles before optimisation (try 256x1024 for the maximum). This is not a scrolling tilemap maker!',nil,MB_ICONERROR);
-      exit;
-    end;
-    
     // Check bitmap pixel format
-    case bm.PixelFormat of
-    pf1bit:begin EnableGroupBox(gb1bit,true ); EnableGroupBox(gb4bit,false); end;
-    pf8bit,
-    pf4bit:begin EnableGroupBox(gb1bit,false); EnableGroupBox(gb4bit,true);  end;
-    else
-      EnableGroupBox(gb1bit,false);
-      EnableGroupBox(gb4bit,false);
+    if (bm.PixelFormat<>pf1bit)
+    and (bm.PixelFormat<>pf8bit)
+    and (bm.PixelFormat<>pf4bit) then begin
       Application.MessageBox('Image format not supported! Can''t process it.',nil,MB_ICONERROR);
       Exit;
     end;
@@ -166,13 +231,28 @@ begin
       Assign(bm);
       Width:=8;
       Height:=w*h*8;
-      for y:=0 to h-1 do
-        for x:=0 to w-1 do
-          Canvas.CopyRect(
-            Rect(0,(y*w+x)*8,8,(y*w+x)*8+8),
-            bm.Canvas,
-            Rect(x*8,y*8,x*8+8,y*8+8)
-          );
+      if cb8x16.Checked then begin
+        h:=h div 2;
+        for y:=0 to h-1 do begin
+          for x:=0 to w-1 do begin
+            Canvas.CopyRect(
+              Rect(0,(y*w+x)*16,8,(y*w+x)*16+16), // dest
+              bm.Canvas,
+              Rect(x*8,y*16,x*8+8,y*16+16) // src
+            );
+          end;
+        end;
+      end else begin
+        for y:=0 to h-1 do begin
+          for x:=0 to w-1 do begin
+            Canvas.CopyRect(
+              Rect(0,(y*w+x)*8,8,(y*w+x)*8+8),
+              bm.Canvas,
+              Rect(x*8,y*8,x*8+8,y*8+8)
+            );
+          end;
+        end;
+      end;
     end;
 //    imgOriginal.picture.assign(bm);
   finally
@@ -181,8 +261,8 @@ begin
 
   btnProcess.Enabled:=false;
   // Check how many colours are used if 4bpp or 8bpp
-  if gb4bit.Enabled then begin
-    SetHint('Decomposing to tiles...');
+  if bm.PixelFormat<>pf1bit then begin
+    SetHint('Counting colours...');
     h:=0; // h = highest
     for y:=0 to imgColumn.Picture.Bitmap.height-1 do begin
       p:=imgColumn.Picture.Bitmap.ScanLine[y];
@@ -195,13 +275,7 @@ begin
         for x:=0 to 7 do if p[x]>h then h:=p[x]
     end;
     NumColours:=h+1;
-    lblNumColours.Caption:=Format('BMP uses %d colours',[NumColours]);
-    case h of
-      0..1: rb1bit.Checked:=True;
-      2..3: rb2bit.Checked:=True;
-      4..7: rb3bit.Checked:=True;
-      8..15:rb4bit.Checked:=True;
-    end;
+    SetHint(Format('Image uses %d colours',[NumColours]));
   end else begin
     // 1 bit
     NumColours:=2;
@@ -209,7 +283,7 @@ begin
 
   Application.ProcessMessages;
   btnProcess.Enabled:=True;
-  
+
   if NumColours>16 then begin
     SetHint('Error converting bitmap');
     Application.MessageBox('Too many colours! This bitmap can''t be processed.',nil,MB_ICONERROR+MB_OK);
@@ -227,100 +301,88 @@ asm
   BSWAP eax
 end;
 
-procedure TForm1.WriteReconstData;
+function hflip(str:string):string;
+const
+  lookup:array[0..15] of char = ('0', '8', '4', 'c', '2', 'a', '6', 'e', '1',
+    '9', '5', 'd', '3', 'b', '7', 'f');
 var
-  s,datatype:string;
-  i,offset,digits,blank,val:integer;
-  wa:PWordArray;
-  Modifiers:word;
+  i:integer;
 begin
-  offset:=StrToIntDef(Form1.edTileOffset.Text,-1);
-  blank :=StrToIntDef(Form1.edBlankTile.Text ,-1);
-
-  // Make checkboxes valid
-  if cbBytes.Checked
-  and (
-        (HighestTileIndex+Offset>$ff)
-     or (cbUseMirroring.Checked)
-     or (cbSpritePalette.Checked)
-     or (cbInFront.Checked)
-  ) then begin
-    cbBytes.Checked:=False;
-    edTileOffsetChange(nil);
-    exit;
+  // I want to reverse the bits in each byte
+  // this is horrid!
+  result := '';
+  SetLength(result, 64);
+  for i:=0 to 31 do begin
+    result[i*2+1] := lookup[StrToInt('$'+str[i*2+2])];
+    result[i*2+2] := lookup[StrToInt('$'+str[i*2+1])];
   end;
+end;
 
-  Modifiers:=0;
-  if not Form1.cbBytes.Checked then begin
-    if Form1.cbSpritePalette.Checked then Modifiers:=Modifiers or (1 shl 11);
-    if Form1.cbInFront      .Checked then Modifiers:=Modifiers or (1 shl 12);
+function vflip(str:string):string;
+var
+  i:integer;
+begin
+  // A little nicer: reverse the order of 8-char substrings
+  result := '';
+  for i:=1 to 8 do begin
+    result := result + Copy(str, 65 - i*8, 8);
   end;
-
-  wa:=@ReconstData[1];
-  if (offset=-1) or (blank=-1) then begin
-    s:='Invalid tile offset or blank tile index';
-  end else begin
-    if form1.cbBytes.Checked
-    then begin
-      datatype:='.db ';
-      digits:=2;
-    end else begin
-      datatype:='.dw ';
-      digits:=4;
-    end;
-    for i:=0 to (Form1.imgOriginal.Picture.Bitmap.Height div 8)*32-1 do begin
-      if (i mod 32)=0 then begin // new line
-        Delete(s,Length(s),1);
-        s:=s+#13#10+datatype;
-      end;
-      if wa[i]=$ffff then val:=blank else val:=wa[i]+offset;
-      val:=val and ((1 shl (digits*4))-1) or Modifiers;
-      if (wa[i]<>$ffff) or Form1.cbPad.Checked
-      then s:=s+'$'+IntToHex(val,digits)+',';
-    end;
-    Delete(s,Length(s),1);
-    Delete(s,1,2);
-  end;
-  mmReconstData.Text:=s;
 end;
 
 procedure TForm1.btnProcessClick(Sender: TObject);
 var
   row:integer;
   p:pByteArray;
-  Tile,ProcessedTile:array[0..7] of dword;
-  b:byte;
-  i,j,k,l:integer;
+  wp:pWord;
+  Tile:array[0..7] of dword;
+  TileRow:dword;
+  i,j,k:integer;
   pixelvalue:byte;
-  sl:TStringList;
-  wa:pWordArray;
-  currentline:string;
+  hexstring, althexstring:string;
 begin
   if not btnProcess.Enabled then exit;
+  if imgOriginal.Picture.Bitmap.Empty then exit;
   SetHint('Converting tiles...');
   cbUseMirroring.Enabled:=cbRemoveDupes.Checked;
-  sl:=TStringList.Create;
-  for row:=0 to (imgColumn.Picture.Bitmap.Height div 8)-1 do begin
-    sl.Add('; Tile number 0x'+IntToHex(row,3));
 
-    currentline:='.db ';
-    if gb1bit.Enabled then begin
+  tilehexcodes.Clear;
+  tilehexcodes.Sorted := cbRemoveDupes.Checked;
+
+  // Allocate the tilemap 2D array
+  tilemapwidth := imgOriginal.Picture.Bitmap.Width div 8;
+  tilemapheight := imgOriginal.Picture.Bitmap.Height div 8;
+  GetMem(tilemap, tilemapheight * tilemapwidth * SizeOf(word));
+  wp := @tilemap^[0];
+
+  // For each tile
+  for row:=0 to (imgColumn.Picture.Bitmap.Height div 8)-1 do begin
+    // Get bitmap into Tile in a standard format
+    case (imgColumn.Picture.Bitmap.PixelFormat) of
+    pf1bit: begin
+      // 1bpp version
       for i:=0 to 7 do begin
         p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
-        b:=p^[0];
-        if cbInvert.Checked then b:=b xor $ff;
-        currentline:=currentline+'$'+IntToHex(b,2)+',';
-      end;
-    end else begin
-      if imgColumn.Picture.Bitmap.PixelFormat=pf4bit then
-      for i:=0 to 7 do begin // 4bpp version
+        Tile[i]:=(((p[0] shr 7) and $1) shl 28) or
+                 (((p[0] shr 6) and $1) shl 24) or
+                 (((p[0] shr 5) and $1) shl 20) or
+                 (((p[0] shr 4) and $1) shl 16) or
+                 (((p[0] shr 3) and $1) shl 12) or
+                 (((p[0] shr 2) and $1) shl  8) or
+                 (((p[0] shr 1) and $1) shl  4) or
+                 (((p[0] shr 0) and $1) shl  0);
+      end
+    end;
+    pf4bit: begin
+      // 4bpp version
+      for i:=0 to 7 do begin
         p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
         move(p^[0],Tile[i],4);
         Tile[i]:=swap32(Tile[i]); // Tile[i] now contains $01234567 where each digit is each pixel's index
-        ProcessedTile[i]:=0;
       end
-      else
-      for i:=0 to 7 do begin // 8bpp version
+    end;
+    pf8bit: begin
+      // 8bpp version
+      for i:=0 to 7 do begin
         p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
         Tile[i]:=((p[0] and $f) shl 28) or
                  ((p[1] and $f) shl 24) or
@@ -331,59 +393,115 @@ begin
                  ((p[6] and $f) shl  4) or
                  ((p[7] and $f) shl  0);
         // Tile[i] now contains $01234567 where each digit is each pixel's index
-        ProcessedTile[i]:=0;
-      end;
-
-      for i:=0 to 7 do // for each line in the tile
-        for j:=0 to 7 do begin // for each pixel on the line
-          pixelvalue:=Tile[i] shr (4*(7-j)) and $f;
-          for k:=0 to 3 do // for each bit in the pixel
-            ProcessedTile[i]:=ProcessedTile[i] or (((pixelvalue shr k) and 1) shl (8*k+(7-j)));
-        end;
-
-      for i:=0 to 7 do begin
-        currentline:=currentline+'$'+IntToHex((ProcessedTile[i] shr  0) and $ff,2)+',';
-        if rb1bit.checked then continue;
-        currentline:=currentline+'$'+IntToHex((ProcessedTile[i] shr  8) and $ff,2)+',';
-        if rb2bit.checked then continue;
-        currentline:=currentline+'$'+IntToHex((ProcessedTile[i] shr 16) and $ff,2)+',';
-        if rb3bit.checked then continue;
-        currentline:=currentline+'$'+IntToHex((ProcessedTile[i] shr 24) and $ff,2)+',';
-        if rb4bit.checked then continue;
       end;
     end;
-    Delete(currentline,Length(currentline),1);
-    sl.add(currentline);
+    end;
+
+    // Now Tile contains the 4bpp paletted data in "chunky" format -
+    // each 4 bits defines a single pixel
+
+    // Convert to planar if needed
+    if (cbPlanar.Checked) then begin
+      // planar
+      // 1st byte = LSBs of each pixel
+      // ..
+      // 4th byte = MSBs of each pixel
+      for i:=0 to 7 do begin
+        TileRow := 0;
+        for j:=0 to 7 do begin
+          pixelvalue := (Tile[i] shr (4*(7-j))) and $f;
+          // for each bit in pixelvalue
+          for k:=0 to 3 do begin
+            // OR it into TileRow in the right place
+            TileRow := TileRow
+              or (((pixelvalue shr k) and 1) shl (8*k+(7-j)));
+          end;
+        end;
+        // put it back in Tile
+        // the ordering is wrong though
+        // TODO: make it be right in the first place?
+        Tile[i] := swap32(TileRow);
+      end;
+    end;
+
+    // Make a string of text out of it (hex string)
+    hexstring := '';
+    for i:= 0 to 7 do begin
+      hexstring := hexstring + IntToHex(Tile[i], 8);
+    end;
+
+    if (cbRemoveDupes.Checked)
+    then begin
+      // check for an exact match
+      if (tilehexcodes.Find(hexstring, i)) then begin
+        i := Integer(tilehexcodes.Objects[i]);
+      end else begin
+        if (cbUseMirroring.Checked) then begin
+          // check for flipped/mirrored matches
+          althexstring := hflip(hexstring); // Hflip
+          if (tilehexcodes.Find(althexstring, i)) then begin
+            // H-flip match
+            i := Integer(tilehexcodes.Objects[i]) or $0200;
+          end else begin
+            althexstring := vflip(hexstring); // VFlip
+            if (tilehexcodes.Find(althexstring, i)) then begin
+              i := Integer(tilehexcodes.Objects[i]) or $0400;
+            end else begin
+              althexstring := hflip(althexstring); // VFlip + HFlip
+              if (tilehexcodes.Find(althexstring, i)) then begin
+                i := Integer(tilehexcodes.Objects[i]) or $0600;
+              end else begin
+                i := -1;
+              end;
+            end;
+          end;
+        end else begin
+          // no mirroring
+          i := -1;
+        end;
+      end;
+      // so add the original version and its tile number
+      if (i = -1) then begin
+        i := tilehexcodes.Count;
+        tilehexcodes.AddObject(hexstring, TObject(i));
+      end;
+    end else begin
+      i := tilehexcodes.Count;
+      tilehexcodes.AddObject(hexstring, TObject(i));
+    end;
+    // i is now the index of the tile in the list
+
+    // append it to the tilemap data
+    wp^ := i;
+    Inc(wp);
   end;
-  mmResults.Text:=sl.text;
 
-  // Build reconstruction data
-  j:=imgOriginal.Picture.Bitmap.Height div 8;             // Number of rows
-  k:=imgOriginal.Picture.Bitmap.Width div 8;              // Tiles per row (no. of columns)
-  SetLength(ReconstData,j*32*2);  // make string big enough to hold it - 32 tiles per line, 2 bytes per tile
-  wa:=@ReconstData[1]; // treat string as array of words
-  for i:=0 to j-1 do begin
-    for l:=0 to k-1 do wa[i*32+l]:=i*k+l;
-    for l:=k to 31  do wa[i*32+l]:=$ffff;
+  // Convert silly hex codes into pure RAM
+  if Assigned(tiledata) then begin
+    FreeMem(tiledata);
+  end;
+  tiledatasize := tilehexcodes.Count * 32;
+  GetMem(tiledata, tiledatasize);
+  for i:=0 to tilehexcodes.Count - 1 do begin
+    // Get the memory location we want
+    p := PByteArray(Integer(tiledata) + Integer(tileHexCodes.Objects[i]) * 32);
+    // Convert the hex to there
+    for j:=0 to 31 do begin
+      p^[j] := StrToInt('$' + Copy(tilehexcodes[i], j*2+1, 2));
+    end;
   end;
 
-  sl.free;
+  SetHint(Format('%d tiles converted',[tilehexcodes.Count]));
 
-  HighestTileIndex:=(imgColumn.Picture.Bitmap.Height div 8)-1;
-
-  if cbRemoveDupes.Checked
-  then btnRemoveDupes.Click
-  else begin
-    SetHint('Calculating tilemap...');
-    WriteReconstData;
-    SetHint(Format('%d tiles converted',[imgColumn.Picture.Bitmap.Height div 8]));
-  end;
+  // Pretty-print the data to the memos
+  PopulateTileDataMemo;
+  PopulateTilemapDataMemo;
 end;
 
 procedure SaveText(lines:TStrings;filename:string);
 begin
   lines.SaveToFile(filename);
-  SetHint('Saved in text format to '+filename);
+  SetHint('Saved in text format to "'+ExtractFileName(filename)+'"');
 end;
 
 procedure SaveBinary(lines:TStrings;filename:string);
@@ -413,129 +531,56 @@ begin
   end;
   fs.free;
   values.free;
-  SetHint('Saved in binary format to '+filename);
-end;
-
-procedure SavePSCompressed(lines:TStrings;filename:string;interleaving:integer);
-var
-  i,j,k,n,bitplane,blocksize:integer;
-  Buffer,Buffer2:PByteArray;
-  ch:byte;
-
-  s:string;
-  values:TStringList;
-  ms:TMemoryStream;
-  size:integer;
-begin
-  // Get binary data
-  values:=TStringList.Create;
-  ms:=TMemoryStream.Create();
-
-  size:=0;
-
-  for i:=0 to lines.Count-1 do begin
-    s:=lines[i];
-    values.Clear;
-    ExtractStrings( [',',' '], [], PChar(s),values);
-    for j:=0 to values.Count-1 do begin
-      if values[j]='.dw' then size:=2;
-      if values[j]='.db' then size:=1;
-      if pos(';',values[j])>0 then break; // stop parsing line when ; encountered
-      n:=StrToIntDef(values[j],-1);
-      if n>-1 then ms.Write(n,size);
-    end;
-  end;
-  values.free;
-
-  // Compress it
-
-  // 1. Make memory block same size as # of tiles
-  Buffer:=allocmem(ms.Size); // 8 lines per tile, 4 bytes per line
-  try
-    // 2. Copy data into Buffer, interleaving
-//    for i:=0 to ms.Size-1 do
-//      Buffer[i]:=VRAM[4*(i mod (NumTiles*8))+(i div (NumTiles*8))];
-    ms.Seek(0,soFromBeginning);
-    blocksize:=ms.size div interleaving; // size of each plane
-    for i:=0 to ms.Size-1 do begin
-      k:=blocksize*(i mod interleaving) + (i div interleaving); // where to write this byte to
-      ms.Read(Buffer[k],1);
-//      Buffer[i]:=VRAM[4*(i mod (NumTiles*8))+(i div (NumTiles*8))];
-    end;
-{
-    // Test: save to file
-    with TFileStream.Create(extractfilepath(paramstr(0))+'out.dat',fmCreate) do begin
-      Write(Buffer[0],ms.Size);
-      free;
-    end;
-}
-    // 3. Copy to second buffer in 4 blocks, checking for repeated bytes
-    Buffer2:=allocmem(ms.size+128); // +128 bytes in case it gets bigger
-    try
-//      i:=0; // i is index into buffer
-      j:=0; // j is index into buffer2
-      for bitplane:=0 to interleaving-1 do begin
-        // Copy the relevant bitplane to the start of Buffer
-        if bitplane<>0 then move(Buffer[bitplane*blocksize],Buffer[0],blocksize);
-        i:=0;
-        repeat
-          ch:=Buffer[i]; // Run through buffer, compare to next (2) bytes
-          if (ch=Buffer[i+1]) and (ch=Buffer[i+2]) then begin // Same! Let's see how many...
-            k:=1; while (i+k<blocksize) and (Buffer[i+k]=ch) and (k<127) do Inc(k);
-            Buffer2[j]:=k; // So there's k identical bytes, let's write that
-            Buffer2[j+1]:=ch;
-            Inc(j,2);
-          end else begin // Non-identical bytes! Let's see how many there are
-            k:=1;
-            while (i+k+2<=blocksize)
-              and not (
-                    (Buffer[i+k]=Buffer[i+k+1])
-                and (Buffer[i+k]=Buffer[i+k+2])
-              )
-              and (k<127)
-               do Inc(k);
-            Buffer2[j]:=$80 or k; // So there's k non-identical bytes, let's write that
-            Move(Buffer[i],Buffer2[j+1],k);
-            Inc(j,k+1);
-          end;
-          inc(i,k);
-        until i=blocksize; // repeat for one block
-        Buffer2[j]:=0; Inc(j); // Write block terminator
-      end;
-
-      // Save to file
-      with TFileStream.Create(filename,fmCreate) do begin
-        Write(Buffer2[0],j);
-        free;
-      end;
-//      Application.MessageBox(PChar('Compressed data saved as '+extractfilepath(paramstr(0))+'compr.dat'),'Compressed',MB_ICONINFORMATION+MB_OK);
-
-    finally
-      FreeMem(Buffer2);
-    end;
-  finally
-    FreeMem(Buffer);
-  end;
-  ms.free;
-  SetHint('Saved in PS compressed format (interleaving '+IntToStr(interleaving)+') to '+filename);
+  SetHint('Saved in binary format to "'+ExtractFileName(filename)+'"');
 end;
 
 procedure SaveTiles(filename:string;format:integer);
+var
+  i,n:integer;
 begin
-  case format of
-  1: SaveText(Form1.mmResults.Lines,filename);
-  2: SaveBinary(Form1.mmResults.Lines,filename);
-  3: if Form1.rb4bit.Checked
-     then SavePSCompressed(Form1.mmResults.Lines,filename,4)
-     else Application.MessageBox('Phantasy Star type compression only works for 4 bit data. Try changing the type on the Source page.',nil,MB_ICONERROR)
-   end;
+  if format = 1 then SaveText(Form1.mmResults.Lines,filename)
+  else begin
+    // Find the nth savetiles-capable plugin
+    n:=1;
+    for i:=0 to Length(plugins)-1 do begin
+      if Assigned(plugins[i].CompressTiles) then Inc(n);
+      if n = format then begin
+        // found it
+        CompressTiles(tiledata, tiledatasize div 32, plugins[i].CompressTiles, filename);
+        break;
+      end;
+    end;
+  end;
 end;
 
 procedure TForm1.btnSaveTilesRawClick(Sender: TObject);
+var
+  filter:string;
+  i:integer;
+  mask: string;
+  FilterParts: TStringList;
 begin
-  SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tiles).inc');
-  SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then SaveTiles(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  // Build the save dialog filter
+  filter := 'Include files (*.inc)|*.inc';
+  for i:=0 to Length(plugins) - 1 do begin
+    if Assigned(plugins[i].CompressTiles)
+    then filter := filter + Format('|%s (*.%s)|*.%s',[plugins[i].Name, plugins[i].Ext, plugins[i].Ext]);
+  end;
+  SaveDialog1.Filter := filter;
+
+  if (sender = nil) then begin
+    // automated save
+    // find the index of the ext of the filename
+    mask := '*' + ExtractFileExt(SaveDialog1.Filename);
+    FilterParts:=TStringList.Create;
+    ExtractStrings(['|'],[],PChar(filter),FilterParts);
+    SaveTiles(SaveDialog1.FileName, (FilterParts.IndexOf(mask) + 1) div 2);
+    FilterParts.Free;
+  end else begin
+    SaveDialog1.FileName := ChangeFileExt(FileName.Text,' (tiles).inc');
+    SaveDialog1.OnTypeChange(SaveDialog1);
+    if SaveDialog1.Execute then SaveTiles(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  end;
 end;
 
 procedure TForm1.rb2bitClick(Sender: TObject);
@@ -544,10 +589,45 @@ begin
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
+var
+  GetName: TGetName;
+  GetExt: TGetExt;
+  sr:TSearchRec;
+  dllHandle: THandle;
+  plugin:TPlugin;
 begin
   DragAcceptFiles(Handle,True); // allow dropping of files
   Application.OnHint:=DisplayHint;
   Application.Title:=Form1.Caption;
+
+  // build plugins list
+  if (FindFirst(ExtractFilePath(ParamStr(0)) + 'gfxcomp_*.dll', faAnyFile, sr) = 0) then  begin
+    repeat
+      // load DLL
+      dllHandle := LoadLibrary(PAnsiChar(sr.Name));
+      if (dllHandle > HINSTANCE_ERROR) then begin
+        @GetName := GetProcAddress(dllHandle, 'getName');
+        @GetExt := GetProcAddress(dllHandle, 'getExt');
+        @plugin.CompressTiles := GetProcAddress(dllHandle, 'compressTiles');
+        @plugin.CompressTilemap := GetProcAddress(dllHandle, 'compressTilemap');
+        if Assigned(GetName)
+        and Assigned(GetExt)
+        then begin
+          SetLength(plugins,Length(plugins)+1);
+          plugin.Name := GetName();
+          plugin.Ext := GetExt();
+          plugin.Handle := dllHandle;
+          plugins[Length(plugins)-1] := plugin;
+        end else begin
+          FreeLibrary(dllHandle);
+        end;
+      end;
+    until FindNext(sr) <> 0;
+    FindClose(sr);
+  end;
+
+  // Initialise data containers
+  tilehexcodes := TStringList.Create;
 end;
 
 procedure TForm1.WMDROPFILES(var Message: TWMDROPFILES);
@@ -562,166 +642,58 @@ begin
   btnLoadClick(nil);
 end;
 
-function MirrorTileData(original:string;DoHoriz:boolean):string;
-var
-  i,j,byte,n:integer;
-  temp:string;
-begin
-  // original = '.db $00,$10,$10,$10,$10,$10,$00,$00'
-  // hex bytes could be more
-  result:='';
-  if DoHoriz then begin
-    // need to mirror individual bytes in order
-    result:='.db ';
-    i:=5;
-    while i<length(original) do begin
-      byte:=strtoint(copy(original,i,3));
-      // mirror byte
-      byte:=((byte and $80) shr 7) or
-            ((byte and $40) shr 5) or
-            ((byte and $20) shr 3) or
-            ((byte and $10) shr 1) or
-            ((byte and $08) shl 1) or
-            ((byte and $04) shl 3) or
-            ((byte and $02) shl 5) or
-            ((byte and $01) shl 7);
-      result:=result+'$'+inttohex(byte,2)+',';
-      Inc(i,4);
-    end;
-    Delete(result,Length(result),1);
-  end else begin
-    // Vertical mirror: need to switch bytes around in groups of 8
-    result:='.db ';
-    i:=5; // index of 1st byte in string
-
-    if      form1.rb1bit.checked then n:=3 // how many bytes to switch in each group
-    else if form1.rb2bit.checked then n:=7
-    else if form1.rb3bit.checked then n:=11
-    else                              n:=15;
-
-    while i<length(original) do begin
-      temp:='';
-      for j:=1 to 8 do begin
-        temp:=copy(original,i,n)+','+temp;
-        Inc(i,n+1);
-      end;
-      result:=result+temp;
-    end;
-    Delete(result,Length(result),1);
-  end;
-end;
-
-procedure RemoveDupes(sl:TStringList;s:string;wa:pWordArray;OriginalTileNumber:integer);
-var
-  j,k,DuplicateTileNumber:integer;
-begin
-  // find duplicates
-  j:=sl.IndexOf(s);
-  while j>-1 do begin
-    // Duplicate found at line j
-    DuplicateTileNumber:=StrToInt('$'+Copy(sl[j-1],17,3)); // Get duplicate tile number
-    k:=0;
-    while wa[k]<>DuplicateTileNumber do Inc(k); // Find where in the reconst data it is used
-    wa[k]:=OriginalTileNumber;
-    sl.Delete(j);    // Delete line
-    sl.Delete(j-1);  // Delete comment before it
-    j:=sl.IndexOf(s);
-  end;
-  // try mirroring...
-  if (form1.cbUseMirroring.Checked) and (OriginalTileNumber<512) then begin
-    RemoveDupes(sl,MirrorTileData(s,true),wa,OriginalTileNumber or $4000);
-    RemoveDupes(sl,MirrorTileData(s,false),wa,OriginalTileNumber or $8000);
-    RemoveDupes(sl,MirrorTileData(MirrorTileData(s,true),false),wa,OriginalTileNumber or $c000);
-  end;
-end;
-
-procedure TForm1.btnRemoveDupesClick(Sender: TObject);
-var
-  i,j,k,OriginalTileNumber:integer;
-  sl:TStringList;
-  s:string;
-  wa:pWordArray;
-begin
-  SetHint('Removing duplicate tiles...');
-  sl:=TStringList.Create;
-  sl.Text:=mmResults.Text;
-  wa:=@ReconstData[1];
-
-  i:=0;
-  sl.BeginUpdate;
-  while i<sl.Count-1 do begin
-    s:=sl[i];
-    if s[1]<>'.' then begin // Not a data line
-       Inc(i);
-       Continue;
-    end;
-
-    OriginalTileNumber:=StrToInt('$'+Copy(sl[i-1],17,3)); // Get original tile number
-    sl[i]:='';
-    // find duplicates
-    SetHint('Removing duplicate tiles... '+IntToStr(OriginalTileNumber));
-    RemoveDupes(sl,s,wa,OriginalTileNumber);
-    sl[i]:=s;
-    Inc(i);
-  end;
-  // Make numbers consecutive again
-  j:=0;
-  for i:=0 to sl.Count-1 do
-    if pos('; Tile number 0x',sl[i])=1 then begin
-      OriginalTileNumber:=StrToInt('$'+Copy(sl[i],17,3));
-      sl[i]:='; Tile number 0x'+IntToHex(j,3);
-      // I want to change all occurrences of OriginalTileData to j
-      for k:=0 to (Length(ReconstData) div 2)-1 do
-        if  (wa[k]<>$ffff)
-        and ((wa[k] and $3fff)=(OriginalTileNumber and $3fff))
-        then wa[k]:=j or (wa[k] and not $3fff);
-      Inc(j);
-    end;
-  HighestTileIndex:=j-1;
-  sl.EndUpdate;
-
-  // process my "moved" mirror bits
-  for i:=0 to (Length(ReconstData) div 2)-1 do
-    if  (wa[i]<>$ffff)
-    and ((wa[i] and $c000)>0)
-    then wa[i]:=(wa[i] and $3fff)
-                or ((wa[i] and $c000) shr 5);
-  // vh0pcvhdddddddd
-  // >>>>>
-
-  mmResults.Text:=sl.Text;
-  sl.Free;
-
-  WriteReconstData;
-  SetHint(
-    IntToStr(imgColumn.Picture.Bitmap.Height div 8)+
-    ' tiles converted ('+
-    IntToStr(HighestTileIndex+1)
-    +' unique)'
-  );
-end;
-
 procedure SaveTilemap(filename:string;format:integer);
+var
+  i,n:integer;
 begin
-  case format of
-  1: SaveText(Form1.mmReconstData.Lines,filename);
-  2: SaveBinary(Form1.mmReconstData.Lines,filename);
-  3: SavePSCompressed(Form1.mmReconstData.Lines,filename,2);
+  if format = 1 then SaveText(Form1.mmReconstData.Lines,filename)
+  else begin
+    // Find the nth savetiles-capable plugin
+    n:=1;
+    for i:=0 to Length(plugins)-1 do begin
+      if Assigned(plugins[i].CompressTilemap) then Inc(n);
+      if n = format then begin
+        // found it
+        CompressTilemap(PByteArray(tilemap), tilemapheight, tilemapwidth, plugins[i].CompressTilemap, filename);
+        break;
+      end;
+    end;
   end;
 end;
 
 procedure TForm1.btnSaveReconstClick(Sender: TObject);
+var
+  filter:string;
+  i:integer;
+  mask: string;
+  FilterParts: TStringList;
 begin
-  SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (tile numbers).inc');
-  SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then SaveTilemap(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  // Build the save dialog filter
+  filter := 'Include files (*.inc)|*.inc';
+  for i:=0 to Length(plugins) - 1 do begin
+    if Assigned(plugins[i].CompressTileMap)
+    then filter := filter + Format('|%s (*.%s)|*.%s',[plugins[i].Name, plugins[i].Ext, plugins[i].Ext]);
+  end;
+  SaveDialog1.Filter := filter;
+
+  if (sender = nil) then begin
+    // find the index of the ext of the filename
+    mask := '*' + ExtractFileExt(SaveDialog1.Filename);
+    FilterParts:=TStringList.Create;
+    ExtractStrings(['|'],[],PChar(filter),FilterParts);
+    SaveTilemap(SaveDialog1.FileName, (FilterParts.IndexOf(mask) + 1) div 2);
+    FilterParts.Free;
+  end else begin
+    SaveDialog1.FileName := ChangeFileExt(FileName.Text,' (tiles).inc');
+    SaveDialog1.OnTypeChange(SaveDialog1);
+    if SaveDialog1.Execute then SaveTilemap(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  end;
 end;
 
 procedure TForm1.edTileOffsetChange(Sender: TObject);
 begin
-  cbSpritePalette.Enabled:=not cbBytes.Checked;
-  cbInFront      .Enabled:=not cbBytes.Checked;
-  WriteReconstData;
+  PopulateTileDataMemo;
+  PopulateTilemapDataMemo;
 end;
 
 procedure TForm1.DisplayHint(Sender: TObject);
@@ -807,31 +779,55 @@ procedure SavePalette(filename:string;format:integer);
 begin
   case format of
   1: SaveText(Form1.mmPalette.Lines,filename);
-  2: if Form1.rbPalConst.Checked
-     then Application.MessageBox('If you choose cl123 style output then not only is there no sense choosing to save it as binary, but also this program can''t do it due to the hacky way it''s written! You''d better try again.',nil,MB_ICONERROR)
-     else SaveBinary(Form1.mmPalette.Lines,filename);
-  3: Application.MessageBox('Phantasy Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
+  2: SaveBinary(Form1.mmPalette.Lines,filename);
+  else
+    Application.MessageBox('Invalid file type for palette',nil,MB_ICONERROR);
   end;
 end;
 
 procedure TForm1.btnSavePaletteClick(Sender: TObject);
+var
+  filter:string;
+  mask: string;
+  FilterParts: TStringList;
 begin
-  SaveDialog1.FileName:=ChangeFileExt(FileName.Text,' (palette).inc');
-  SaveDialog1.OnTypeChange(SaveDialog1);
-  if (sender=nil) or SaveDialog1.Execute then SavePalette(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  // Build the save dialog filter
+  filter := 'Include files (*.inc)|*.inc';
+  if not rbPalConst.Checked
+  then filter := filter + '|Binary files (*.bin)|*.bin';
+  SaveDialog1.Filter := filter;
+
+  if (sender = nil) then begin
+    // find the index of the ext of the filename
+    mask := '*' + ExtractFileExt(SaveDialog1.Filename);
+    FilterParts:=TStringList.Create;
+    ExtractStrings(['|'],[],PChar(filter),FilterParts);
+    SavePalette(SaveDialog1.FileName, (FilterParts.IndexOf(mask) + 1) div 2);
+    FilterParts.Free;
+  end else begin
+    SaveDialog1.FileName := ChangeFileExt(FileName.Text,' (palette).inc');
+    SaveDialog1.OnTypeChange(SaveDialog1);
+    if SaveDialog1.Execute then SavePalette(SaveDialog1.FileName,SaveDialog1.FilterIndex);
+  end;
 end;
 
 procedure TForm1.SaveDialog1TypeChange(Sender: TObject);
 var
   DlgParent: HWND;
   StrFileName, StrExt: string;
+  FilterParts:TStringList;
 begin
   DlgParent := GetParent(TSaveDialog(Sender).Handle);
 
-  case SaveDialog1.FilterIndex of
-    1: StrExt := '.inc';
-    2: StrExt := '.bin';
-    3: StrExt := '.pscompr';
+  // find the ext from the filter
+  FilterParts:=TStringList.Create;
+  try
+    ExtractStrings(['|'],[],PChar(SaveDialog1.Filter),FilterParts);
+    if (FilterParts.Count > SaveDialog1.FilterIndex * 2 - 1)
+    then StrExt:=Copy(FilterParts[SaveDialog1.FilterIndex * 2 - 1], 2, 100)
+    else exit;
+  finally
+    FilterParts.Free;
   end;
 
   StrFileName := ChangeFileExt(ExtractFileName(TSaveDialog(Sender).FileName), StrExt);
@@ -845,15 +841,14 @@ procedure TForm1.FormShow(Sender: TObject);
 var
   i:integer;
   s,filename,tilefilename,tilemapfilename,palettefilename:string;
-  tileformat,tilemapformat,paletteformat:integer;
-  quitafter,ignorenext:boolean;
+  quitafter,ignorenext,gotfile:boolean;
 begin
-  tileformat:=0;
-  tilemapformat:=0;
-  paletteformat:=0;
   filename:='';
   quitafter:=false;
   ignorenext:=false;
+  gotfile:=false;
+  // stop all processing until I'm ready
+  btnProcess.Enabled:=false;
   // command-line handling
   for i:=1 to ParamCount do begin
     if ignorenext then begin // flag set to skip the next
@@ -863,92 +858,129 @@ begin
     s:=ParamStr(i);
     if (s[1]<>'-') and FileExists(s) then begin
       Form1.FileName.Text:=s;
-      btnLoadClick(nil);
-    end else if s='-invert' then cbInvert.Checked:=true
-    else if s='-1bit' then rb1bit.Checked:=true
-    else if s='-2bit' then rb2bit.Checked:=true
-    else if s='-3bit' then rb3bit.Checked:=true
-    else if s='-4bit' then rb4bit.Checked:=true
+      gotfile := true;
+    end else if s='-8x16' then cb8x16.Checked:=true
+    else if s='-8x8' then cb8x16.Checked:=false
+    else if s='-planar' then cbPlanar.Checked:=true
+    else if s='-chunky' then cbPlanar.Checked:=false
+    else if s='-mirror' then cbUseMirroring.Checked:=true
     else if s='-nomirror' then cbUseMirroring.Checked:=false
+    else if s='-removedupes' then cbRemoveDupes.Checked:=true
     else if s='-noremovedupes' then cbRemoveDupes.Checked:=false
-    else if pos('-tileoffset',s)=1 then edTileOffset.Text:=copy(s,12,MaxInt)
-    else if pos('-pad',s)=1 then begin
-      edBlankTile.Text:=copy(s,5,MaxInt);
-      cbPad.Checked:=true;
-    end
-    else if s='-bytes' then cbBytes.Checked:=true
     else if s='-spritepalette' then cbSpritePalette.Checked:=true
     else if s='-infrontofsprites' then cbInFront.Checked:=true
     else if s='-palsms' then rbPalHex.Checked:=true
     else if s='-palgg' then rbPalGG.Checked:=true
     else if s='-palcl123' then rbPalConst.Checked:=true
-    else if s='-savetilesinc' then begin
-      tileformat:=1;
+    else if s='-tileoffset' then begin
+      edTileOffset.Text:=paramstr(i+1);
+      ignorenext:=true;
+    end else if s='-savetiles' then begin
       tilefilename:=paramstr(i+1);
-      if tilefilename='' then tilefilename:='-';
-      ignorenext:=tilefilename[1]<>'-';
-    end else if s='-savetilesbin' then begin
-      tileformat:=2;
-      tilefilename:=paramstr(i+1);
-      if tilefilename='' then tilefilename:='-';
-      ignorenext:=tilefilename[1]<>'-';
-    end else if s='-savetilespscompr' then begin
-      tileformat:=3;
-      tilefilename:=paramstr(i+1);
-      if tilefilename='' then tilefilename:='-';
-      ignorenext:=tilefilename[1]<>'-';
-    end else if s='-savetilemapinc' then begin
-      tilemapformat:=1;
+      ignorenext:=true;
+    end else if s='-savetilemap' then begin
       tilemapfilename:=paramstr(i+1);
-      if tilemapfilename='' then tilemapfilename:='-';
-      ignorenext:=tilemapfilename[1]<>'-';
-    end else if s='-savetilemapbin' then begin
-      tilemapformat:=2;
-      tilemapfilename:=paramstr(i+1);
-      if tilemapfilename='' then tilemapfilename:='-';
-      ignorenext:=tilemapfilename[1]<>'-';
-    end else if s='-savetilemappscompr' then begin
-      tilemapformat:=3;
-      tilemapfilename:=paramstr(i+1);
-      if tilemapfilename='' then tilemapfilename:='-';
-      ignorenext:=tilemapfilename[1]<>'-';
-    end else if s='-savepaletteinc' then begin
-      paletteformat:=1;
+      ignorenext:=true;
+    end else if s='-savepalette' then begin
       palettefilename:=paramstr(i+1);
-      if palettefilename='' then palettefilename:='-';
-      ignorenext:=palettefilename[1]<>'-';
-    end else if s='-savepalettebin' then begin
-      paletteformat:=2;
-      palettefilename:=paramstr(i+1);
-      if palettefilename='' then palettefilename:='-';
-      ignorenext:=palettefilename[1]<>'-';
+      ignorenext:=true;
     end else if s='-exit' then quitafter:=true
     else Application.MessageBox(PAnsiChar('Unknown parameter:'#13#10+s),nil);
   end;
 
-  if tileformat>0 then begin
-    if tilefilename[1]='-'
-    then begin
-      SaveDialog1.FilterIndex:=tileformat;
+  // do processing if wanted
+  if gotfile then begin
+    btnLoadClick(nil);
+
+    // Save results if specified
+    if Length(tilefilename) > 0 then begin
+      SaveDialog1.FileName := tilefilename;
       btnSaveTilesRawClick(nil);
-    end else SaveTiles(tilefilename,tileformat);
-  end;
-  if tilemapformat>0 then begin
-    if tilemapfilename[1]='-'
-    then begin
-      SaveDialog1.FilterIndex:=tilemapformat;
+    end;
+
+    if Length(tilemapfilename) > 0 then begin
+      SaveDialog1.FileName := tilemapfilename;
       btnSaveReconstClick(nil);
-    end else SaveTilemap(tilemapfilename,tilemapformat);
-  end;
-  if paletteformat>0 then begin
-    if palettefilename[1]='-'
-    then begin
-      SaveDialog1.FilterIndex:=paletteformat;
+    end;
+
+    if Length(palettefilename) > 0 then begin
+      SaveDialog1.FileName := palettefilename;
       btnSavePaletteClick(nil);
-    end else SavePalette(palettefilename,paletteformat);
+    end;
   end;
 
   if quitafter then Application.Terminate;
+end;
+
+procedure TForm1.cb8x16Click(Sender: TObject);
+begin
+  if fileexists(FileName.Text) then btnLoadClick(Sender);
+end;
+
+procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
+var
+  i:integer;
+begin
+  tilehexcodes.free;
+
+  if Assigned(tiledata) then FreeMem(tiledata);
+
+  for i:=0 to Length(plugins) - 1 do begin
+    FreeLibrary(plugins[i].Handle);
+  end;
+  SetLength(plugins, 0);
+end;
+
+procedure TForm1.PopulateTileDataMemo;
+var
+  i,j,offset:integer;
+  s:string;
+  p:PByteArray;
+begin
+  p := tiledata;
+  offset := StrToIntDef(edTileOffset.Text, 0);
+  with mmResults.Lines do begin
+    BeginUpdate;
+    Clear;
+    for i:=0 to tilehexcodes.Count - 1 do begin
+      Add('; Tile index $' + IntToHex(i + offset, 3));
+      s:='.db';
+      for j:=0 to 31 do begin
+        s := s + ' $' + IntToHex(p^[j], 2);
+      end;
+      Add(s);
+      p := PByteArray(Integer(p) + 32);
+    end;
+    EndUpdate;
+  end;
+end;
+
+procedure TForm1.PopulateTilemapDataMemo;
+var
+  i,j,index,flags,offset,extraflags:integer;
+  s:string;
+  wp:PWordArray;
+begin
+  wp := tilemap;
+  offset := StrToIntDef(edTileOffset.Text, 0);
+  extraflags := 0;
+  if (cbSpritePalette.Checked) then extraflags := extraflags or $0800;
+  if (cbInFront.Checked) then extraflags := extraflags or $1000;
+  with mmReconstData.Lines do begin
+    BeginUpdate;
+    Clear;
+    for i:=0 to tilemapheight-1 do begin
+      s:='.dw';
+      for j:=0 to tilemapwidth-1 do begin
+        index := (wp^[j] and $01ff) + offset;
+        flags := (wp^[j] and $0600) or extraflags;
+        s := s + ' $' + IntToHex(index or flags,4);
+      end;
+      Add(s);
+      wp := PWordArray(Integer(wp) + tilemapwidth * SizeOf(Word));
+    end;
+    EndUpdate;
+  end;
 end;
 
 end.

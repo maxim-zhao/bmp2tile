@@ -1,79 +1,50 @@
-BMP to SMS/GG tile converter 0.35
+BMP to SMS/GG tile converter 0.4
 =================================
 
-by Maxim in 2002-2005
+by Maxim in 2002-2009
 
-This program converts images from BMP, PNG, PCX and GIF format to SMS/GG 
-tile, tilemap and palette data.
+This program converts images from BMP, PNG, PCX and GIF format to SMS/GG tile,
+tilemap and palette data.
 
 Instructions
 ============
 
-FIRST you have to prepare your file in an image editor. This is the
-important part! There are certain requirements for it to be processed by
-this program. If you are using an image editor that doesn't allow you to
-output in the right format then you might need to get one that can
-convert for you. I like Paint Shop Pro, it can easily do what you want
-here.
+FIRST you have to prepare your file in an image editor. This is the important
+part! There are certain requirements for it to be processed by this program. If
+you are using an image editor that doesn't allow you to output in the right
+format then you might need to get one that can convert for you. I like Paint
+Shop Pro, it can easily do what you want here.
 
-Requirement 1: The image should have a width and height that are
-  multiples of 8. If it's not, the program can handle that (adding
-  padding) but it's not ideal.
+Requirement 1: The image should have a width and height that are multiples of 8.
+  If it's not, the program can handle that (adding padding) but it's not ideal.
 
 Requirement 2: The image must be in one of these formats:
-  BMP (not RLE)
+  BMP
   GIF
-  PNG (no transparency)
+  PNG
   PCX
 
 Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
-  Higher bit depths are not acceptable. So there. The reason for this
-  is because you (should) want to control your palette, since it will
-  be shared among all the images you display. Your image editor should
-  have facilities to save a palette and apply it to all the images you
-  want to use. Since a given tile is limited to one of the two 16-
-  colour palettes, there is no use for any higher colour depth and by
-  removing the possibility I remove the chance of accidentally having
-  higher indices. If you are using an 8-bit image and you use too many
-  colours, the program will not process it. You can define colours
-  beyond index 15, just don't use them.
+  Higher bit depths are not acceptable. So there. The reason for this is
+  because you (should) want to control your palette, since it will be shared
+  among all the images you display. Your image editor should have facilities to
+  save a palette and apply it to all the images you want to use. Since a given
+  tile is limited to one of the two 16- colour palettes, there is no use for
+  any higher colour depth and by removing the possibility I remove the chance
+  of accidentally having higher indices. If you are using an 8-bit image and
+  you use too many colours, the program will not process it. You can define
+  colours beyond index 15, just don't use them.
 
-Requirement 4: The image must not be more than 256 pixels wide. This is
-  due to various internal limitations because it's only designed to
-  create tilemaps for display, not for handling huge scrolling areas.
-
-Requirement 5: The total area of the image must not be more than 4096
-  tiles (that's 262144 pixels, or 256x1024 or 128x2048, etc). You can
-  only have 448 tiles on the SMS anyway (unless you cheat a bit, but
-  then you only gain a few more). If you have 2000 tiles after
-  optimisation, you're just screwed. This is another internal
-  limitation.
-
-So, once you've got that all sussed, save your image to a file and then
-drag and drop it onto the program. (Alternatively, you can find your
-file the old-fashioned way with the Browse button.) Then it'll load it
-and process it for you. Then you have some options depending on what
-you want...
+So, once you've got that all sussed, save your image to a file and then drag
+and drop it onto the program. (Alternatively, you can find your file the old-
+fashioned way with the Browse button.) Then it'll load it and process it for
+you. Then you have some options depending on what you want...
 
 Source tab
 ==========
 
-First of all, this will show you your image. Isn't that nice?
-
-If your image is 1-bit, there is an option to invert the colour indices.
-Everything that is colour 1 will become colour 0 and vice versa. This is
-useful if your image has its colours in the wrong order - perhaps your
-image editor doesn't give you control over the palette in 1-bit images.
-You can always just use the first two colours in a 4-bit or 8-bit image
-for exactly the same effect.
-
-If your image is 4-bit or 8-bit then it will count how many colours are
-actually used. Depending on how many are used, it will choose the
-minimum number of bits (bitplanes) needed to represent your image. Note,
-however, that only 4-bit data is suitable for writing directly to VRAM -
-less bits will save ROM space, but will require some handling by your
-code to output zeroes in place of the missing bitplanes. If you don't
-understand that then crank it up to 4-bit each time.
+This will show you your image. Isn't that nice? If it's big, it'll be squashed
+to fit.
 
 Tiles tab
 =========
@@ -84,197 +55,204 @@ edit it a bit.
 
 If "Remove duplicates" is checked then identical tiles will be removed.
 This can save a lot of space, and is essential for full-screen graphics
-on the SMS. Note that it can take a few seconds to process, more so if
-there are more duplicate tiles. It could be done faster but I'd have to
-rewrite the whole thing.
+on the SMS.
 
 If "Use tile mirroring" is checked then tiles which are horizontal or
-vertical mirror images of others will be removed. This requires the
-tilemap data to be in word form (see later). If you design your graphics
+vertical mirror images of others will be removed. If you design your graphics
 with this in mind you can save a lot of graphics space.
 
-Click on "Save" to save the tile data to a file. You have three choices
-for the format to save in:
+If "Treat as 8x16" is checked then the image is decomposed in the order
+  1 3 5
+  2 4 6
+  7 9 b
+  8 a c
+This is suitable for use with 8x16 sprites, for example. However, "Remove
+duplicates" may make the resulting data not work as expected. You probably
+ought to make sure the image height is a multiple of 16.
 
-  - WLA DX include format. This is the format shown in the box, and can
-    either be included in your source with
-      .include "filename.inc"
-    or simply pasted in.
-  - Binary format. This is raw binary data, and can be included in your
-    source with
-      .incbin "filename.bin"
-  - Phantasy Star compressed format. This is compresed data suitable for
-    running through Phantasy Star's tile loader routines. You need to
-    include it with
-      .incbin "filename.bin"
-    and also include the code from "Phantasy Star decompressors.inc" -
-    read that file for more information. Note that you must choose 4
-    bit, word sized data for this to work properly.
+If "Planar tile output" is checked, the resulting data is bitplane-separated -
+each byte contains the data for one bitplane of a row of pixels. If it's
+unchecked, you will get "chunky" data - each byte holds all four bits for two
+pixels.
 
-Note that the program does not enforce the SMS's limitations on the
-number of tiles that can be defined - the SMS is practically limited to
-448 (0x1c0) tiles unless you squeeze some into unused tilemap/sprite
-table space, and you'll have to do that manually.
+Enter a number in the "Index of first tile" box to have the data generated with
+the assumption that the first tile is not tile zero. For the tile data, this
+just affects the comments, but it also applies to the tilemap data (see below).
+To enter a hex number, prefix it with '$'.
+
+Click on "Save" to save the tile data to a file. The available file formats
+depend on the plugins (see below) - but you will always be able to save the
+displayed text as an "inc" file. This can either be included in your source
+with .include "filename.inc" or simply pasted in.
+
+Note that the program does not enforce the SMS's limitations on the number of
+tiles that can be defined - the SMS is practically limited to 448 (0x1c0) tiles
+unless you squeeze some into unused tilemap/sprite table space, and you'll have
+to do that manually.
 
 Tilemap tab
 ===========
 
-This tab shows the tilemap data. It is also in WLA DX's data format. If
-your tiles are sprites then you don't want this. If your input image is
-too big then it won't be output - if you want big tilemaps then you'll
-need to make a map editor anyway, and then the format depends on your
-code anyway.
+This tab shows the tilemap data. It is also in WLA DX's data format. If your
+tiles are sprites then you don't want this.
 
-If "Tile offset" is changed to a sensible value, the data will be
-changed to be correct assuming that the tile data will be loaded into
-VRAM starting at that tile's address. In other words, if you put 8 here
-(for example), the first tile in the tile data will be referred to in
-the tilemap data as tile index 8. This is useful when you're loading
-several sets of tiles as they can't all start at 0. If you want to enter
-a hex value then prefix it with a $ sign.
-
-If "Pad" is checked then the data will be padded with the given tile
-index to make it up to 32 tiles per row. This is useful if you want to
-lazily display the image since the data will not require any seeking
-within VRAM when you write it. It's not hard to code a proper tile
-displayer that accepts the width and height of the tilemap data as
-parameters.
-
-If "Bytes" is checked, if possible then the data will be reduced to just
-the low bytes of each word. This excludes the following possibilities:
-
-  - Tiles with indices over $ff (255) including any offset
-  - Use of mirroring to remove duplicates
-  - Setting the sprite palette flag
-  - Setting the in front of sprites flag
-
-If "Use sprite palette" or "In front of sprites" are checked then the
-appropriate bits will be set in the tile data for all tiles. It is not
-possible to do this on a tile-by-tile basis.
-
-"Save" does much the same as before. Note that Phantasy Star compressed
-data has an interleaving of 4 for tiles and 2 for tilemaps.
+"Save" does much the same as before.
 
 Palette tab
 ===========
 
-By popular demand...
+This tab reads in the palette from the bitmap and attempts to convert it to
+data suitable for you to use. It's tricky because there are different ways to
+represent the SMS's 4-bit colour with a 24-bit colour system (as used in BMP
+files' palettes). I've kludged it to work OK according to the colours used in
+Meka (both palette types) and eSMS but I recommend you use the bright Meka
+palette (colour values 0, 85, 170, 255) just because I prefer it.
 
-This tab reads in the palette from the bitmap and attempts to convert it
-to data suitable for you to use. It's tricky because there are different
-ways to represent the SMS's 4-bit colour with a 24-bit colour system (as
-used in BMP files' palettes). I've kludged it to work OK according to
-the colours used in Meka (both palette types) and eSMS but I recommend
-you use the bright Meka palette (colour values 0, 85, 170, 255) just
-because I prefer it.
+At the top you're shown the current palette.
 
-If you've not arranged your palette properly then the output will be
-unpredictable! Make sure your picture hasn't got any weird colours in it
-that you weren't expecting.
+There are a few options for the text output. If you want plain hex values then
+choose "Output hex (SMS)". If you choose "Output cl123 (SMS)" then you can
+include the "colours.inc" file in your project to define the constants used; it
+makes it easier to tell what colour each value represents (see colours.inc for
+more description).
 
-At the top you're shown the current palette - or rather, just the
-colours that are used.
+There's also an option to "Output hex (GG)" which will output 12-bit Game Gear
+palette data. This one doesn't attempt to handle different palette systems, it
+just shifts colours to their high 4 bits so you'd better make sure white is 255,
+255,255.
 
-There are a few options for the text output. If you want plain hex
-values then choose "Output hex (SMS)". If you choose "Output cl123 (SMS)"
-then you can include the "colours.inc" file in your project to define
-the constants used; it makes it easier to tell what colour each value
-represents (see colours.inc for more description).
+"Save" works again, but there are no plugins any more.
 
-There's also an option to "Output hex (GG)" which will output 12-bit
-Game Gear palette data. This one doesn't attempt to handle different
-palette systems, it just shifts colours to their high 4 bits so you'd
-better make sure white is 255,255,255.
+Plugins
+=======
 
-"Save" works again, but saving as binary or Phantasy Star compressed
-doesn't make sense.
+For saving tile and tilemap data, plugins are used. These are DLL files found
+in the same directory as the program, with filenames starting with "gfxcomp_".
+
+Each plugin must define a unique file extension for its data. (Double
+extensions don't work.) This allows the commandline mode (see below) to infer
+the plugin to use. It also helps to have it define a reasonable name for itself.
+plugins can be tiles-only, tilemap-only or both.
+
+If you want to write a plugin, make a DLL with the right filename that exports
+these functions (with cdecl calling convention, which is the default for most
+C/C++ DLLs):
+
+char* getName()
+  Returns a null-terminated string giving the name of the format, for display.
+char* getExt()
+  Returns a null-terminated file extension (without any preceding dot) that is
+  used to build filename masks and to tell which plugin to use in commandline
+  mode,
+int compressTiles(char* source, int numTiles, char* dest, int destLen)
+  Compresses the tile data from source to dest. Each tile is 32 bytes. If
+  destLen is too small, you must return 0. If there is an error while
+  compressing (perhaps the tile data does not conform to some restriction),
+  return -1. Else return the number of bytes inserted into the buffer.
+int compressTilemap(char* source, int width, int height, char* dest,
+  int destLen)
+  Compresses the tilemap data from source to dest. Each tilemap entry is 2
+  bytes in little-endian order. If destLen is too small, you must return 0. If
+  there is an error (perhaps some restriction on the data), return -1. Else
+  return the number of bytes inserted into the buffer.
+
+You can support one or both compressXXX functions.
 
 Commandline mode
 ================
 
-Pass the following on the commandline to make the corresponding option/
-action choices. The order has no effect.
+Pass the following on the commandline to make the corresponding option/action
+choices. Defaults are marked with *.
 
 Command switch      Effect
 <filename>          Load the specified bitmap. Note that the format
                     restrictions are the same as before.
--1bit               Treat input data as 1bpp
--2bit               Treat input data as 2bpp
--3bit               Treat input data as 3bpp
--4bit               Treat input data as 4bpp
 
-If you don't specify the bitdepth, the program automatically chooses the
-smallest one that will contain all the colour indices used.
+-removedupes        *Optimise out duplicate tiles
+-noremovedupes      Or don't
+-mirror             *Use tile mirroring to further optimise duplicates
+-nomirror           Or don't
+-8x8                *Treat tile data as 8x8
+-8x16               Treat tile data as 8x16
+-planar             *Output planar tile data
+-chunky             Output chunky tile data
+-tileoffset <n>     The starting index of the first tile. *Default is 0.
 
--noremovedupes      Do not optimise out duplicate tiles
--nomirror           Do not use tile mirroring to further optimise
-                    duplicates
-
--tileoffset         The starting index of the first tile, in the tilemap
-                    data. 0 if unspecified.
--pad<n>             Add this parameter to pad the tilemap data to 32
-                    columns, to make smaller bitmaps produce full-width
-                    tilemap data. The tile number to pad with must be
-                    given (in decimal or $-prefixed hex), with no space
-                    between it and the 'd', eg. -pad0
--bytes              Produce only the low byte of the tilemap data - this
-                    restricts the number of tiles possible and stops the
-                    next two options having any effect.
--spritepalette      Set the tilemap bits to make tiles use the sprite
-                    palette
--infrontofsprites   Set the tilemap bits to make tiles appear in front
-                    of sprites
+-spritepalette      Set the tilemap bit to make tiles use the sprite palette.
+                    *Default is unset.
+-infrontofsprites   Set the tilemap bit to make tiles appear in front of
+                    sprites. *Default is unset.
 
 -palsms             Output the palette in SMS colour format
 -palgg              Output the palette in GG colour format
--palcl123           Output the palette in SMS colour format, using
-                    constants of the form cl123 (see above).
+-palcl123           Output the palette in SMS colour format, using constants of
+                    the form cl123 (see above).
 
--savetilesinc [filename]
--savetilesbin [filename]
--savetilespscompr [filename]
-                    Save tile data in WLA DX include format, binary
-                    format or Phantasy Star compressed format
-                    respectively, to [filename]. If [filename] is
-                    omitted then one will be automatically generated
-                    from the input filename.
--savetilemapinc [filename]
--savetilemapbin [filename]
--savetilemappscompr [filename]
-                    Save tilemap data in WLA DX include format, binary
-                    format or Phantasy Star compressed format
-                    respectively, to [filename]. If [filename] is
-                    omitted then one will be automatically generated
-                    from the input filename.
--savepaletteinc [filename]
--savepalettebin [filename]
-                    Save palette data in WLA DX include format or binary
-                    respectively, to [filename]. If [filename] is
-                    omitted then one will be automatically generated
-                    from the input filename.
+-savetiles <filename>
+                    Save tile data to <filename>. The format will be inferred
+                    from the extension of <filename>.
 
-If you specify more than one item from each group above then only the
-last will have any effect.
+-savetilemap <filename>
+                    Save tilemap data to <filename>. The format will be inferred
+                    from the extension of <filename>.
+
+-savepalette <filename>
+                    Save palette data to <filename>. The format will be inferred
+                    from the extension of <filename>.
 
 -exit               Exit the program after doing all the above
 
 Errors shown in commandline mode are often not very helpful, and no
 ERRORLEVEL values are returned. Be careful!
 
-
-Still to come
-=============
-
-Any suggestions? I ought to make it faster, the way it's done now is
-very slow...
-
 Source
 ======
 
-Included. It's not that great though. Delphi 7 it is.
+Included. It's not that great though. The main program is written in Delphi 7;
+plugins are written in Visual C++ 8.
+
+History
+=======
+
+0.4
+- Rewrote the tile/tilemap code, it's much faster now
+- Added plugin support
+- Removed 1/2/3bpp output support, plugins can do that now
+0.35
+- Fixed a stupid bug with 8-bit images
+- Modified demo to use more varied source images to help with testing
+- Included source that got left out of 0.34
+0.34
+- Relaxed image size restrictions as far as possible
+- Added some checking of formats when saving to avoid nonsensical option combinations
+- Added more decompressor code and demos
+0.33
+- The Load button is now a Browse button and gives you a normal Windows Open dialogue
+0.32
+- Added support for 8-bit images (using only the first 16 palette entries)
+- Added support for more image formats (GIF, PNG, PCX)
+- Fixed some bugs when loading a second image
+- Fixed some bugs with 1-bit images
+0.31
+- Added a missing commandline switch
+- Added optional output filename specification
+- Fixed a bug in the palette convertor
+- Added a demo of all the output formats
+0.3
+- Added binary and Phantasy Star compressed output
+- Added commandline mode
+0.22
+- Vertical mirroring above 1bpp was broken; now it isn't.
+0.21
+- Fixed a few glitches
+0.2
+- Added palette decoding
+- Added tile mirroring optimisation
+- Smoothed out the rough edges a bit more
+0.1
+- Initial release
 
 Dedication
 ==========
 
 To my beautiful wife :)
-
