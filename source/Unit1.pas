@@ -360,7 +360,7 @@ end;
 
 function MirrorTileData(original:string;DoHoriz:boolean):string;
 var
-  i,j,byte:integer;
+  i,j,byte,n:integer;
   temp:string;
 begin
   // original = '.db $00,$10,$10,$10,$10,$10,$00,$00'
@@ -388,12 +388,18 @@ begin
   end else begin
     // Vertical mirror: need to switch bytes around in groups of 8
     result:='.db ';
-    i:=5;
+    i:=5; // index of 1st byte in string
+
+    if      form1.rb1bit.checked then n:=3 // how many bytes to switch in each group
+    else if form1.rb2bit.checked then n:=7
+    else if form1.rb3bit.checked then n:=11
+    else                              n:=15;
+
     while i<length(original) do begin
       temp:='';
       for j:=1 to 8 do begin
-        temp:=copy(original,i,3)+','+temp;
-        Inc(i,4);
+        temp:=copy(original,i,n)+','+temp;
+        Inc(i,n+1);
       end;
       result:=result+temp;
     end;

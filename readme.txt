@@ -1,4 +1,4 @@
-BMP to SMS/GG tile converter 0.21
+BMP to SMS/GG tile converter 0.22
 =================================
 
 by Maxim in 2002 and 2003
