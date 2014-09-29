@@ -320,7 +320,7 @@ begin
 
   sl.free;
 
-  SetHint(IntToStr((imgColumn.Picture.Bitmap.Height div 8)-1)+' tiles converted');
+  SetHint(Format('%d tiles converted',[imgColumn.Picture.Bitmap.Height div 8]));
 
   HighestTileIndex:=(imgColumn.Picture.Bitmap.Height div 8)-1;
 

@@ -1,5 +1,5 @@
-BMP to SMS/GG tile converter 0.2
-================================
+BMP to SMS/GG tile converter 0.21
+=================================
 
 by Maxim in 2002 and 2003
 
@@ -42,7 +42,7 @@ want...
 Settings tab
 ============
 
-First if all, this will show you your image. Isn't that nice?
+First of all, this will show you your image. Isn't that nice?
 
 If your image is 1-bit, there is an option to invert the colour indices.
 Everything that is colour 1 will become colour 0 and vice versa. This is
@@ -161,10 +161,10 @@ better make sure white is 255,255,255.
 Still to come
 =============
 
-I will probably try to add in a compressor for the format used in some 
+I will probably try to add in a compressor for the format used in some
 Sega games, if only because that saves me having to write a decompressor
-and I want to have a compressed format available for graphics. Until 
-then, my snappily-titled "Sega 8-bit compression scheme A decoder/
+in asm and I want to have a compressed format available for graphics.
+Until then, my snappily-titled "Sega 8-bit compression scheme A decoder/
 encoder" can do that, albeit in a less handy way.
 
 Source
