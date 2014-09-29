@@ -25,7 +25,6 @@ type
     XPManifest1: TXPManifest;
     TabSheet3: TTabSheet;
     mmResults: TRichEdit;
-    imgOriginal: TImage;
     imgColumn: TImage;
     btnRemoveDupes: TButton;
     btnSaveTilesRaw: TButton;
@@ -55,6 +54,7 @@ type
     Label1: TLabel;
     btnSavePalette: TButton;
     OpenDialog1: TOpenDialog;
+    imgOriginal: TImage;
     procedure btnLoadClick(Sender: TObject);
     procedure btnProcessClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
@@ -131,11 +131,12 @@ begin
     imgOriginal.Center:=((bm.width<imgOriginal.width) and (bm.height<imgOriginal.height));
 
     if (bm.Width>256)
-    or (bm.Height>256)
+    or ((bm.Width div 8) * (bm.Height div 8) > 4096)
     then begin
-      Application.MessageBox('Bitmap''s dimensions exceed possible tilemap area (usually 256x224, 256x256 in stretched modes)!',nil,MB_ICONERROR);
+      Application.MessageBox('Sorry, I can''t process bitmaps wider than 256 pixels, or with more than 4096 tiles before optimisation (try 256x1024 for the maximum). This is not a scrolling tilemap maker!',nil,MB_ICONERROR);
       exit;
     end;
+    
     // Check bitmap pixel format
     case bm.PixelFormat of
     pf1bit:begin EnableGroupBox(gb1bit,true ); EnableGroupBox(gb4bit,false); end;
@@ -321,14 +322,14 @@ begin
       else
       for i:=0 to 7 do begin // 8bpp version
         p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
-        Tile[i]:=((p[0] and $f) shl  0) or
-                 ((p[1] and $f) shl  4) or
-                 ((p[2] and $f) shl  8) or
-                 ((p[3] and $f) shl 12) or
-                 ((p[4] and $f) shl 16) or
-                 ((p[5] and $f) shl 20) or
-                 ((p[6] and $f) shl 24) or
-                 ((p[7] and $f) shl 28);
+        Tile[i]:=((p[0] and $f) shl 28) or
+                 ((p[1] and $f) shl 24) or
+                 ((p[2] and $f) shl 20) or
+                 ((p[3] and $f) shl 16) or
+                 ((p[4] and $f) shl 12) or
+                 ((p[5] and $f) shl  8) or
+                 ((p[6] and $f) shl  4) or
+                 ((p[7] and $f) shl  0);
         // Tile[i] now contains $01234567 where each digit is each pixel's index
         ProcessedTile[i]:=0;
       end;
@@ -524,8 +525,10 @@ begin
   case format of
   1: SaveText(Form1.mmResults.Lines,filename);
   2: SaveBinary(Form1.mmResults.Lines,filename);
-  3: SavePSCompressed(Form1.mmResults.Lines,filename,4);
-  end;
+  3: if Form1.rb4bit.Checked
+     then SavePSCompressed(Form1.mmResults.Lines,filename,4)
+     else Application.MessageBox('Phantasy Star type compression only works for 4 bit data. Try changing the type on the Source page.',nil,MB_ICONERROR)
+   end;
 end;
 
 procedure TForm1.btnSaveTilesRawClick(Sender: TObject);
@@ -556,7 +559,7 @@ begin
   FileDropped:=StrPas(NTString);              // Convert to a Delphi string
   dragfinish(message.drop);                   // Discard dropped file(s) data
   FileName.Text:=FileDropped;
-  btnLoad.Click;
+  btnLoadClick(nil);
 end;
 
 function MirrorTileData(original:string;DoHoriz:boolean):string;
@@ -807,7 +810,7 @@ begin
   2: if Form1.rbPalConst.Checked
      then Application.MessageBox('If you choose cl123 style output then not only is there no sense choosing to save it as binary, but also this program can''t do it due to the hacky way it''s written! You''d better try again.',nil,MB_ICONERROR)
      else SaveBinary(Form1.mmPalette.Lines,filename);
-  3: Application.MessageBox('Phantsay Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
+  3: Application.MessageBox('Phantasy Star type compression is inapplicable to palettes. You''d better try again.',nil,MB_ICONERROR)
   end;
 end;
 
@@ -860,7 +863,7 @@ begin
     s:=ParamStr(i);
     if (s[1]<>'-') and FileExists(s) then begin
       Form1.FileName.Text:=s;
-      btnLoad.Click;
+      btnLoadClick(nil);
     end else if s='-invert' then cbInvert.Checked:=true
     else if s='-1bit' then rb1bit.Checked:=true
     else if s='-2bit' then rb2bit.Checked:=true

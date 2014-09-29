@@ -1,4 +1,4 @@
-BMP to SMS/GG tile converter 0.34
+BMP to SMS/GG tile converter 0.35
 =================================
 
 by Maxim in 2002-2005
@@ -257,6 +257,9 @@ If you specify more than one item from each group above then only the
 last will have any effect.
 
 -exit               Exit the program after doing all the above
+
+Errors shown in commandline mode are often not very helpful, and no
+ERRORLEVEL values are returned. Be careful!
 
 
 Still to come
