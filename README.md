@@ -7,4 +7,4 @@ http://www.smspower.org/maxim/Software/BMP2Tile
 
 It has a Winamp-inspired plugin interface for data compression. Source for compressors is found here:
 
-https://github.com/maxim-zhao/bmp2tile-compressors
+https://github.com/maxim-zhao/bmp2tilecompressors
