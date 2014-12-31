@@ -1,6 +1,3 @@
-; uncomment to skip first 2 pictures
-;.define skipfirsttwopictures
-
 ;==============================================================
 ; WLA-DX banking setup
 ;==============================================================
@@ -18,10 +15,10 @@ banksize $4000
 banks 3
 .endro
 
-; Memory map (for Phantasy Star tilemap decompression)
+; Memory map
 .enum $c000
-TileMapData: dsb 32*24*2
-
+TileMapData: dsb 32*24*2 ; (for Phantasy Star tilemap decompression)
+PSGDecoderBuffer: dsb 34 ; (for Phantasy Star Gaiden decompressor)
 .ende
 
 ;==============================================================
@@ -34,6 +31,7 @@ TileMapData: dsb 32*24*2
 
 .include "..\colours.inc"
 .include "..\Phantasy Star decompressors.inc"
+.include "..\Phantasy Star Gaiden decompressor.inc"
 
 ;==============================================================
 ; Boot section
@@ -67,11 +65,10 @@ main:
 
   call NoSprites ; they mess things up
 
-picture1:
-.ifndef skipfirsttwopictures
   ;==============================================================
   ; Picture 1: WLA DX includes
   ;==============================================================
+picture1:
   ld a,:akmwtiles
   ld ($ffff),a
 
@@ -120,6 +117,7 @@ picture1:
   ;==============================================================
   ; Picture 2: binary
   ;==============================================================
+picture2:
   ld a,:sonictiles
   ld ($ffff),a
 
@@ -158,10 +156,11 @@ picture1:
   out ($bf),a
   ld a,$81
   out ($bf),a
-.endif
+
   ;==============================================================
   ; Picture 3: PS compressed
   ;==============================================================
+picture3:
   ld a,:pstiles
   ld ($ffff),a
 
@@ -203,8 +202,9 @@ picture1:
   out ($bf),a
 
   ;==============================================================
-  ; Picture 4: PS compressed (again)
+  ; Picture 4: PSG compressed tiles, PS compressed tilemap
   ;==============================================================
+picture4:
   ld a,:bbrtiles
   ld ($ffff),a
 
@@ -216,9 +216,9 @@ picture1:
   call WriteToVRAM
 
   ; Load tiles
-  ld de,$4000
-  ld hl,bbrtiles
-  call LoadTiles4BitRLENoDI
+  ld hl,$4000
+  ld ix,bbrtiles
+  call PSG_decompress
 
   ; Load tilemap (direct to VRAM)
   ld hl,bbrtilemap
@@ -274,19 +274,11 @@ picture1:
 .ends
 .section "BBR data" superfree
   bbrtiles:
-  .incbin "BBR (tiles).pscompr"
+  .incbin "BBR (tiles).psgcompr"
   bbrtilemap:
   .incbin "BBR (tilemap).pscompr"
   bbrpalette:
   .incbin "BBR (palette).bin" fsize bbrpalettesize
-.ends
-.section "BBR data 2" superfree
-  bbrtiles2:
-  .incbin "BBR (tiles).pscompr"
-  bbrtilemap2:
-  .incbin "BBR (tilemap).pscompr"
-  bbrpalette2:
-  .incbin "BBR (palette).bin" fsize bbrpalettesize2
 .ends
 
 
