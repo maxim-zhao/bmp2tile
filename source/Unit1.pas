@@ -17,34 +17,38 @@ type
     XPManifest1: TXPManifest;
     TabSheet3: TTabSheet;
     mmResults: TMemo;
-    btnSaveTilesRaw: TButton;
     TabSheet2: TTabSheet;
     mmReconstData: TMemo;
-    btnSaveReconst: TButton;
     StatusBar1: TStatusBar;
     TabSheet4: TTabSheet;
     mmPalette: TMemo;
     btnLoadPalette: TButton;
-    rbPalHex: TRadioButton;
-    rbPalConst: TRadioButton;
-    rbPalGG: TRadioButton;
-    imgPalette: TImage;
-    Bevel1: TBevel;
     SaveDialog1: TSaveDialog;
-    btnSavePalette: TButton;
     OpenDialog1: TOpenDialog;
     imgOriginal: TImage;
     imgColumn: TImage;
-    cbSpritePalette: TCheckBox;
-    cbInFront: TCheckBox;
-    cbRemoveDupes: TCheckBox;
-    cbUseMirroring: TCheckBox;
-    Label3: TLabel;
-    edTileOffset: TEdit;
-    cbPlanar: TCheckBox;
-    cb8x16: TCheckBox;
     TabSheet5: TTabSheet;
     mmMessages: TMemo;
+    Panel1: TPanel;
+    cbRemoveDupes: TCheckBox;
+    cbUseMirroring: TCheckBox;
+    cbPlanar: TCheckBox;
+    cb8x16: TCheckBox;
+    Label3: TLabel;
+    edTileOffset: TEdit;
+    btnSaveTilesRaw: TButton;
+    Panel2: TPanel;
+    cbSpritePalette: TCheckBox;
+    cbInFront: TCheckBox;
+    btnSaveReconst: TButton;
+    Panel3: TPanel;
+    rbPalHex: TRadioButton;
+    rbPalConst: TRadioButton;
+    rbPalGG: TRadioButton;
+    btnSavePalette: TButton;
+    Panel4: TPanel;
+    imgPalette: TImage;
+    Panel5: TPanel;
     procedure btnLoadClick(Sender: TObject);
     procedure btnProcessClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
@@ -215,12 +219,16 @@ begin
     end;
 
     // Check bitmap dimensions
-    if ((bm.width  mod 8)>0)
-    or ((bm.height mod 8)>0)
+    if ((bm.width  mod 8)<>0)
+    or ((bm.height mod 8)<>0)
     then begin
-      Application.MessageBox('Bitmap''s dimensions are not multiples of 8! Adjusting...',nil,MB_ICONWARNING);
-      bm.width :=ceil(bm.width /8)*8;
-      bm.height:=ceil(bm.height/8)*8;
+      Application.MessageBox('Bitmap''s dimensions are not multiples of 8!',nil,MB_ICONERROR);
+      Exit;
+    end;
+    if (cb8x16.Checked and ((bm.Height mod 16)<>0))
+    then begin
+      Application.MessageBox('Bitmap''s height is not a multiple of 16!',nil,MB_ICONERROR);
+      Exit;
     end;
 
     w:=bm.width  div 8;
@@ -684,7 +692,7 @@ begin
     SaveTilemap(SaveDialog1.FileName, (FilterParts.IndexOf(mask) + 1) div 2);
     FilterParts.Free;
   end else begin
-    SaveDialog1.FileName := ChangeFileExt(FileName.Text,' (tiles).inc');
+    SaveDialog1.FileName := ChangeFileExt(FileName.Text,' (tilemap).inc');
     SaveDialog1.OnTypeChange(SaveDialog1);
     if SaveDialog1.Execute then SaveTilemap(SaveDialog1.FileName,SaveDialog1.FilterIndex);
   end;
@@ -822,7 +830,7 @@ begin
   // find the ext from the filter
   FilterParts:=TStringList.Create;
   try
-    ExtractStrings(['|'],[],PChar(SaveDialog1.Filter),FilterParts);
+    FilterParts.Text := StrUtils.AnsiReplaceStr(SaveDialog1.Filter, '|', #13#10);
     if (FilterParts.Count > SaveDialog1.FilterIndex * 2 - 1)
     then StrExt:=Copy(FilterParts[SaveDialog1.FilterIndex * 2 - 1], 2, 100)
     else exit;
