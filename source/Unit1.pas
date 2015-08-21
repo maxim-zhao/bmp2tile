@@ -653,6 +653,7 @@ end;
 procedure SaveTilemap(filename:string;format:integer);
 var
   i,n:integer;
+  extraflags,bufsize:integer;  // SVERX's dirty fix
 begin
   if format = 1 then SaveText(Form1.mmReconstData.Lines,filename)
   else begin
@@ -662,6 +663,18 @@ begin
       if Assigned(plugins[i].CompressTilemap) then Inc(n);
       if n = format then begin
         // found it
+        
+        // SVERX's dirty fix - BEGIN
+        extraflags := 0;
+        if (cbSpritePalette.Checked) then extraflags := extraflags or $0800;
+        if (cbInFront.Checked) then extraflags := extraflags or $1000;
+        bufsize := 0;
+        while (bufsize < tilemapheight*tilemapwidth) do begin
+          tilemap[bufsize] := (tilemap[bufsize] and $07FF) or extraflags;
+          bufsize : = bufsize + 1;
+        end;
+        // SVERX's dirty fix - END
+
         CompressTilemap(PByteArray(tilemap), tilemapheight, tilemapwidth, plugins[i].CompressTilemap, filename);
         break;
       end;
