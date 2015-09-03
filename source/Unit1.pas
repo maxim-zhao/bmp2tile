@@ -13,7 +13,6 @@ type
     btnLoad: TButton;
     PageControl1: TPageControl;
     TabSheet1: TTabSheet;
-    btnProcess: TButton;
     XPManifest1: TXPManifest;
     TabSheet3: TTabSheet;
     mmResults: TMemo;
@@ -22,11 +21,9 @@ type
     StatusBar1: TStatusBar;
     TabSheet4: TTabSheet;
     mmPalette: TMemo;
-    btnLoadPalette: TButton;
     SaveDialog1: TSaveDialog;
     OpenDialog1: TOpenDialog;
     imgOriginal: TImage;
-    imgColumn: TImage;
     TabSheet5: TTabSheet;
     mmMessages: TMemo;
     Panel1: TPanel;
@@ -50,20 +47,21 @@ type
     imgPalette: TImage;
     Panel5: TPanel;
     procedure btnLoadClick(Sender: TObject);
-    procedure btnProcessClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
-    procedure rb2bitClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure btnSaveReconstClick(Sender: TObject);
     procedure edTileOffsetChange(Sender: TObject);
-    procedure btnLoadPaletteClick(Sender: TObject);
+    procedure LoadPalette(Sender: TObject);
     procedure btnSavePaletteClick(Sender: TObject);
     procedure SaveDialog1TypeChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure cb8x16Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure UpdateTilemapModifications;
     procedure PopulateTileDataMemo;
     procedure PopulateTilemapDataMemo;
+    procedure ProcessImage;
+    procedure cbRemoveDupesClick(Sender: TObject);
   private
     { Private declarations }
     procedure WMDROPFILES(var Message: TWMDROPFILES); message WM_DROPFILES;
@@ -105,6 +103,8 @@ var
   tilemap:PWordArray;
   tilemapheight:integer;
   tilemapwidth:integer;
+  tilemapOffset:integer; // Offset applied to current tilemap data
+  tilesColumn:TBitmap; // The source image, reararnged as an 8x8n column
 
 procedure SetHint(s:string);
 begin
@@ -235,7 +235,9 @@ begin
     h:=bm.height div 8;
 
     SetHint('Decomposing to tiles...');
-    with imgColumn.Picture.Bitmap do begin
+    if Assigned(tilesColumn) then tilesColumn.free;
+    tilesColumn := TBitmap.Create;
+    with tilesColumn do begin
       Assign(bm);
       Width:=8;
       Height:=w*h*8;
@@ -267,14 +269,13 @@ begin
     bm.free;
   end;
 
-  btnProcess.Enabled:=false;
   // Check how many colours are used if 4bpp or 8bpp
   if bm.PixelFormat<>pf1bit then begin
     SetHint('Counting colours...');
     h:=0; // h = highest
-    for y:=0 to imgColumn.Picture.Bitmap.height-1 do begin
-      p:=imgColumn.Picture.Bitmap.ScanLine[y];
-      if imgColumn.Picture.Bitmap.PixelFormat=pf4bit then
+    for y:=0 to tilesColumn.height-1 do begin
+      p:=tilesColumn.ScanLine[y];
+      if tilesColumn.PixelFormat=pf4bit then
         for x:=0 to 3 do begin
           if (p[x] and $f)>h then h:=p[x] and $f;
           if (p[x] shr 4 and $f)>h then h:=p[x] shr 4 and $f;
@@ -290,7 +291,6 @@ begin
   end;
 
   Application.ProcessMessages;
-  btnProcess.Enabled:=True;
 
   if NumColours>16 then begin
     SetHint('Error converting bitmap');
@@ -299,9 +299,9 @@ begin
   end;
 
   SetHint('Reading palette...');
-  btnLoadPalette.Click;
+  LoadPalette(nil);
 
-  btnProcess.Click;
+  ProcessImage;
 end;
 
 function Swap32(value:DWORD):DWORD; assembler;
@@ -337,7 +337,24 @@ begin
   end;
 end;
 
-procedure TForm1.btnProcessClick(Sender: TObject);
+procedure TForm1.UpdateTilemapModifications;
+var
+  extraflags,bufsize,newTilemapOffset:integer;
+begin
+  // Apply flags, offset
+  extraflags := 0;
+  if (cbSpritePalette.Checked) then extraflags := extraflags or $0800;
+  if (cbInFront.Checked) then extraflags := extraflags or $1000;
+  newTilemapOffset := StrToIntDef(edTileOffset.Text, 0);
+  bufsize := 0;
+  while (bufsize < tilemapheight*tilemapwidth) do begin
+    tilemap[bufsize] := ((tilemap[bufsize] and $07FF) - tilemapOffset + newTilemapOffset) or extraflags;
+    bufsize := bufsize + 1;
+  end;
+  tilemapOffset := newTilemapOffset;
+end;
+
+procedure TForm1.ProcessImage;
 var
   row:integer;
   p:pByteArray;
@@ -348,7 +365,6 @@ var
   pixelvalue:byte;
   hexstring, althexstring:string;
 begin
-  if not btnProcess.Enabled then exit;
   if imgOriginal.Picture.Bitmap.Empty then exit;
   SetHint('Converting tiles...');
   cbUseMirroring.Enabled:=cbRemoveDupes.Checked;
@@ -363,13 +379,13 @@ begin
   wp := @tilemap^[0];
 
   // For each tile
-  for row:=0 to (imgColumn.Picture.Bitmap.Height div 8)-1 do begin
+  for row:=0 to (tilesColumn.Height div 8)-1 do begin
     // Get bitmap into Tile in a standard format
-    case (imgColumn.Picture.Bitmap.PixelFormat) of
+    case (tilesColumn.PixelFormat) of
     pf1bit: begin
       // 1bpp version
       for i:=0 to 7 do begin
-        p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
+        p:=tilesColumn.ScanLine[row*8+i];
         Tile[i]:=(((p[0] shr 7) and $1) shl 28) or
                  (((p[0] shr 6) and $1) shl 24) or
                  (((p[0] shr 5) and $1) shl 20) or
@@ -383,7 +399,7 @@ begin
     pf4bit: begin
       // 4bpp version
       for i:=0 to 7 do begin
-        p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
+        p:=tilesColumn.ScanLine[row*8+i];
         move(p^[0],Tile[i],4);
         Tile[i]:=swap32(Tile[i]); // Tile[i] now contains $01234567 where each digit is each pixel's index
       end
@@ -391,7 +407,7 @@ begin
     pf8bit: begin
       // 8bpp version
       for i:=0 to 7 do begin
-        p:=imgColumn.Picture.Bitmap.ScanLine[row*8+i];
+        p:=tilesColumn.ScanLine[row*8+i];
         Tile[i]:=((p[0] and $f) shl 28) or
                  ((p[1] and $f) shl 24) or
                  ((p[2] and $f) shl 20) or
@@ -501,6 +517,9 @@ begin
 
   SetHint(Format('%d tiles converted',[tilehexcodes.Count]));
 
+  tilemapOffset := 0; // at first
+  UpdateTilemapModifications;
+
   // Pretty-print the data to the memos
   PopulateTileDataMemo;
   PopulateTilemapDataMemo;
@@ -590,12 +609,12 @@ begin
     if SaveDialog1.Execute then SaveTiles(SaveDialog1.FileName,SaveDialog1.FilterIndex);
   end;
 end;
-
+(*
 procedure TForm1.rb2bitClick(Sender: TObject);
 begin
   btnProcess.Click;
 end;
-
+  *)
 procedure TForm1.FormCreate(Sender: TObject);
 var
   GetName: TGetName;
@@ -653,7 +672,6 @@ end;
 procedure SaveTilemap(filename:string;format:integer);
 var
   i,n:integer;
-  extraflags,bufsize:integer;  // SVERX's dirty fix
 begin
   if format = 1 then SaveText(Form1.mmReconstData.Lines,filename)
   else begin
@@ -663,18 +681,6 @@ begin
       if Assigned(plugins[i].CompressTilemap) then Inc(n);
       if n = format then begin
         // found it
-        
-        // SVERX's dirty fix - BEGIN
-        extraflags := 0;
-        if (cbSpritePalette.Checked) then extraflags := extraflags or $0800;
-        if (cbInFront.Checked) then extraflags := extraflags or $1000;
-        bufsize := 0;
-        while (bufsize < tilemapheight*tilemapwidth) do begin
-          tilemap[bufsize] := (tilemap[bufsize] and $07FF) or extraflags;
-          bufsize : = bufsize + 1;
-        end;
-        // SVERX's dirty fix - END
-
         CompressTilemap(PByteArray(tilemap), tilemapheight, tilemapwidth, plugins[i].CompressTilemap, filename);
         break;
       end;
@@ -713,6 +719,7 @@ end;
 
 procedure TForm1.edTileOffsetChange(Sender: TObject);
 begin
+  UpdateTilemapModifications;
   PopulateTileDataMemo;
   PopulateTilemapDataMemo;
 end;
@@ -724,7 +731,7 @@ begin
   else StatusBar1.SimpleText:=OldHint;
 end;
 
-procedure TForm1.btnLoadPaletteClick(Sender: TObject);
+procedure TForm1.LoadPalette(Sender: TObject);
 var
   hpal:HPALETTE;
   palette:array[0..16*4-1] of byte;
@@ -868,8 +875,6 @@ begin
   quitafter:=false;
   ignorenext:=false;
   gotfile:=false;
-  // stop all processing until I'm ready
-  btnProcess.Enabled:=false;
   // command-line handling
   for i:=1 to ParamCount do begin
     if ignorenext then begin // flag set to skip the next
@@ -978,30 +983,29 @@ end;
 
 procedure TForm1.PopulateTilemapDataMemo;
 var
-  i,j,index,flags,offset,extraflags:integer;
+  i,j:integer;
   s:string;
   wp:PWordArray;
 begin
   wp := tilemap;
-  offset := StrToIntDef(edTileOffset.Text, 0);
-  extraflags := 0;
-  if (cbSpritePalette.Checked) then extraflags := extraflags or $0800;
-  if (cbInFront.Checked) then extraflags := extraflags or $1000;
   with mmReconstData.Lines do begin
     BeginUpdate;
     Clear;
     for i:=0 to tilemapheight-1 do begin
       s:='.dw';
       for j:=0 to tilemapwidth-1 do begin
-        index := (wp^[j] and $01ff) + offset;
-        flags := (wp^[j] and $0600) or extraflags;
-        s := s + ' $' + IntToHex(index or flags,4);
+        s := s + ' $' + IntToHex(wp^[j],4);
       end;
       Add(s);
       wp := PWordArray(Integer(wp) + tilemapwidth * SizeOf(Word));
     end;
     EndUpdate;
   end;
+end;
+
+procedure TForm1.cbRemoveDupesClick(Sender: TObject);
+begin
+  ProcessImage;
 end;
 
 end.
