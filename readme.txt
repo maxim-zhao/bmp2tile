@@ -1,7 +1,7 @@
-BMP to SMS/GG tile converter 0.4
+BMP to SMS/GG tile converter 0.41
 =================================
 
-by Maxim in 2002-2009
+by Maxim in 2002-2015
 
 This program converts images from BMP, PNG, PCX and GIF format to SMS/GG tile,
 tilemap and palette data.
@@ -214,6 +214,8 @@ plugins are written in Visual C++ 8.
 History
 =======
 
+0.41
+- Fixed the broken tilemap modifications (flags and offsets) when saving as non-text
 0.4
 - Rewrote the tile/tilemap code, it's much faster now
 - Added plugin support
