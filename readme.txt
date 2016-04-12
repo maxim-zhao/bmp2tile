@@ -1,7 +1,7 @@
-BMP to SMS/GG tile converter 0.41
+BMP to SMS/GG tile converter 0.42
 =================================
 
-by Maxim in 2002-2015
+by Maxim in 2002-2016
 
 This program converts images from BMP, PNG, PCX and GIF format to SMS/GG tile,
 tilemap and palette data.
@@ -19,10 +19,12 @@ Requirement 1: The image should have a width and height that are multiples of 8.
   If it's not, the program can handle that (adding padding) but it's not ideal.
 
 Requirement 2: The image must be in one of these formats:
+  PNG
   BMP
   GIF
-  PNG
   PCX
+  TGA
+  PPM
 
 Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
   Higher bit depths are not acceptable. So there. The reason for this is
@@ -108,7 +110,8 @@ files' palettes). I've kludged it to work OK according to the colours used in
 Meka (both palette types) and eSMS but I recommend you use the bright Meka
 palette (colour values 0, 85, 170, 255) just because I prefer it.
 
-At the top you're shown the current palette.
+At the top you're shown the current palette. This is extracted from your image,
+ratehr than recreated from the converted data, but that shouldn't matter.
 
 There are a few options for the text output. If you want plain hex values then
 choose "Output hex (SMS)". If you choose "Output cl123 (SMS)" then you can
@@ -120,6 +123,12 @@ There's also an option to "Output hex (GG)" which will output 12-bit Game Gear
 palette data. This one doesn't attempt to handle different palette systems, it
 just shifts colours to their high 4 bits so you'd better make sure white is 255,
 255,255.
+
+The option "Always emit 16 colours" toggles between emitting only as many colours
+as are used (possibly including unused ones in the middle, but omitting unused 
+ones with higher indexes than any that are used in the image) and emitting a full 
+16 colour palette (if you want it to emit the full palette regardless of what's
+actually used).
 
 "Save" works again, but there are no plugins any more.
 
@@ -187,6 +196,8 @@ Command switch      Effect
 -palgg              Output the palette in GG colour format
 -palcl123           Output the palette in SMS colour format, using constants of
                     the form cl123 (see above).
+-fullpalette        Output 16 colours rather than as many as are present in the
+                    image.
 
 -savetiles <filename>
                     Save tile data to <filename>. The format will be inferred

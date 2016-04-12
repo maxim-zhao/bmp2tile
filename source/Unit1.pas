@@ -46,6 +46,7 @@ type
     Panel4: TPanel;
     imgPalette: TImage;
     Panel5: TPanel;
+    cb16Colours: TCheckBox;
     procedure btnLoadClick(Sender: TObject);
     procedure btnSaveTilesRawClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -733,40 +734,45 @@ end;
 
 procedure TForm1.LoadPalette(Sender: TObject);
 var
-  hpal:HPALETTE;
-  palette:array[0..16*4-1] of byte;
+  PaletteEntries:array[0..15] of TPaletteEntry;
   s:string;
   i,j:integer;
   colours:array[0..2] of integer;
   bm:TBitmap;
-  p:pbytearray;
+  NumColoursToEmit:integer;
 begin
   if imgOriginal.Picture.Bitmap.Empty then exit;
-  // get palette from bitmap
-  hpal:=imgOriginal.Picture.Bitmap.Palette;
+  if (cb16Colours.Checked)
+  then NumColoursToEmit := 16
+  else NumColoursToEmit := NumColours;
+  // initialise palette data
+  for i:=0 to 15 do begin
+    PaletteEntries[i].peRed:=$00; // black
+    PaletteEntries[i].peGreen:=$00;
+    PaletteEntries[i].peBlue:=$00;
+    PaletteEntries[i].peFlags:=$00;
+  end;
   // get colours
-  GetPaletteEntries(hpal,0,NumColours,palette);
+  GetPaletteEntries(imgOriginal.Picture.Bitmap.Palette,0,NumColoursToEmit,PaletteEntries);
   // draw
   bm:=TBitmap.Create;
   with bm do begin
-    PixelFormat:=pf4Bit;
-    Palette:=CopyPalette(imgOriginal.Picture.Bitmap.Palette);
-    Width:=NumColours;
+    PixelFormat:=pf24bit;
+    Width:=NumColoursToEmit;
     Height:=1;
-    p:=ScanLine[0];
-    for i:=0 to NumColours-1 do
-      if ((i and 1) = 1)
-      then p[i div 2]:=p[i div 2] and $f0 or i
-      else p[i div 2]:=p[i div 2] and $0f or (i shl 4);
+    for i:=0 to NumColoursToEmit-1 do
+      Canvas.Pixels[i,0]:=TColor(PaletteEntries[i]);
     imgPalette.Picture.Assign(bm);
     Free;
   end;
 
   // process
   s:='.db';
-  for i:=0 to NumColours-1 do begin
+  for i:=0 to NumColoursToEmit-1 do begin
     // get rgb
-    for j:=0 to 2 do colours[j]:=palette[i*4+j];
+    colours[0]:=PaletteEntries[i].peRed;
+    colours[1]:=PaletteEntries[i].peGreen;
+    colours[2]:=PaletteEntries[i].peBlue;
 
     if rbPalHex.Checked or rbPalConst.Checked then begin
       // figure out values (SMS)
