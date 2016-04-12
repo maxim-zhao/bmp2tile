@@ -9,7 +9,7 @@
 *.exe
 *.dsk
 *.zip
-*.inc
+demo/*.inc
 *.bin
 *.dat
 *.dcu
