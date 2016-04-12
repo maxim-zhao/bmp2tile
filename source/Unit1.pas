@@ -904,6 +904,7 @@ begin
     else if s='-palsms' then rbPalHex.Checked:=true
     else if s='-palgg' then rbPalGG.Checked:=true
     else if s='-palcl123' then rbPalConst.Checked:=true
+    else if s='-fullpalette' then cb16Colours.Checked:=true
     else if s='-tileoffset' then begin
       edTileOffset.Text:=paramstr(i+1);
       ignorenext:=true;
