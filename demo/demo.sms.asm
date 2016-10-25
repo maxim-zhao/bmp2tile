@@ -17,8 +17,9 @@ banks 3
 
 ; Memory map
 .enum $c000
-TileMapData: dsb 32*24*2 ; (for Phantasy Star tilemap decompression)
-PSGDecoderBuffer: dsb 34 ; (for Phantasy Star Gaiden decompressor)
+TileMapData       dsb 32*24*2 ; (for Phantasy Star tilemap decompression)
+PSGDecoderBuffer  dsb 34 ; (for Phantasy Star Gaiden decompressor)
+;aPLibMemory       dsb 5 ; (for slow aPLib decompressor)
 .ende
 
 ;==============================================================
@@ -30,8 +31,15 @@ PSGDecoderBuffer: dsb 34 ; (for Phantasy Star Gaiden decompressor)
 .org $0000
 
 .include "..\colours.inc"
-.include "..\Phantasy Star decompressors.inc"
-.include "..\Phantasy Star Gaiden decompressor.inc"
+.include "Phantasy Star decompressor.asm"
+.include "Phantasy Star Gaiden decompressor.asm"
+
+.section "aPLib" free
+.block "aPLib"
+.define aPLibToVRAM
+.include "aPLib decompressor (fast).asm"
+.endb
+.ends
 
 ;==============================================================
 ; Boot section
@@ -239,6 +247,44 @@ picture4:
   ld a,$81
   out ($bf),a
 
+  ;==============================================================
+  ; Picture 5: aPLib compressed tiles and tilemap
+  ;==============================================================
+picture5:
+  ld a,:populoustiles
+  ld ($ffff),a
+
+  ; Load palette
+  ld hl,$c000                     ; palette index 0 write address
+  call VRAMToHL
+  ld hl,populouspalette               ; data
+  ld bc,populouspalettesize           ; size
+  call WriteToVRAM
+
+  ; Load tiles
+  ld de,$4000
+  ld hl,populoustiles
+  call aPLib_decompress
+
+  ; Load tilemap (direct to VRAM)
+  ld hl,populoustilemap
+  ld de,$3800 | $4000
+  call aPLib_decompress
+
+  ; Turn screen on
+  ld a,$c4
+  out ($bf),a
+  ld a,$81
+  out ($bf),a
+
+  call WaitForButton
+
+  ; Turn screen off
+  ld a,$84
+  out ($bf),a
+  ld a,$81
+  out ($bf),a
+  
   ; Go back to the start
   jp picture1
 .ends
@@ -279,6 +325,14 @@ picture4:
   .incbin "BBR (tilemap).pscompr"
   bbrpalette:
   .incbin "BBR (palette).bin" fsize bbrpalettesize
+.ends
+.section "Populous data" superfree
+  populoustiles:
+  .incbin "Populous (tiles).aPLib"
+  populoustilemap:
+  .incbin "Populous (tilemap).aPLib"
+  populouspalette:
+  .incbin "Populous (palette).bin" fsize populouspalettesize
 .ends
 
 
