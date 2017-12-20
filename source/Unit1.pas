@@ -682,7 +682,7 @@ begin
       if Assigned(plugins[i].CompressTilemap) then Inc(n);
       if n = format then begin
         // found it
-        CompressTilemap(PByteArray(tilemap), tilemapheight, tilemapwidth, plugins[i].CompressTilemap, filename);
+        CompressTilemap(PByteArray(tilemap), tilemapwidth, tilemapheight, plugins[i].CompressTilemap, filename);
         break;
       end;
     end;
