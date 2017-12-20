@@ -1,7 +1,7 @@
-BMP to SMS/GG tile converter 0.42
+BMP to SMS/GG tile converter 0.43
 =================================
 
-by Maxim in 2002-2016
+by Maxim in 2002-2017
 
 This program converts images from BMP, PNG, PCX and GIF format to SMS/GG tile,
 tilemap and palette data.
@@ -220,11 +220,13 @@ Source
 ======
 
 Included. It's not that great though. The main program is written in Delphi 7;
-plugins are written in Visual C++ 8.
+plugins are written in Visual C++ 14.
 
 History
 =======
 
+0.42
+- Fixed a stupid bug which meant tilemap width and height were swapped when compressing
 0.41
 - Fixed the broken tilemap modifications (flags and offsets) when saving as non-text
 0.4
