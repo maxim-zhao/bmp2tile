@@ -225,8 +225,10 @@ plugins are written in Visual C++ 14.
 History
 =======
 
-0.42
+0.43
 - Fixed a stupid bug which meant tilemap width and height were swapped when compressing
+0.42
+- Option to always emit 16 colours
 0.41
 - Fixed the broken tilemap modifications (flags and offsets) when saving as non-text
 0.4
