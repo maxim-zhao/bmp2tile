@@ -1,4 +1,4 @@
-BMP to SMS/GG tile converter 0.43
+BMP to SMS/GG tile converter 0.44
 =================================
 
 by Maxim in 2002-2017
@@ -225,6 +225,8 @@ plugins are written in Visual C++ 14.
 History
 =======
 
+0.44
+- Palette preview now shows you the result of mapping to the SMS or GG palette
 0.43
 - Fixed a stupid bug which meant tilemap width and height were swapped when compressing
 0.42
