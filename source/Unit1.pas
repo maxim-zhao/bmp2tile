@@ -754,6 +754,33 @@ begin
   end;
   // get colours
   GetPaletteEntries(imgOriginal.Picture.Bitmap.Palette,0,NumColoursToEmit,PaletteEntries);
+  // adjust to the target system's capabilities
+  for i:=0 to NumColoursToEmit-1 do begin
+    // get rgb
+    colours[0]:=PaletteEntries[i].peRed;
+    colours[1]:=PaletteEntries[i].peGreen;
+    colours[2]:=PaletteEntries[i].peBlue;
+
+    if rbPalHex.Checked or rbPalConst.Checked then begin
+      // figure out values (SMS)
+      // eSMS = 0, 57, 123, 189
+      // Meka = 0, 85, 170, 255
+      //     or 0, 65, 130, 195
+      for j:=0 to 2 do
+      if      colours[j]<56  then colours[j]:=0
+      else if colours[j]<122 then colours[j]:=85
+      else if colours[j]<188 then colours[j]:=170
+      else                        colours[j]:=255;
+    end else begin
+      // GG palette - reduce each to 4 bits (then extend again)
+      for j:=0 to 2 do colours[j]:=colours[j] shr 4;
+      for j:=0 to 2 do colours[j]:=colours[j] shl 4 or colours[j];
+    end;
+    // Back to palette
+    PaletteEntries[i].peRed:=colours[0];
+    PaletteEntries[i].peGreen:=colours[1];
+    PaletteEntries[i].peBlue:=colours[2];
+  end;
   // draw
   bm:=TBitmap.Create;
   with bm do begin
@@ -775,15 +802,8 @@ begin
     colours[2]:=PaletteEntries[i].peBlue;
 
     if rbPalHex.Checked or rbPalConst.Checked then begin
-      // figure out values (SMS)
-      // eSMS = 0, 57, 123, 189
-      // Meka = 0, 85, 170, 255
-      //     or 0, 65, 130, 195
-      for j:=0 to 2 do
-      if      colours[j]<56  then colours[j]:=0
-      else if colours[j]<122 then colours[j]:=1
-      else if colours[j]<188 then colours[j]:=2
-      else                        colours[j]:=3;
+      // SMS palette - reduce each to 2 bits
+      for j:=0 to 2 do colours[j]:=colours[j] shr 6;
 
       if rbPalHex.Checked
       then s:=s+' $'+inttohex(colours[0] shl 0 or
