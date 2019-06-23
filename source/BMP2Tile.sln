@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.572
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BMP2Tile", "BMP2Tile.csproj", "{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.ActiveCfg = Debug|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.Build.0 = Debug|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.ActiveCfg = Release|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A0E069C-16F2-4053-9003-2E447753B5D4}
+	EndGlobalSection
+EndGlobal

@@ -24,3 +24,7 @@ demo/*.inc
 *.gif
 *.ini
 *.ddp
+/source/.vs/
+/source/bin/
+*.user
+/source/obj/
