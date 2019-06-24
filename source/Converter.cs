@@ -337,10 +337,11 @@ namespace BMP2Tile
             // We want to find the highest index used in the data
             // We do that by getting the tiles...
             var tiles = GetTiles(bitmap);
-            var highestIndexUsed = tiles.SelectMany(tile => tile.GetValue(true)).Max();
+
+            var highestIndexUsed = tiles.SelectMany(tile => tile.Indices).Max();
             if (highestIndexUsed > 15)
             {
-                var numIndicesUsed = tiles.SelectMany(tile => tile.GetValue(true)).Distinct().Count();
+                var numIndicesUsed = tiles.SelectMany(tile => tile.Indices).Distinct().Count();
                 throw new Exception($"Image uses colours up to index {highestIndexUsed} - this must be no more than 15. There are {numIndicesUsed} palette entries used.");
             }
 

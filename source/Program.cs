@@ -71,9 +71,11 @@ namespace BMP2Tile
                                 converter.PaletteFormat = Palette.Formats.MasterSystemConstants;
                                 break;
                             case "-palsms":
+                            case "-smspalette":
                                 converter.PaletteFormat = Palette.Formats.MasterSystem;
                                 break;
                             case "-palgg":
+                            case "-ggpalette":
                                 converter.PaletteFormat = Palette.Formats.GameGear;
                                 break;
                             case "-fullpalette":

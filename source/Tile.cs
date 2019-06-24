@@ -12,6 +12,8 @@ namespace BMP2Tile
             _data = data;
         }
 
+        public IEnumerable<byte> Indices => _data;
+
         public IEnumerable<byte> GetValue(bool asChunky)
         {
             if (asChunky)
@@ -52,7 +54,7 @@ namespace BMP2Tile
             for (int y = 0; y < 8; ++y)
             for (int x = 0; x < 8; ++x)
             {
-                yield return _data[y * 8 + (8 - x)];
+                yield return _data[y * 8 + (7 - x)];
             }
         }
 
@@ -61,7 +63,7 @@ namespace BMP2Tile
             for (int y = 0; y < 8; ++y)
             for (int x = 0; x < 8; ++x)
             {
-                yield return _data[(8 - y) * 8 + x];
+                yield return _data[(7 - y) * 8 + x];
             }
         }
 
@@ -70,7 +72,7 @@ namespace BMP2Tile
             for (int y = 0; y < 8; ++y)
             for (int x = 0; x < 8; ++x)
             {
-                yield return _data[(8 - y) * 8 + (8 - x)];
+                yield return _data[(7 - y) * 8 + (7 - x)];
             }
         }
 
