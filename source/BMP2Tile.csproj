@@ -50,6 +50,7 @@
     <Compile Include="CompressionDllWrapper.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="ICompressor.cs" />
+    <Compile Include="IncludeTextWriter.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Palette.cs" />
     <Compile Include="Program.cs" />

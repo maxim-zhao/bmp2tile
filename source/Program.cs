@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace BMP2Tile
 {
@@ -95,6 +96,14 @@ namespace BMP2Tile
                                 break;
                             case "-exit":
                                 return 0;
+                            case "-v":
+                            case "-verbose":
+                                converter.LogLevel = 2;
+                                break;
+                            case "-q":
+                            case "-quiet":
+                                converter.LogLevel = 0;
+                                break;
                             default:
                                 converter.Filename = arg;
                                 break;
