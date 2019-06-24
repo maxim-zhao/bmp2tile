@@ -51,10 +51,11 @@
     <Compile Include="Converter.cs" />
     <Compile Include="ICompressor.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="Palette.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tile.cs" />
-    <Compile Include="TilemapEntry.cs" />
+    <Compile Include="Tilemap.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

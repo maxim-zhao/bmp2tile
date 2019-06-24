@@ -7,6 +7,15 @@ namespace BMP2Tile
 {
     internal class CompressionDllWrapper: ICompressor
     {
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr LoadLibrary(string dllToLoad);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool FreeLibrary(IntPtr hModule);
+
         private readonly IntPtr _hModule;
 
         // BMP2Tile exported function signatures
@@ -22,7 +31,7 @@ namespace BMP2Tile
 
         public CompressionDllWrapper(string filename)
         {
-            _hModule = NativeMethods.LoadLibrary(filename);
+            _hModule = LoadLibrary(filename);
             if (_hModule == IntPtr.Zero)
             {
                 return;
@@ -61,7 +70,7 @@ namespace BMP2Tile
             // First we convert the tiles to a buffer
             var source = tiles.SelectMany(tile => tile.GetValue(asChunky)).ToArray();
 
-            return Compress(dest => _saveTiles(source, tiles.Count(), dest, dest.Length));
+            return Compress(dest => _saveTiles(source, tiles.Count, dest, dest.Length));
         }
 
         public IEnumerable<byte> CompressTilemap(Tilemap tilemap)
@@ -108,7 +117,7 @@ namespace BMP2Tile
 
         private T GetFunction<T>(string functionName) where T: Delegate
         {
-            var functionPointer = NativeMethods.GetProcAddress(_hModule, functionName);
+            var functionPointer = GetProcAddress(_hModule, functionName);
             if (functionPointer == IntPtr.Zero)
             {
                 return null;
@@ -120,7 +129,7 @@ namespace BMP2Tile
         {
             if (_hModule != IntPtr.Zero)
             {
-                NativeMethods.FreeLibrary(_hModule);
+                FreeLibrary(_hModule);
             }
         }
 

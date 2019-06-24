@@ -10,7 +10,11 @@ namespace BMP2Tile
             {
                 using (var converter = new Converter(message => Console.Out.WriteLine(message)))
                 {
+                    // We parse the args in order.
+                    // This is different from "BMP2Tile Classic" which would accumulate the settings and
+                    // then act on them at the end; but I think this way is better.
 
+                    // Since some take multiple parameters, we use lambdas to handle the "continuation".
                     Action<string> nextArgHandler = null;
 
                     foreach (var arg in args)
@@ -22,6 +26,8 @@ namespace BMP2Tile
                             continue;
                         }
 
+                        // ReSharper disable StringLiteralTypo
+                        // ReSharper disable AccessToDisposedClosure
                         switch (arg.ToLowerInvariant())
                         {
                             case "-removedupes":
@@ -62,11 +68,13 @@ namespace BMP2Tile
                                 converter.HighPriority = true;
                                 break;
                             case "-palcl123":
+                                converter.PaletteFormat = Palette.Formats.MasterSystemConstants;
+                                break;
                             case "-palsms":
-                                converter.PaletteFormat = Converter.PaletteFormats.SMS;
+                                converter.PaletteFormat = Palette.Formats.MasterSystem;
                                 break;
                             case "-palgg":
-                                converter.PaletteFormat = Converter.PaletteFormats.GG;
+                                converter.PaletteFormat = Palette.Formats.GameGear;
                                 break;
                             case "-fullpalette":
                                 converter.FullPalette = true;
@@ -86,6 +94,8 @@ namespace BMP2Tile
                                 converter.Filename = arg;
                                 break;
                         }
+                        // ReSharper restore AccessToDisposedClosure // Use of converter in lambdas
+                        // ReSharper restore StringLiteralTypo // Parameter names
                     }
                 }
             }
