@@ -360,7 +360,7 @@ namespace BMP2Tile
                 paletteEntries.RemoveRange(highestIndexUsed + 1, paletteEntries.Count - (highestIndexUsed + 1));
             }
 
-            return new Palette(bitmap.Palette.Entries.ToList());
+            return new Palette(paletteEntries);
         }
 
         public void Dispose()

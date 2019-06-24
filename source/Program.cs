@@ -81,6 +81,9 @@ namespace BMP2Tile
                             case "-fullpalette":
                                 converter.FullPalette = true;
                                 break;
+                            case "-minimumpalette":
+                                converter.FullPalette = false;
+                                break;
                             case "-savetiles":
                                 nextArgHandler = s => converter.SaveTiles(s);
                                 break;
