@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace BMP2Tile
 {
-    internal class CompressionDllWrapper: ICompressor
+    internal class CompressionDllWrapper: ICompressorImpl
     {
         [DllImport("kernel32.dll")]
         private static extern IntPtr LoadLibrary(string dllToLoad);

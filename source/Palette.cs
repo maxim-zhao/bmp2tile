@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace BMP2Tile
 {
-    internal class Palette
+    public class Palette
     {
         private readonly List<Color> _entries;
 
@@ -49,7 +49,7 @@ namespace BMP2Tile
             }
         }
 
-        private int ToMasterSystemChannel(byte b)
+        private static int ToMasterSystemChannel(byte b)
         {
             // Some typical colours used for SMS palettes include...
             // eSMS = 0, 57, 123, 189
@@ -59,22 +59,58 @@ namespace BMP2Tile
             return b < 56 ? 0 : b < 122 ? 1 : b < 188 ? 2 : 3;
         }
 
-        private byte ToMasterSystem(Color c)
+        private static byte ToMasterSystem(Color c)
         {
             return (byte) ((ToMasterSystemChannel(c.B) << 4) | (ToMasterSystemChannel(c.G) << 2) | ToMasterSystemChannel(c.R));
         }
 
-        private string ToMasterSystemConstant(Color c)
+        private static string ToMasterSystemConstant(Color c)
         {
             return $"cl{ToMasterSystemChannel(c.R)}{ToMasterSystemChannel(c.G)}{ToMasterSystemChannel(c.B)}";
         }
 
-        private short ToGameGear(Color c)
+        private static short ToGameGear(Color c)
         {
             // We just truncate to 4 bits per channel
-            var to4Bit = new Func<byte, int>(b => (byte)((b >> 4) & 0xf));
+            var to4Bit = new Func<byte, int>(b => (byte) ((b >> 4) & 0xf));
 
-            return (short)((to4Bit(c.B) << 8) | (to4Bit(c.G) << 4) | to4Bit(c.R));
+            return (short) ((to4Bit(c.B) << 8) | (to4Bit(c.G) << 4) | to4Bit(c.R));
         }
+
+        public List<Color> ForDisplay(Formats format)
+        {
+            switch (format)
+            {
+                case Formats.MasterSystem:
+                case Formats.MasterSystemConstants:
+                    return _entries.Select(ToMasterSystem).Select(FromMasterSystem).ToList();
+                case Formats.GameGear:
+                    return _entries.Select(ToGameGear).Select(FromGameGear).ToList();
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(format), format, null);
+            }
+        }
+
+        private static Color FromMasterSystem(byte value)
+        {
+            var r = (value >> 0) & 0b000011;
+            var g = (value >> 2) & 0b000011;
+            var b = (value >> 4) & 0b000011;
+            r = r | (r << 2) | (r << 4) | (r << 6);
+            g = g | (g << 2) | (g << 4) | (g << 6);
+            b = b | (b << 2) | (b << 4) | (b << 6);
+            return Color.FromArgb(r, g, b);
+        }
+        private static Color FromGameGear(short value)
+        {
+            var r = (value >> 0) & 0b001111;
+            var g = (value >> 4) & 0b001111;
+            var b = (value >> 8) & 0b001111;
+            r = r | (r << 4);
+            g = g | (g << 4);
+            b = b | (b << 4);
+            return Color.FromArgb(r, g, b);
+        }
+
     }
 }

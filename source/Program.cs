@@ -1,15 +1,33 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace BMP2Tile
 {
     internal static class Program
     {
+        private static bool _verbose;
+
         static int Main(string[] args)
         {
             try
             {
-                using (var converter = new Converter(message => Console.Out.WriteLine(message)))
+                using (var converter = new Converter((message, level) =>
+                {
+                    switch (level)
+                    {
+                        case Converter.LogLevel.Verbose:
+                            if (_verbose)
+                            {
+                                Console.Out.WriteLine(message);
+                            }
+                            break;
+                        case Converter.LogLevel.Normal:
+                            Console.Out.WriteLine(message);
+                            break;
+                        case Converter.LogLevel.Error:
+                            Console.Error.WriteLine(message);
+                            break;
+                    }
+                }))
                 {
                     // We parse the args in order.
                     // This is different from "BMP2Tile Classic" which would accumulate the settings and
@@ -98,11 +116,11 @@ namespace BMP2Tile
                                 return 0;
                             case "-v":
                             case "-verbose":
-                                converter.LogLevel = 2;
+                                _verbose = true;
                                 break;
                             case "-q":
                             case "-quiet":
-                                converter.LogLevel = 0;
+                                _verbose = false;
                                 break;
                             default:
                                 converter.Filename = arg;
@@ -120,9 +138,7 @@ namespace BMP2Tile
                 return 1;
             }
 
-            // If we get here then we are in GUI mode...
-            // TODO
-            return 1;
+            return 0;
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BMP2Tile
 {
-    internal class IncludeTextWriter : ICompressor
+    internal class IncludeTextWriter : ICompressorImpl
     {
         public void Dispose()
         {

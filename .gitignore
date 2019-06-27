@@ -28,3 +28,5 @@ demo/*.inc
 /source/bin/
 *.user
 /source/obj/
+/source/GUI/bin/
+/source/GUI/obj/

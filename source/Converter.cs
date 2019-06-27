@@ -5,18 +5,19 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace BMP2Tile
 {
-    internal class Converter: IDisposable
+    public class Converter: IDisposable
     {
         #region Fields
 
-        private readonly Action<string> _logger;
+        private readonly Action<string, LogLevel> _logger;
         private Palette _palette;
         private List<Tile> _tiles;
         private Tilemap _tilemap;
-        private readonly Dictionary<string, ICompressor> _compressors = new Dictionary<string, ICompressor>();
+        private readonly Dictionary<string, ICompressorImpl> _compressors = new Dictionary<string, ICompressorImpl>();
 
         private bool _removeDuplicates = true;
         private bool _useMirroring = true;
@@ -28,10 +29,18 @@ namespace BMP2Tile
         private string _filename;
         private Bitmap _bitmap;
         private bool _optimized;
+        private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
 
         #endregion
 
-        public Converter(Action<string> logger)
+        public enum LogLevel
+        {
+            Verbose,
+            Normal,
+            Error
+        }
+
+        public Converter(Action<string, LogLevel> logger)
         {
             _logger = logger;
         }
@@ -123,7 +132,6 @@ namespace BMP2Tile
         }
 
         public Palette.Formats PaletteFormat { private get; set; }
-        public int LogLevel { private get; set; }
 
         #endregion
 
@@ -137,13 +145,24 @@ namespace BMP2Tile
                 Optimize();
             }
 
-            Log("Saving tiles...", true);
+            Log("Saving tiles...", LogLevel.Verbose);
 
             var compressor = GetCompressor(filename);
             var bytes = compressor.CompressTiles(_tiles, Chunky);
             File.WriteAllBytes(filename, bytes.ToArray());
 
             Log($"Saved tiles in format \"{compressor.Name}\" to {filename}");
+        }
+
+        public string GetTilesAsText()
+        {
+            GetTiles();
+            if (_removeDuplicates)
+            {
+                Optimize();
+            }
+
+            return Encoding.ASCII.GetString(_includeTextWriter.CompressTiles(_tiles, Chunky).ToArray());
         }
 
         public void SaveTilemap(string filename)
@@ -155,17 +174,28 @@ namespace BMP2Tile
             }
 
             var compressor = GetCompressor(filename);
-            Log("Compressing tilemap...", true);
+            Log("Compressing tilemap...", LogLevel.Verbose);
             var bytes = compressor.CompressTilemap(_tilemap);
             File.WriteAllBytes(filename, bytes.ToArray());
 
-            _logger($"Saved tilemap in format \"{compressor.Name}\" to {filename}");
+            Log($"Saved tilemap in format \"{compressor.Name}\" to {filename}");
+        }
+
+        public string GetTilemapAsText()
+        {
+            GetTilemap();
+            if (_removeDuplicates)
+            {
+                Optimize();
+            }
+
+            return Encoding.ASCII.GetString(_includeTextWriter.CompressTilemap(_tilemap).ToArray());
         }
 
         public void SavePalette(string filename)
         {
             GetPalette();
-            Log("Saving palette...", true);
+            Log("Saving palette...", LogLevel.Verbose);
             if (Path.GetExtension(filename.ToLowerInvariant()) == ".inc")
             {
                 File.WriteAllText(filename, _palette.ToString(PaletteFormat));
@@ -178,9 +208,33 @@ namespace BMP2Tile
             Log($"Saved palette to {filename}");
         }
 
+        public string GetPaletteAsText(Palette.Formats format)
+        {
+            GetPalette();
+            return _palette.ToString(format);
+        }
+
+        public List<List<Color>> GetPalettes(Palette.Formats format)
+        {
+            GetPalette();
+            var convertedPalette = _palette.ForDisplay(format);
+            return new List<List<Color>>
+            {
+                _bitmap.Palette.Entries.Take(convertedPalette.Count).ToList(),
+                convertedPalette
+            };
+        }
+
+        public IEnumerable<ICompressor> GetCompressorInfo()
+        {
+            GetCompressors();
+
+            return _compressors.Values;
+        }
+
         #endregion
 
-        private ICompressor GetCompressor(string filename)
+        private ICompressorImpl GetCompressor(string filename)
         {
             GetCompressors();
             var extension = Path.GetExtension(filename)?.ToLowerInvariant();
@@ -204,10 +258,10 @@ namespace BMP2Tile
                 return;
             }
 
-            Log("Discovering compressors", true);
+            Log("Discovering compressors", LogLevel.Verbose);
 
             // We add some C#-based ones...
-            _compressors.Add(".inc", new IncludeTextWriter());
+            _compressors.Add(".inc", _includeTextWriter);
 
             // We enumerate files in the program folder
             var path = AppContext.BaseDirectory;
@@ -224,7 +278,7 @@ namespace BMP2Tile
                         continue;
                     }
                     _compressors["." + compressor.Extension.ToLowerInvariant()] = compressor;
-                    Log($"Added \"{compressor.Name}\" ({compressor.Extension}) from {filename}", true);
+                    Log($"Added \"{compressor.Name}\" ({compressor.Extension}) from {filename}", LogLevel.Verbose);
                 }
                 catch (Exception ex)
                 {
@@ -232,7 +286,7 @@ namespace BMP2Tile
                 }
             }
 
-            Log($"Added {_compressors.Count} compressors", true);
+            Log($"Added {_compressors.Count} compressors", LogLevel.Verbose);
         }
 
         private void GetBitmap()
@@ -268,7 +322,7 @@ namespace BMP2Tile
                 }
             }
 
-            Log($"Loaded bitmap from {_filename}", true);
+            Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
         }
 
         private void Optimize()
@@ -281,7 +335,7 @@ namespace BMP2Tile
             GetTiles();
             GetTilemap();
 
-            Log("Optimizing...", true);
+            Log("Optimizing...", LogLevel.Verbose);
 
             var tileCountBefore = _tiles.Count;
 
@@ -291,6 +345,7 @@ namespace BMP2Tile
                 // Compare tile i to the ones following it
                 // Replace duplicates with this one
                 var thisTile = _tiles[i];
+                var thisTileIndex = (int)(i + _tileOffset);
                 for (int j = i + 1; j < _tiles.Count; /* increment in loop */)
                 {
                     var comparedTile = _tiles[j];
@@ -303,11 +358,12 @@ namespace BMP2Tile
                     // We have a match, so we want to remove it from the collection...
                     _tiles.RemoveAt(j);
                     // ...and replace all entries referencing it in the tilemap, plus move all higher indices down by 1
+                    var tileIndexToReplace = (int)(j + _tileOffset);
                     foreach (var entry in _tilemap)
                     {
-                        if (entry.TileIndex == j)
+                        if (entry.TileIndex == tileIndexToReplace)
                         {
-                            entry.TileIndex = i;
+                            entry.TileIndex = thisTileIndex;
                             switch (comparison)
                             {
                                 case Tile.Match.HFlip:
@@ -322,7 +378,7 @@ namespace BMP2Tile
                                     break;
                             }
                         }
-                        else if (entry.TileIndex > j)
+                        else if (entry.TileIndex > tileIndexToReplace)
                         {
                             --entry.TileIndex;
                         }
@@ -330,7 +386,7 @@ namespace BMP2Tile
                 }
             }
 
-            Log($"Reduced from {tileCountBefore} to {_tiles.Count} tiles", true);
+            Log($"Reduced from {tileCountBefore} to {_tiles.Count} tiles");
 
             _optimized = true;
         }
@@ -344,7 +400,7 @@ namespace BMP2Tile
 
             GetBitmap();
 
-            Log("Creating tilemap", true);
+            Log("Creating tilemap", LogLevel.Verbose);
 
             // This is an unoptimised tilemap
             // So we just need to fill space
@@ -366,7 +422,7 @@ namespace BMP2Tile
 
             _tilemap = tilemap;
 
-            Log($"Created {_tilemap.Width}x{tilemap.Height} tilemap", true);
+            Log($"Created {_tilemap.Width}x{tilemap.Height} tilemap", LogLevel.Verbose);
         }
 
         private void GetTiles()
@@ -379,7 +435,7 @@ namespace BMP2Tile
 
             GetBitmap();
 
-            Log("Generating tiles from image", true);
+            Log("Generating tiles from image", LogLevel.Verbose);
 
             BitmapData bitmapData = null;
             try
@@ -412,7 +468,7 @@ namespace BMP2Tile
 
                 _tiles = tiles;
 
-                Log($"Created {_tiles.Count} tiles", true);
+                Log($"Created {_tiles.Count} tiles", LogLevel.Verbose);
             }
             finally
             {
@@ -478,32 +534,22 @@ namespace BMP2Tile
                 // Extend to 16 if smaller
                 if (paletteEntries.Count < 16)
                 {
-                    Log("Extending palette to 16 entries", true);
+                    Log("Extending palette to 16 entries", LogLevel.Verbose);
                     paletteEntries.AddRange(Enumerable.Repeat(Color.Black, 16 - paletteEntries.Count));
                 }
             }
-            else if (paletteEntries.Count > highestIndexUsed)
+            else if (paletteEntries.Count > highestIndexUsed + 1)
             {
-                Log($"Truncating palette to {highestIndexUsed} entries", true);
+                Log($"Truncating palette to {highestIndexUsed} entries", LogLevel.Verbose);
                 paletteEntries.RemoveRange(highestIndexUsed + 1, paletteEntries.Count - (highestIndexUsed + 1));
             }
 
             _palette = new Palette(paletteEntries);
         }
 
-        private void Log(string message, bool ifVerbose = false)
+        private void Log(string message, LogLevel level = LogLevel.Normal)
         {
-            if (ifVerbose && LogLevel < 2)
-            {
-                return;
-            }
-
-            if (LogLevel < 1)
-            {
-                return;
-            }
-
-            _logger(message);
+            _logger(message, level);
         }
 
         public void Dispose()
