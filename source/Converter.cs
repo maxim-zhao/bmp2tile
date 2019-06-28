@@ -440,26 +440,19 @@ namespace BMP2Tile
             BitmapData bitmapData = null;
             try
             {
+                // In Windows we can just specify 8bpp here and GDI+ extends 4bpp images for us.
+                // However this is not implemented in Wine so we convert it ourselves.
                 bitmapData = _bitmap.LockBits(
                     new Rectangle(0, 0, _bitmap.Width, _bitmap.Height),
                     ImageLockMode.ReadOnly,
-                    PixelFormat.Format8bppIndexed); // TODO is this converting? 4bpp: OK >8bpp: ???
+                    _bitmap.PixelFormat);
 
                 var tiles = new List<Tile>();
 
                 // We want to split the image to 8x8 chunks in the required order
                 foreach (var coordinate in GetTileCoordinates(_bitmap.Width, _bitmap.Height))
                 {
-                    var tileData = new byte[8 * 8];
-                    for (int y = 0; y < 8; ++y)
-                    {
-                        // Copy data 8 pixels at a time
-                        Marshal.Copy(
-                            bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X,
-                            tileData,
-                            y * 8,
-                            8);
-                    }
+                    var tileData = GetTile(coordinate, bitmapData);
 
                     tiles.Add(new Tile(tileData));
                 }
@@ -477,6 +470,55 @@ namespace BMP2Tile
                     _bitmap.UnlockBits(bitmapData);
                 }
             }
+        }
+
+        private byte[] GetTile(Point coordinate, BitmapData bitmapData)
+        {
+            var tileData = new byte[8 * 8];
+
+            switch (bitmapData.PixelFormat)
+            {
+                case PixelFormat.Format8bppIndexed:
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        // Copy data 8 pixels at a time
+                        Marshal.Copy(
+                            bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X,
+                            tileData,
+                            y * 8,
+                            8);
+                    }
+                    break;
+                case PixelFormat.Format4bppIndexed:
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        // We need to extend from 4bpp to 8bpp
+                        var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 2;
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            var b = Marshal.ReadByte(data, i);
+                            tileData[y * 8 + i * 2 + 0] = (byte)((b >> 4) & 0xf);
+                            tileData[y * 8 + i * 2 + 1] = (byte)((b >> 0) & 0xf);
+                        }
+                    }
+                    break;
+                case PixelFormat.Format1bppIndexed:
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        // We need to extend from 1bpp to 8bpp
+                        var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 8;
+                        var b = Marshal.ReadByte(data);
+                        for (int i = 0; i < 8; ++i)
+                        {
+                            tileData[y * 8 + i] = (byte)((b >> (7 - i)) & 0b1);
+                        }
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException($"Unsupported bitmap format {bitmapData.PixelFormat}");
+            }
+
+            return tileData;
         }
 
         private IEnumerable<Point> GetTileCoordinates(int width, int height)

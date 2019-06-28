@@ -42,7 +42,7 @@ namespace BMP2TileGUI
         {
             using (var ofd = new OpenFileDialog
             {
-                Filter = "Image files (*.bmp;*.png)|*.bmp;*.png|All files (*.*)|*.*",
+                Filter = "Image files (*.bmp;*.png;*.gif)|*.bmp;*.png;*.gif|All files (*.*)|*.*",
                 CheckFileExists = true,
                 Multiselect = false
             })

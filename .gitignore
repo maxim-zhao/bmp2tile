@@ -30,3 +30,6 @@ demo/*.inc
 /source/obj/
 /source/GUI/bin/
 /source/GUI/obj/
+/*.exe
+/*.pdb
+/*.exe.config
