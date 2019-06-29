@@ -56,12 +56,32 @@ namespace BMP2TileGUI
             }
         }
 
+        private void Try(Action a)
+        {
+            try
+            {
+                a();
+            }
+            catch (System.Exception ex)
+            {
+                var message = $"Error: {ex.Message}";
+                if (!(ex is BMP2Tile.AppException))
+                {
+                    message += $"\n\nGuru meditation:\n\n{ex.StackTrace}";
+                }
+                OnMessageLogged(message, Converter.LogLevel.Error);
+            }
+        }
+
         private void LoadImage(string filename)
         {
-            tbFilename.Text = filename;
-            _converter.Filename = filename;
-            pbPreview.ImageLocation = filename;
-            ConvertForDisplay();
+            Try(() =>
+            {
+                _converter.Filename = filename;
+                ConvertForDisplay();
+                tbFilename.Text = filename;
+                pbPreview.ImageLocation = filename;
+            });
         }
 
         private void Form1_DragEnter(object sender, DragEventArgs e)
@@ -83,60 +103,71 @@ namespace BMP2TileGUI
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            var compressors = _converter.GetCompressorInfo()
-                .Where(x => x.Capabilities.HasFlag(CompressorCapabilities.Tiles))
-                .OrderBy(x => x.Name)
-                .ToList();
-
-            var filter = string.Join("|", compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
-
-            using (var sfd = new SaveFileDialog {Filter = filter})
+            Try(() =>
             {
-                if (sfd.ShowDialog(this) == DialogResult.OK)
+                var compressors = _converter.GetCompressorInfo()
+                    .Where(x => x.Capabilities.HasFlag(CompressorCapabilities.Tiles))
+                    .OrderBy(x => x.Name)
+                    .ToList();
+
+                var filter = string.Join("|",
+                    compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
+
+                using (var sfd = new SaveFileDialog {Filter = filter})
                 {
-                    _converter.SaveTiles(sfd.FileName);
+                    if (sfd.ShowDialog(this) == DialogResult.OK)
+                    {
+                        _converter.SaveTiles(sfd.FileName);
+                    }
                 }
-            }
+            });
         }
 
         private void btnSaveTilemap_Click(object sender, EventArgs e)
         {
-            var compressors = _converter.GetCompressorInfo()
-                .Where(x => x.Capabilities.HasFlag(CompressorCapabilities.Tilemap))
-                .OrderBy(x => x.Name)
-                .ToList();
-
-            var filter = string.Join("|", compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
-
-            using (var sfd = new SaveFileDialog {Filter = filter})
+            Try(() =>
             {
-                if (sfd.ShowDialog(this) == DialogResult.OK)
+                var compressors = _converter.GetCompressorInfo()
+                    .Where(x => x.Capabilities.HasFlag(CompressorCapabilities.Tilemap))
+                    .OrderBy(x => x.Name)
+                    .ToList();
+
+                var filter = string.Join("|",
+                    compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
+
+                using (var sfd = new SaveFileDialog {Filter = filter})
                 {
-                    _converter.SaveTilemap(sfd.FileName);
+                    if (sfd.ShowDialog(this) == DialogResult.OK)
+                    {
+                        _converter.SaveTilemap(sfd.FileName);
+                    }
                 }
-            }
+            });
         }
 
         private void btnSavePalette_Click(object sender, EventArgs e)
         {
-            string filter = "Include files (*.inc)|*.inc";
-            if (rbHexGG.Checked || (rbHexSMS.Checked && !cbPaletteConstants.Checked))
+            Try(() =>
             {
-                filter += "|Binary files (*.bin)|*.bin";
-            }
-
-            using (var sfd = new SaveFileDialog {Filter = filter})
-            {
-                if (sfd.ShowDialog(this) == DialogResult.OK)
+                string filter = "Include files (*.inc)|*.inc";
+                if (rbHexGG.Checked || (rbHexSMS.Checked && !cbPaletteConstants.Checked))
                 {
-                    _converter.SavePalette(sfd.FileName);
+                    filter += "|Binary files (*.bin)|*.bin";
                 }
-            }
+
+                using (var sfd = new SaveFileDialog {Filter = filter})
+                {
+                    if (sfd.ShowDialog(this) == DialogResult.OK)
+                    {
+                        _converter.SavePalette(sfd.FileName);
+                    }
+                }
+            });
         }
 
         private void ControlChanged(object sender, EventArgs e)
         {
-            ConvertForDisplay();
+            Try(ConvertForDisplay);
         }
 
         private void ConvertForDisplay()

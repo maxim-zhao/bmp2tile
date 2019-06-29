@@ -240,7 +240,7 @@ namespace BMP2Tile
             var extension = Path.GetExtension(filename)?.ToLowerInvariant();
             if (extension == null)
             {
-                throw new Exception($"Failed to get extension from filename: {filename}");
+                throw new AppException($"Failed to get extension from filename: {filename}");
             }
 
             if (_compressors.TryGetValue(extension, out var result))
@@ -248,7 +248,7 @@ namespace BMP2Tile
                 return result;
             }
 
-            throw new Exception($"Failed to find handler for extension {extension} (filename {filename})");
+            throw new AppException($"Failed to find handler for extension {extension} (filename {filename})");
         }
 
         private void GetCompressors()
@@ -280,7 +280,7 @@ namespace BMP2Tile
                     _compressors["." + compressor.Extension.ToLowerInvariant()] = compressor;
                     Log($"Added \"{compressor.Name}\" ({compressor.Extension}) from {filename}", LogLevel.Verbose);
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     Log($"Failed to load {filename}: {ex.Message}");
                 }
@@ -291,38 +291,38 @@ namespace BMP2Tile
 
         private void GetBitmap()
         {
-            if (_bitmap != null)
+            if (_bitmap == null)
             {
-                return;
-            }
-
-            Log($"Loading {_filename}...");
-
-            _bitmap = new Bitmap(_filename);
-
-            // Check the dimensions
-            if (_bitmap.Width % 8 != 0)
-            {
-                throw new Exception($"Image's width is not a multiple of 8: {_bitmap.Width}");
-            }
-
-            // BUG: this may be changed later, so we can't check it now
-            if (_adjacentBelow)
-            {
-                if (_bitmap.Height % 16 != 0)
+                if (string.IsNullOrEmpty(_filename))
                 {
-                    throw new Exception($"Image's height is not a multiple of 16: {_bitmap.Height}");
+                    throw new AppException("Filename has not been specified");
+                }
+
+                try
+                {
+                    Log($"Loading {_filename}...");
+
+                    _bitmap = new Bitmap(_filename);
+
+                    Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
+
+                    // Check the dimensions
+                    if (_bitmap.Width % 8 != 0)
+                    {
+                        throw new AppException($"Image's width ({_bitmap.Width}) is not a multiple of 8");
+                    }
+
+                    if (_bitmap.Height % 8 != 0)
+                    {
+                        throw new AppException($"Image's height ({_bitmap.Height})is not a multiple of 8");
+                    }
+                }
+                catch (AppException)
+                {
+                    _bitmap = null;
+                    throw;
                 }
             }
-            else
-            {
-                if (_bitmap.Height % 8 != 0)
-                {
-                    throw new Exception($"Image's height is not a multiple of 8: {_bitmap.Height}");
-                }
-            }
-
-            Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
         }
 
         private void Optimize()
@@ -515,7 +515,7 @@ namespace BMP2Tile
                     }
                     break;
                 default:
-                    throw new NotImplementedException($"Unsupported bitmap format {bitmapData.PixelFormat}");
+                    throw new AppException($"Unsupported bitmap format {bitmapData.PixelFormat}");
             }
 
             return tileData;
@@ -526,6 +526,11 @@ namespace BMP2Tile
             // We generate the tile coordinates in row-major order, optionally with "double height sprite" ordering
             if (_adjacentBelow)
             {
+                if (_bitmap.Height % 16 != 0)
+                {
+                    throw new AppException($"Image's height ({_bitmap.Height}) is not a multiple of 16");
+                }
+
                 for (int y = 0; y < height; y += 16)
                 for (int x = 0; x < width; x += 8)
                 {
@@ -556,7 +561,7 @@ namespace BMP2Tile
             // TODO check what we get on non-paletted images - I'm assuming null
             if (_bitmap.Palette == null)
             {
-                throw new Exception("Image is not paletted. You must provide a 4- or 8-bit paletted image.");
+                throw new AppException("Image is not paletted. You must provide a 4- or 8-bit paletted image.");
             }
 
             // We want to find the highest index used in the data
@@ -566,7 +571,7 @@ namespace BMP2Tile
             if (highestIndexUsed > 15)
             {
                 var numIndicesUsed = _tiles.SelectMany(tile => tile.Indices).Distinct().Count();
-                throw new Exception($"Image uses colours up to index {highestIndexUsed} - this must be no more than 15. There are {numIndicesUsed} palette entries used.");
+                throw new AppException($"Image uses colours up to index {highestIndexUsed} - this must be no more than 15. There are {numIndicesUsed} palette entries used.");
             }
 
             var paletteEntries = _bitmap.Palette.Entries.ToList();

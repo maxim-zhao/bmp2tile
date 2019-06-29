@@ -131,10 +131,13 @@ namespace BMP2Tile
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
-                Console.Error.WriteLine(ex.StackTrace);
+                Console.Error.WriteLine($"Fatal error: {ex.Message}");
+                if (!(ex is AppException))
+                {
+                    Console.Error.WriteLine($"Guru meditation:\n{ex.StackTrace}");
+                }
                 return 1;
             }
 

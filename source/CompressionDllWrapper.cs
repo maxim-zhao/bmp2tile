@@ -65,7 +65,7 @@ namespace BMP2Tile
         {
             if (_saveTiles == null)
             {
-                throw new NotSupportedException($"{Name} compressor does not support tiles");
+                throw new AppException($"{Name} compressor does not support tiles");
             }
             // First we convert the tiles to a buffer
             var source = tiles.SelectMany(tile => tile.GetValue(asChunky)).ToArray();
@@ -77,7 +77,7 @@ namespace BMP2Tile
         {
             if (_saveTilemap == null)
             {
-                throw new NotSupportedException($"{Name} compressor does not support tilemaps");
+                throw new AppException($"{Name} compressor does not support tilemaps");
             }
             // First we convert the tilemap to a buffer
             var source = new List<byte>();
@@ -112,7 +112,7 @@ namespace BMP2Tile
                 }
                 // Else we need a bigger buffer...
             }
-            throw new Exception("Failure compressing tiles");
+            throw new AppException("Failure compressing tiles");
         }
 
         private T GetFunction<T>(string functionName) where T: Delegate
