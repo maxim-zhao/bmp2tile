@@ -62,10 +62,10 @@ namespace BMP2TileGUI
             {
                 a();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 var message = $"Error: {ex.Message}";
-                if (!(ex is BMP2Tile.AppException))
+                if (!(ex is AppException))
                 {
                     message += $"\n\nGuru meditation:\n\n{ex.StackTrace}";
                 }
