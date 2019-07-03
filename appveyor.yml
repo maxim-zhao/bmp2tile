@@ -1,0 +1,10 @@
+version: 0.5.{build}
+image: Visual Studio 2019
+configuration: Release
+platform: x86
+build:
+  verbosity: minimal
+after_build:
+- cmd: 7z a bmp2tile.zip *.exe readme.* license
+artifacts:
+- path: '*.zip'
