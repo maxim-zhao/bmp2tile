@@ -175,7 +175,7 @@ Pass the following on the commandline to make the corresponding option/action
 choices. Defaults are marked with *.
 
 |Command switch           |Effect                                       |
-|=========================|=============================================|
+|-------------------------|---------------------------------------------|
 |<filename>               |Load the specified bitmap. Note that the format restrictions are the same as before.           |
 |`-removedupes`           |*Optimise out duplicate tiles                                                                  |
 |`-noremovedupes`         |Or don't                                                                                       |
