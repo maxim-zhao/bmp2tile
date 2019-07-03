@@ -147,48 +147,56 @@ If you want to write a plugin, make a DLL with the right filename that exports
 these functions (with cdecl calling convention, which is the default for most
 C/C++ DLLs):
 
-`const char* getName()`
-  Returns a null-terminated string giving the name of the format, for display.
+```C
+const char* getName()`
+```
+Returns a null-terminated string giving the name of the format, for display.
 
-`char* getExt()`
-  Returns a null-terminated file extension (without any preceding dot) that is
-  used to build filename masks and to tell which plugin to use in commandline
-  mode,
+```C
+char* getExt()
+```
+Returns a null-terminated file extension (without any preceding dot) that is
+used to build filename masks and to tell which plugin to use in commandline
+mode.
 
-`int compressTiles(const char* source, int numTiles, char* dest, int destLen)`
-  Compresses the tile data from source to dest. Each tile is 32 bytes. If
-  destLen is too small, you must return 0. If there is an error while
-  compressing (perhaps the tile data does not conform to some restriction),
-  return -1. Else return the number of bytes inserted into the buffer.
+```C
+int compressTiles(const char* source, int numTiles, char* dest, int destLen)
+```
+Compresses the tile data from source to dest. Each tile is 32 bytes. If
+destLen is too small, you must return 0. If there is an error while
+compressing (perhaps the tile data does not conform to some restriction),
+return -1. Else return the number of bytes inserted into the buffer.
 
-`int compressTilemap(char* source, int width, int height, char* dest, int destLen)`
-  Compresses the tilemap data from source to dest. Each tilemap entry is 2
-  bytes in little-endian order. If destLen is too small, you must return 0. If
-  there is an error (perhaps some restriction on the data), return -1. Else
-  return the number of bytes inserted into the buffer.
+```C
+int compressTilemap(char* source, int width, int height, char* dest, int destLen)
+```
+Compresses the tilemap data from source to dest. Each tilemap entry is 2
+bytes in little-endian order. If destLen is too small, you must return 0. If
+there is an error (perhaps some restriction on the data), return -1. Else
+return the number of bytes inserted into the buffer.
 
-You can support one or both compressXXX functions.
+You can support one or both `compress*` functions.
 
 # Commandline mode
 
 Pass the following on the commandline to make the corresponding option/action
-choices. Defaults are marked with *.
+choices. Defaults are marked with :star:.
 
 |Command switch           |Effect                                       |
 |-------------------------|---------------------------------------------|
 |`<filename>`             |Load the specified bitmap. Note that the format restrictions are the same as before.           |
-|`-removedupes`           |*Optimise out duplicate tiles                                                                  |
+|`-removedupes`           |:star: Optimise out duplicate tiles                                                                  |
 |`-noremovedupes`         |Or don't                                                                                       |
-|`-mirror`                |*Use tile mirroring to further optimise duplicates                                             |
+|`-mirror`                |:star: Use tile mirroring to further optimise duplicates                                             |
 |`-nomirror`              |Or don't                                                                                       |
-|`-8x8`                   |*Treat tile data as 8x8                                                                        |
+|`-8x8`                   |:star: Treat tile data as 8x8                                                                        |
 |`-8x16`                  |Treat tile data as 8x16                                                                        |
-|`-planar`                |*Output planar tile data                                                                       |
+|`-planar`                |:star: Output planar tile data                                                                       |
 |`-chunky`                |Output chunky tile data                                                                        |
-|`-tileoffset <n>`        |The starting index of the first tile. *Default is 0.                                           |
-|`-spritepalette`         |Set the tilemap bit to make tiles use the sprite palette. *Default is unset.                   |
-|`-infrontofsprites`      |Set the tilemap bit to make tiles appear in front of sprites. *Default is unset.               |
-|`-palsms`                |*Output the palette in SMS colour format                                                       |
+|`-tileoffset <n>`        |The starting index of the first tile. :star: Default is 0.                                           |
+|`-spritepalette`         |Set the tilemap bit to make tiles use the sprite palette. :star: Default is unset.                   |
+|`-infrontofsprites`      |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset.               |
+|`-palsms`                |:star: Output the palette in SMS colour format                                                       |
 |`-palgg`                 |Output the palette in GG colour format                                                         |
 |`-palcl123`              |Output the palette in SMS colour format, using constants of the form cl123 (see above).        |
 |`-fullpalette`           |Output 16 colours rather than as many as are present in the image.                             |
