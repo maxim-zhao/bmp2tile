@@ -24,3 +24,12 @@ demo/*.inc
 *.gif
 *.ini
 *.ddp
+/source/.vs/
+/source/bin/
+*.user
+/source/obj/
+/source/GUI/bin/
+/source/GUI/obj/
+/*.exe
+/*.pdb
+/*.exe.config
