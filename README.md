@@ -176,7 +176,7 @@ choices. Defaults are marked with *.
 
 |Command switch           |Effect                                       |
 |-------------------------|---------------------------------------------|
-|<filename>               |Load the specified bitmap. Note that the format restrictions are the same as before.           |
+|`<filename>`             |Load the specified bitmap. Note that the format restrictions are the same as before.           |
 |`-removedupes`           |*Optimise out duplicate tiles                                                                  |
 |`-noremovedupes`         |Or don't                                                                                       |
 |`-mirror`                |*Use tile mirroring to further optimise duplicates                                             |
@@ -185,18 +185,18 @@ choices. Defaults are marked with *.
 |`-8x16`                  |Treat tile data as 8x16                                                                        |
 |`-planar`                |*Output planar tile data                                                                       |
 |`-chunky`                |Output chunky tile data                                                                        |
-|`-tileoffset` <n>        |The starting index of the first tile. *Default is 0.                                           |
+|`-tileoffset <n>`        |The starting index of the first tile. *Default is 0.                                           |
 |`-spritepalette`         |Set the tilemap bit to make tiles use the sprite palette. *Default is unset.                   |
 |`-infrontofsprites`      |Set the tilemap bit to make tiles appear in front of sprites. *Default is unset.               |
 |`-palsms`                |*Output the palette in SMS colour format                                                       |
 |`-palgg`                 |Output the palette in GG colour format                                                         |
 |`-palcl123`              |Output the palette in SMS colour format, using constants of the form cl123 (see above).        |
 |`-fullpalette`           |Output 16 colours rather than as many as are present in the image.                             |
-|`-savetiles` <filename>  |Save tile data to <filename>. The format will be inferred from the extension of <filename>.    |
-|`-savetilemap` <filename>|Save tilemap data to <filename>. The format will be inferred from the extension of <filename>. |
-|`-savepalette` <filename>|Save palette data to <filename>. The format will be inferred from the extension of <filename>. |
+|`-savetiles <filename>`  |Save tile data to `<filename>`. The format will be inferred from the extension of `<filename>`.    |
+|`-savetilemap <filename>`|Save tilemap data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
+|`-savepalette <filename>`|Save palette data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 
-Note that options are interpreted ssequentially. That means you should specify any options (and the input file) before any
+Note that options are interpreted sequentially. That means you should specify any options (and the input file) before any
 `-save*` actions. It also you can chain together operations, as so:
 
 ```
@@ -214,53 +214,67 @@ Most of the plugins are written in C++.
 
 0.5
 - Rewrite to C#. Commandline mode is now much faster and operates sequentially.
+
 0.44
 - Palette preview now shows you the result of mapping to the SMS or GG palette
+
 0.43
 - Fixed a stupid bug which meant tilemap width and height were swapped when compressing
+
 0.42
 - Option to always emit 16 colours
+
 0.41
 - Fixed the broken tilemap modifications (flags and offsets) when saving as non-text
+
 0.4
 - Rewrote the tile/tilemap code, it's much faster now
 - Added plugin support
 - Removed 1/2/3bpp output support, plugins can do that now
+
 0.35
 - Fixed a stupid bug with 8-bit images
 - Modified demo to use more varied source images to help with testing
 - Included source that got left out of 0.34
+
 0.34
 - Relaxed image size restrictions as far as possible
 - Added some checking of formats when saving to avoid nonsensical option combinations
 - Added more decompressor code and demos
+
 0.33
 - The Load button is now a Browse button and gives you a normal Windows Open dialogue
+
 0.32
 - Added support for 8-bit images (using only the first 16 palette entries)
 - Added support for more image formats (GIF, PNG, PCX)
 - Fixed some bugs when loading a second image
 - Fixed some bugs with 1-bit images
+
 0.31
 - Added a missing commandline switch
 - Added optional output filename specification
 - Fixed a bug in the palette convertor
 - Added a demo of all the output formats
+
 0.3
 - Added binary and Phantasy Star compressed output
 - Added commandline mode
+
 0.22
 - Vertical mirroring above 1bpp was broken; now it isn't.
+
 0.21
 - Fixed a few glitches
+
 0.2
 - Added palette decoding
 - Added tile mirroring optimisation
 - Smoothed out the rough edges a bit more
+
 0.1
 - Initial release
 
-Dedication
-==========
+# Dedication
 
 To my beautiful wife :)
