@@ -153,7 +153,7 @@ const char* getName()`
 Returns a null-terminated string giving the name of the format, for display.
 
 ```C
-char* getExt()
+const char* getExt()
 ```
 Returns a null-terminated file extension (without any preceding dot) that is
 used to build filename masks and to tell which plugin to use in commandline
@@ -168,7 +168,7 @@ compressing (perhaps the tile data does not conform to some restriction),
 return -1. Else return the number of bytes inserted into the buffer.
 
 ```C
-int compressTilemap(char* source, int width, int height, char* dest, int destLen)
+int compressTilemap(const char* source, int width, int height, char* dest, int destLen)
 ```
 Compresses the tilemap data from source to dest. Each tilemap entry is 2
 bytes in little-endian order. If destLen is too small, you must return 0. If
