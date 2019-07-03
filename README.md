@@ -1,66 +1,54 @@
-BMP2Tile
-========
+# BMP2Tile
 
 It’s a program that can converts BMP, PNG, PCX and GIF format images into raw or compressed 8×8 pixel separated-bitplane tile data suitable for inclusion in SMS and GG homebrew programs. At the same time, it optimises duplicate tiles, creates a tilemap to recreate the original image and converts the palette for you.
 
 http://www.smspower.org/maxim/Software/BMP2Tile
+https://github.com/maxim-zhao/bmp2tile
 
 It has a Winamp-inspired plugin interface for data compression. Source for compressors is found here:
 
 https://github.com/maxim-zhao/bmp2tilecompressors
 
-BMP to SMS/GG tile converter 0.44
-=================================
-
-by Maxim in 2002-2017
-
-This program converts images from BMP, PNG, PCX and GIF format to SMS/GG tile,
-tilemap and palette data.
-
-Instructions
-============
+# Instructions
 
 FIRST you have to prepare your file in an image editor. This is the important
 part! There are certain requirements for it to be processed by this program. If
 you are using an image editor that doesn't allow you to output in the right
 format then you might need to get one that can convert for you. I like Paint
-Shop Pro, it can easily do what you want here.
+Shop Pro 7, it can easily do what you want here.
 
-Requirement 1: The image should have a width and height that are multiples of 8.
-  If it's not, the program can handle that (adding padding) but it's not ideal.
+### Requirement 1
+The image should have a width and height that are multiples of 8.
+If it's not, the program can handle that (adding padding) but it's not ideal.
 
-Requirement 2: The image must be in one of these formats:
-  PNG
-  BMP
-  GIF
-  PCX
-  TGA
-  PPM
+### Requirement 2
+The image must be in one of these formats:
+- PNG
+- BMP
+- GIF
 
-Requirement 3: The image MUST be either in 1bpp, 4bpp or 8bpp format.
-  Higher bit depths are not acceptable. So there. The reason for this is
-  because you (should) want to control your palette, since it will be shared
-  among all the images you display. Your image editor should have facilities to
-  save a palette and apply it to all the images you want to use. Since a given
-  tile is limited to one of the two 16- colour palettes, there is no use for
-  any higher colour depth and by removing the possibility I remove the chance
-  of accidentally having higher indices. If you are using an 8-bit image and
-  you use too many colours, the program will not process it. You can define
-  colours beyond index 15, just don't use them.
+### Requirement 3
+The image MUST be either in 1bpp, 4bpp or 8bpp format.
+Higher bit depths are not acceptable. So there. The reason for this is
+because you (should) want to control your palette, since it will be shared
+among all the images you display. Your image editor should have facilities to
+save a palette and apply it to all the images you want to use. Since a given
+tile is limited to one of the two 16-colour palettes, there is no use for
+any higher colour depth and by removing the possibility I remove the chance
+of accidentally having higher indices. If you are using an 8-bit image and
+you use too many colours, the program will not process it. You can define
+colours beyond index 15, just don't use them.
 
 So, once you've got that all sussed, save your image to a file and then drag
 and drop it onto the program. (Alternatively, you can find your file the old-
 fashioned way with the Browse button.) Then it'll load it and process it for
 you. Then you have some options depending on what you want...
 
-Source tab
-==========
+## Source tab
 
-This will show you your image. Isn't that nice? If it's big, it'll be squashed
-to fit.
+This will show you your image. Isn't that nice?
 
-Tiles tab
-=========
+## Tiles tab
 
 This tab shows the tile data. It is in a suitable format to be used with
 WLA DX; if you use another assembler/compiler then you might need to
@@ -75,10 +63,14 @@ vertical mirror images of others will be removed. If you design your graphics
 with this in mind you can save a lot of graphics space.
 
 If "Treat as 8x16" is checked then the image is decomposed in the order
+
+```
   1 3 5
   2 4 6
   7 9 b
   8 a c
+```
+
 This is suitable for use with 8x16 sprites, for example. However, "Remove
 duplicates" may make the resulting data not work as expected. You probably
 ought to make sure the image height is a multiple of 16.
@@ -103,16 +95,14 @@ tiles that can be defined - the SMS is practically limited to 448 (0x1c0) tiles
 unless you squeeze some into unused tilemap/sprite table space, and you'll have
 to do that manually.
 
-Tilemap tab
-===========
+## Tilemap tab
 
 This tab shows the tilemap data. It is also in WLA DX's data format. If your
 tiles are sprites then you don't want this.
 
 "Save" does much the same as before.
 
-Palette tab
-===========
+## Palette tab
 
 This tab reads in the palette from the bitmap and attempts to convert it to
 data suitable for you to use. It's tricky because there are different ways to
@@ -122,7 +112,7 @@ Meka (both palette types) and eSMS but I recommend you use the bright Meka
 palette (colour values 0, 85, 170, 255) just because I prefer it.
 
 At the top you're shown the current palette. This is extracted from your image,
-ratehr than recreated from the converted data, but that shouldn't matter.
+rather than recreated from the converted data, but that shouldn't matter.
 
 There are a few options for the text output. If you want plain hex values then
 choose "Output hex (SMS)". If you choose "Output cl123 (SMS)" then you can
@@ -143,8 +133,7 @@ actually used).
 
 "Save" works again, but there are no plugins any more.
 
-Plugins
-=======
+# Plugins
 
 For saving tile and tilemap data, plugins are used. These are DLL files found
 in the same directory as the program, with filenames starting with "gfxcomp_".
@@ -158,19 +147,21 @@ If you want to write a plugin, make a DLL with the right filename that exports
 these functions (with cdecl calling convention, which is the default for most
 C/C++ DLLs):
 
-char* getName()
+`const char* getName()`
   Returns a null-terminated string giving the name of the format, for display.
-char* getExt()
+
+`char* getExt()`
   Returns a null-terminated file extension (without any preceding dot) that is
   used to build filename masks and to tell which plugin to use in commandline
   mode,
-int compressTiles(char* source, int numTiles, char* dest, int destLen)
+
+`int compressTiles(const char* source, int numTiles, char* dest, int destLen)`
   Compresses the tile data from source to dest. Each tile is 32 bytes. If
   destLen is too small, you must return 0. If there is an error while
   compressing (perhaps the tile data does not conform to some restriction),
   return -1. Else return the number of bytes inserted into the buffer.
-int compressTilemap(char* source, int width, int height, char* dest,
-  int destLen)
+
+`int compressTilemap(char* source, int width, int height, char* dest, int destLen)`
   Compresses the tilemap data from source to dest. Each tilemap entry is 2
   bytes in little-endian order. If destLen is too small, you must return 0. If
   there is an error (perhaps some restriction on the data), return -1. Else
@@ -178,64 +169,51 @@ int compressTilemap(char* source, int width, int height, char* dest,
 
 You can support one or both compressXXX functions.
 
-Commandline mode
-================
+# Commandline mode
 
 Pass the following on the commandline to make the corresponding option/action
 choices. Defaults are marked with *.
 
-Command switch      Effect
-<filename>          Load the specified bitmap. Note that the format
-                    restrictions are the same as before.
+|Command switch           |Effect                                       |
+|=========================|=============================================|
+|<filename>               |Load the specified bitmap. Note that the format restrictions are the same as before.           |
+|`-removedupes`           |*Optimise out duplicate tiles                                                                  |
+|`-noremovedupes`         |Or don't                                                                                       |
+|`-mirror`                |*Use tile mirroring to further optimise duplicates                                             |
+|`-nomirror`              |Or don't                                                                                       |
+|`-8x8`                   |*Treat tile data as 8x8                                                                        |
+|`-8x16`                  |Treat tile data as 8x16                                                                        |
+|`-planar`                |*Output planar tile data                                                                       |
+|`-chunky`                |Output chunky tile data                                                                        |
+|`-tileoffset` <n>        |The starting index of the first tile. *Default is 0.                                           |
+|`-spritepalette`         |Set the tilemap bit to make tiles use the sprite palette. *Default is unset.                   |
+|`-infrontofsprites`      |Set the tilemap bit to make tiles appear in front of sprites. *Default is unset.               |
+|`-palsms`                |*Output the palette in SMS colour format                                                       |
+|`-palgg`                 |Output the palette in GG colour format                                                         |
+|`-palcl123`              |Output the palette in SMS colour format, using constants of the form cl123 (see above).        |
+|`-fullpalette`           |Output 16 colours rather than as many as are present in the image.                             |
+|`-savetiles` <filename>  |Save tile data to <filename>. The format will be inferred from the extension of <filename>.    |
+|`-savetilemap` <filename>|Save tilemap data to <filename>. The format will be inferred from the extension of <filename>. |
+|`-savepalette` <filename>|Save palette data to <filename>. The format will be inferred from the extension of <filename>. |
 
--removedupes        *Optimise out duplicate tiles
--noremovedupes      Or don't
--mirror             *Use tile mirroring to further optimise duplicates
--nomirror           Or don't
--8x8                *Treat tile data as 8x8
--8x16               Treat tile data as 8x16
--planar             *Output planar tile data
--chunky             Output chunky tile data
--tileoffset <n>     The starting index of the first tile. *Default is 0.
+Note that options are interpreted ssequentially. That means you should specify any options (and the input file) before any
+`-save*` actions. It also you can chain together operations, as so:
 
--spritepalette      Set the tilemap bit to make tiles use the sprite palette.
-                    *Default is unset.
--infrontofsprites   Set the tilemap bit to make tiles appear in front of
-                    sprites. *Default is unset.
+```
+bmp2tile.exe foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "fool.tilemap.withmirroring.zx7" -nomirror -savetilemap "fool.tilemap.nomirroring.zx7"
+```
 
--palsms             *Output the palette in SMS colour format
--palgg              Output the palette in GG colour format
--palcl123           Output the palette in SMS colour format, using constants of
-                    the form cl123 (see above).
--fullpalette        Output 16 colours rather than as many as are present in the
-                    image.
+# Source
 
--savetiles <filename>
-                    Save tile data to <filename>. The format will be inferred
-                    from the extension of <filename>.
+https://github.com/maxim-zhao/bmp2tile
 
--savetilemap <filename>
-                    Save tilemap data to <filename>. The format will be inferred
-                    from the extension of <filename>.
+BMP2Tile started life in Delphi 7, but as of version 0.5 became written in C#.
+Most of the plugins are written in C++.
 
--savepalette <filename>
-                    Save palette data to <filename>. The format will be inferred
-                    from the extension of <filename>.
+# History
 
--exit               Exit the program after doing all the above
-
-Errors shown in commandline mode are often not very helpful, and no
-ERRORLEVEL values are returned. Be careful!
-
-Source
-======
-
-Included. It's not that great though. The main program is written in Delphi 7;
-plugins are written in Visual C++ 14.
-
-History
-=======
-
+0.5
+- Rewrite to C#. Commandline mode is now much faster and operates sequentially.
 0.44
 - Palette preview now shows you the result of mapping to the SMS or GG palette
 0.43
