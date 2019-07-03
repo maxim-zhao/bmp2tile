@@ -131,7 +131,7 @@ namespace BMP2Tile
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Console.Error.WriteLine($"Fatal error: {ex.Message}");
                 if (!(ex is AppException))

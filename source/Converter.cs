@@ -280,7 +280,7 @@ namespace BMP2Tile
                     _compressors["." + compressor.Extension.ToLowerInvariant()] = compressor;
                     Log($"Added \"{compressor.Name}\" ({compressor.Extension}) from {filename}", LogLevel.Verbose);
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     Log($"Failed to load {filename}: {ex.Message}");
                 }
