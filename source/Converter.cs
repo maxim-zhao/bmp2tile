@@ -302,7 +302,57 @@ namespace BMP2Tile
                 {
                     Log($"Loading {_filename}...");
 
-                    _bitmap = new Bitmap(_filename);
+                    if (_filename.EndsWith(".bin"))
+                    {
+                        // Raw tiles
+                        // We convert to a tall bitmap
+                        var data = File.ReadAllBytes(_filename);
+                        if (data.Length % 32 != 0)
+                        {
+                            throw new Exception($"{_filename} is {data.Length} bytes, not a multiple of 32!");
+                        }
+
+                        var height = data.Length / 32 * 8;
+                        _bitmap = new Bitmap(8, height, PixelFormat.Format8bppIndexed);
+                        var bitmapData = _bitmap.LockBits(
+                            new Rectangle(0, 0, 8, height), 
+                            ImageLockMode.ReadWrite,
+                            PixelFormat.Format8bppIndexed);
+                        // Convert the planar data into a chunky bitmap...
+                        var row = new byte[4];
+                        var chunky = new byte[8];
+                        for (int y = 0; y < height; ++y)
+                        {
+                            // Get the data for a row of pixels
+                            Array.Copy(data, y*4, row, 0, 4);
+                            // Convert to chunky
+                            for (int x = 0; x < 8; ++x)
+                            {
+                                var pixel = 0;
+                                var bitPosition = 7 - x;
+                                for (int b = 0; b < 4; ++b)
+                                {
+                                    // Get bit from bitplane
+                                    var bitplane = row[b];
+                                    // Mask
+                                    int bit = (bitplane >> bitPosition) & 1;
+                                    // Merge into pixel at right place
+                                    pixel |= bit << b;
+                                }
+                                // Then set it
+                                chunky[x] = (byte)pixel;
+                            }
+                            // Then copy to the image
+                            Marshal.Copy(chunky, 0, bitmapData.Scan0 + bitmapData.Stride * y, 8);
+                        }
+                        _bitmap.UnlockBits(bitmapData);
+                        _bitmap.Palette.Entries[0] = Color.Red;
+                        _bitmap.Palette.Entries[1] = Color.White;
+                    }
+                    else
+                    {
+                        _bitmap = new Bitmap(_filename);
+                    }
 
                     Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
 
