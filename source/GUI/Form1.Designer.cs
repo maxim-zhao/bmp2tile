@@ -402,9 +402,9 @@
             this.cbFullPalette.AutoSize = true;
             this.cbFullPalette.Location = new System.Drawing.Point(153, 226);
             this.cbFullPalette.Name = "cbFullPalette";
-            this.cbFullPalette.Size = new System.Drawing.Size(133, 17);
+            this.cbFullPalette.Size = new System.Drawing.Size(160, 17);
             this.cbFullPalette.TabIndex = 3;
-            this.cbFullPalette.Text = "Always emit &16 colours";
+            this.cbFullPalette.Text = "Always emit &16 or 32 colours";
             this.cbFullPalette.UseVisualStyleBackColor = true;
             this.cbFullPalette.CheckedChanged += new System.EventHandler(this.ControlChanged);
             // 

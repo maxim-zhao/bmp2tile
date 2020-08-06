@@ -454,6 +454,7 @@ namespace BMP2Tile
             }
 
             GetBitmap();
+            GetTiles();
 
             Log("Creating tilemap", LogLevel.Verbose);
 
@@ -467,12 +468,13 @@ namespace BMP2Tile
             {
                 tilemap[point.X / 8, point.Y / 8] = new Tilemap.Entry
                 {
-                    TileIndex = i++,
+                    TileIndex = i,
                     HFlip = false,
                     VFlip = false,
                     HighPriority = _highPriority,
-                    UseSpritePalette = _useSpritePalette
+                    UseSpritePalette = _useSpritePalette || _tiles[i - (int)_tileOffset].UseSpritePalette
                 };
+                ++i;
             }
 
             _tilemap = tilemap;
@@ -502,19 +504,12 @@ namespace BMP2Tile
                     ImageLockMode.ReadOnly,
                     _bitmap.PixelFormat);
 
-                var tiles = new List<Tile>();
-
                 // We want to split the image to 8x8 chunks in the required order
-                foreach (var coordinate in GetTileCoordinates(_bitmap.Width, _bitmap.Height))
-                {
-                    var tileData = GetTile(coordinate, bitmapData);
-
-                    tiles.Add(new Tile(tileData));
-                }
+                _tiles = GetTileCoordinates(_bitmap.Width, _bitmap.Height)
+                    .Select(coordinate => GetTile(coordinate, bitmapData))
+                    .ToList();
 
                 _optimized = false;
-
-                _tiles = tiles;
 
                 Log($"Created {_tiles.Count} tiles", LogLevel.Verbose);
             }
@@ -527,9 +522,10 @@ namespace BMP2Tile
             }
         }
 
-        private byte[] GetTile(Point coordinate, BitmapData bitmapData)
+        private Tile GetTile(Point coordinate, BitmapData bitmapData)
         {
             var tileData = new byte[8 * 8];
+            bool useSpritePalette = false;
 
             switch (bitmapData.PixelFormat)
             {
@@ -543,6 +539,18 @@ namespace BMP2Tile
                             y * 8,
                             8);
                     }
+                    // Then we sanity-check the range
+                    var maxIndex = tileData.Max();
+                    if (maxIndex > 31)
+                    {
+                        throw new AppException("Image uses more than the first 32 palette indices");
+                    }
+
+                    if (maxIndex > 15)
+                    {
+                        useSpritePalette = SelectTilePalette(tileData);
+                    }
+
                     break;
                 case PixelFormat.Format4bppIndexed:
                     for (int y = 0; y < 8; ++y)
@@ -573,7 +581,57 @@ namespace BMP2Tile
                     throw new AppException($"Unsupported bitmap format {bitmapData.PixelFormat}");
             }
 
-            return tileData;
+            return new Tile(tileData, useSpritePalette);
+        }
+
+        private bool SelectTilePalette(IList<byte> tileData)
+        {
+            // If all indices are high, we are good
+            if (tileData.Min() > 15)
+            {
+                return true;
+            }
+
+            // Else we try to remap to either the low or high palette.
+            var palettes = _bitmap.Palette.Entries.Take(32).ToList();
+            if (RestrictTilePalette(tileData, palettes, 16, 31))
+            {
+                // It fits in the high 16, so we return true to indicate to use the sprite palette
+                return true;
+            }
+
+            if (RestrictTilePalette(tileData, palettes, 0, 15))
+            {
+                // It fits in the low 16, so we return false to indicate not to use the sprite palette
+                return false;
+            }
+
+            // Else it's a failure
+            throw new AppException("Image uses colors from both palettes");
+        }
+
+        private bool RestrictTilePalette(IList<byte> tileData, List<Color> palette, int minimumIndex, int maximumIndex)
+        {
+            int range = maximumIndex - minimumIndex + 1;
+            for (var i = 0; i < tileData.Count; i++)
+            {
+                var b = tileData[i];
+                if (b < minimumIndex || b > maximumIndex)
+                {
+                    // Try to remap to a color in the preferred range
+                    var preferredIndex = palette.IndexOf(palette[b], minimumIndex, range);
+                    if (preferredIndex == -1)
+                    {
+                        // Failed to find a match
+                        return false;
+                    }
+
+                    tileData[i] = (byte)preferredIndex;
+                }
+            }
+
+            // Success if we get to the end
+            return true;
         }
 
         private IEnumerable<Point> GetTileCoordinates(int width, int height)
@@ -623,21 +681,26 @@ namespace BMP2Tile
             // We do that by getting the tiles...
             GetTiles();
             var highestIndexUsed = _tiles.SelectMany(tile => tile.Indices).Max();
-            if (highestIndexUsed > 15)
+            if (highestIndexUsed > 31)
             {
                 var numIndicesUsed = _tiles.SelectMany(tile => tile.Indices).Distinct().Count();
-                throw new AppException($"Image uses colours up to index {highestIndexUsed} - this must be no more than 15. There are {numIndicesUsed} palette entries used.");
+                throw new AppException($"Image uses colors up to index {highestIndexUsed} - this must be no more than 31 (0-based). There are {numIndicesUsed} palette entries used.");
             }
 
             var paletteEntries = _bitmap.Palette.Entries.ToList();
 
             if (_fullPalette)
             {
-                // Extend to 16 if smaller
-                if (paletteEntries.Count < 16)
+                // Extend if smaller, truncate if larger
+                int requiredSize = highestIndexUsed > 15 ? 32 : 16;
+                if (paletteEntries.Count < requiredSize)
                 {
-                    Log("Extending palette to 16 entries", LogLevel.Verbose);
-                    paletteEntries.AddRange(Enumerable.Repeat(Color.Black, 16 - paletteEntries.Count));
+                    Log($"Extending palette to {requiredSize} entries", LogLevel.Verbose);
+                    paletteEntries.AddRange(Enumerable.Repeat(Color.Black, requiredSize - paletteEntries.Count));
+                }
+                else
+                {
+                    paletteEntries.RemoveRange(requiredSize, paletteEntries.Count - requiredSize);
                 }
             }
             else if (paletteEntries.Count > highestIndexUsed + 1)

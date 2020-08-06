@@ -5,10 +5,12 @@ namespace BMP2Tile
 {
     internal class Tile
     {
+        public bool UseSpritePalette { get; }
         private readonly byte[] _data;
 
-        public Tile(byte[] data)
+        public Tile(byte[] data, bool useSpritePalette)
         {
+            UseSpritePalette = useSpritePalette;
             _data = data;
         }
 
@@ -26,7 +28,7 @@ namespace BMP2Tile
             }
             else
             {
-                // We want to convert to chunky, where each group of four bytes is the bitplanes of one row of pixels
+                // We want to convert to planar, where each group of four bytes is the bitplanes of one row of pixels
                 for (int rowOffset = 0; rowOffset < _data.Length; rowOffset += 8)
                 {
                     // For this row of pixels, we want to select one bitplane at a time, least significant first
