@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -148,10 +149,12 @@ namespace BMP2Tile
             Log("Saving tiles...", LogLevel.Verbose);
 
             var compressor = GetCompressor(filename);
+            var sw = Stopwatch.StartNew();
             var bytes = compressor.CompressTiles(_tiles, Chunky);
             File.WriteAllBytes(filename, bytes.ToArray());
+            sw.Stop();
 
-            Log($"Saved tiles in format \"{compressor.Name}\" to {filename}");
+            Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}");
         }
 
         public string GetTilesAsText()
@@ -175,10 +178,12 @@ namespace BMP2Tile
 
             var compressor = GetCompressor(filename);
             Log("Compressing tilemap...", LogLevel.Verbose);
+            var sw = Stopwatch.StartNew();
             var bytes = compressor.CompressTilemap(_tilemap);
             File.WriteAllBytes(filename, bytes.ToArray());
+            sw.Stop();
 
-            Log($"Saved tilemap in format \"{compressor.Name}\" to {filename}");
+            Log($"Saved tilemap in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}");
         }
 
         public string GetTilemapAsText()
