@@ -44,6 +44,8 @@
             this.cbRemoveDuplicates = new System.Windows.Forms.CheckBox();
             this.tbTiles = new System.Windows.Forms.TextBox();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tbFirstTileIndex = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.btnSaveTilemap = new System.Windows.Forms.Button();
             this.cbHighPriority = new System.Windows.Forms.CheckBox();
             this.cbSpritePalette = new System.Windows.Forms.CheckBox();
@@ -51,15 +53,13 @@
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.rbHexGG = new System.Windows.Forms.RadioButton();
             this.rbHexSMS = new System.Windows.Forms.RadioButton();
+            this.cbPaletteConstants = new System.Windows.Forms.CheckBox();
             this.pbPalette = new System.Windows.Forms.PictureBox();
             this.btnSavePalette = new System.Windows.Forms.Button();
             this.cbFullPalette = new System.Windows.Forms.CheckBox();
             this.tbPalette = new System.Windows.Forms.TextBox();
             this.tabPage5 = new System.Windows.Forms.TabPage();
             this.tbMessages = new System.Windows.Forms.TextBox();
-            this.tbFirstTileIndex = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.cbPaletteConstants = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -282,6 +282,27 @@
             this.tabPage3.Text = "Tilemap";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // tbFirstTileIndex
+            // 
+            this.tbFirstTileIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.tbFirstTileIndex.Location = new System.Drawing.Point(239, 201);
+            this.tbFirstTileIndex.MaxLength = 4;
+            this.tbFirstTileIndex.Name = "tbFirstTileIndex";
+            this.tbFirstTileIndex.Size = new System.Drawing.Size(36, 20);
+            this.tbFirstTileIndex.TabIndex = 4;
+            this.tbFirstTileIndex.Text = "0";
+            this.tbFirstTileIndex.TextChanged += new System.EventHandler(this.ControlChanged);
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(153, 204);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(80, 13);
+            this.label1.TabIndex = 3;
+            this.label1.Text = "&Index of first tile";
+            // 
             // btnSaveTilemap
             // 
             this.btnSaveTilemap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -376,6 +397,18 @@
             this.rbHexSMS.UseVisualStyleBackColor = true;
             this.rbHexSMS.CheckedChanged += new System.EventHandler(this.ControlChanged);
             // 
+            // cbPaletteConstants
+            // 
+            this.cbPaletteConstants.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.cbPaletteConstants.AutoSize = true;
+            this.cbPaletteConstants.Location = new System.Drawing.Point(153, 203);
+            this.cbPaletteConstants.Name = "cbPaletteConstants";
+            this.cbPaletteConstants.Size = new System.Drawing.Size(129, 17);
+            this.cbPaletteConstants.TabIndex = 10;
+            this.cbPaletteConstants.Text = "Use &constants (cl123)";
+            this.cbPaletteConstants.UseVisualStyleBackColor = true;
+            this.cbPaletteConstants.CheckedChanged += new System.EventHandler(this.ControlChanged);
+            // 
             // pbPalette
             // 
             this.pbPalette.Location = new System.Drawing.Point(5, 5);
@@ -446,39 +479,6 @@
             this.tbMessages.Size = new System.Drawing.Size(652, 236);
             this.tbMessages.TabIndex = 0;
             // 
-            // tbFirstTileIndex
-            // 
-            this.tbFirstTileIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.tbFirstTileIndex.Location = new System.Drawing.Point(239, 201);
-            this.tbFirstTileIndex.MaxLength = 4;
-            this.tbFirstTileIndex.Name = "tbFirstTileIndex";
-            this.tbFirstTileIndex.Size = new System.Drawing.Size(36, 20);
-            this.tbFirstTileIndex.TabIndex = 4;
-            this.tbFirstTileIndex.Text = "0";
-            this.tbFirstTileIndex.TextChanged += new System.EventHandler(this.ControlChanged);
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(153, 204);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(80, 13);
-            this.label1.TabIndex = 3;
-            this.label1.Text = "&Index of first tile";
-            // 
-            // cbPaletteConstants
-            // 
-            this.cbPaletteConstants.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.cbPaletteConstants.AutoSize = true;
-            this.cbPaletteConstants.Location = new System.Drawing.Point(153, 203);
-            this.cbPaletteConstants.Name = "cbPaletteConstants";
-            this.cbPaletteConstants.Size = new System.Drawing.Size(129, 17);
-            this.cbPaletteConstants.TabIndex = 10;
-            this.cbPaletteConstants.Text = "Use &constants (cl123)";
-            this.cbPaletteConstants.UseVisualStyleBackColor = true;
-            this.cbPaletteConstants.CheckedChanged += new System.EventHandler(this.ControlChanged);
-            // 
             // Form1
             // 
             this.AllowDrop = true;
@@ -490,7 +490,7 @@
             this.Controls.Add(this.groupBox1);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
-            this.Text = "Bitmap to SMS/GG tile converter 0.5 by Maxim :: smspower.org";
+            this.Text = "Bitmap to SMS/GG tile converter 0.6 by Maxim :: smspower.org";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
