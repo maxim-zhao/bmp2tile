@@ -612,7 +612,7 @@ namespace BMP2Tile
 
         private bool RestrictTilePalette(IList<byte> tileData, List<Color> palette, int minimumIndex, int maximumIndex)
         {
-            int range = maximumIndex - minimumIndex + 1;
+            int range = Math.Min(maximumIndex, palette.Count - 1) - minimumIndex + 1;
             for (var i = 0; i < tileData.Count; i++)
             {
                 var b = tileData[i];
