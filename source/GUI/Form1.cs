@@ -175,6 +175,7 @@ namespace BMP2TileGUI
             _converter.RemoveDuplicates = cbRemoveDuplicates.Checked;
             _converter.UseMirroring = cbUseMirroring.Checked;
             _converter.AdjacentBelow = cb8x16.Checked;
+            _converter.Chunky = !cbPlanar.Checked;
             if (!uint.TryParse(tbFirstTileIndex.Text, out var tileOffset))
             {
                 tileOffset = 0;
