@@ -31,6 +31,7 @@ namespace BMP2Tile
         private Bitmap _bitmap;
         private bool _optimized;
         private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
+        private readonly HashSet<byte> _paletteIndicesUsed = new HashSet<byte>();
 
         #endregion
 
@@ -506,6 +507,9 @@ namespace BMP2Tile
                     ImageLockMode.ReadOnly,
                     _bitmap.PixelFormat);
 
+                // We want to find some info about the palette as we go here, so we reset the values now.
+                _paletteIndicesUsed.Clear();
+
                 // We want to split the image to 8x8 chunks in the required order
                 _tiles = GetTileCoordinates(_bitmap.Width, _bitmap.Height)
                     .Select(coordinate => GetTile(coordinate, bitmapData))
@@ -527,7 +531,6 @@ namespace BMP2Tile
         private Tile GetTile(Point coordinate, BitmapData bitmapData)
         {
             var tileData = new byte[8 * 8];
-            bool useSpritePalette = false;
 
             switch (bitmapData.PixelFormat)
             {
@@ -541,6 +544,7 @@ namespace BMP2Tile
                             y * 8,
                             8);
                     }
+
                     // Then we sanity-check the range
                     var maxIndex = tileData.Max();
                     if (maxIndex > 31)
@@ -550,7 +554,7 @@ namespace BMP2Tile
 
                     if (maxIndex > 15)
                     {
-                        useSpritePalette = SelectTilePalette(tileData);
+                        SelectTilePalette(tileData);
                     }
 
                     break;
@@ -583,15 +587,16 @@ namespace BMP2Tile
                     throw new AppException($"Unsupported bitmap format {bitmapData.PixelFormat}");
             }
 
-            return new Tile(tileData, useSpritePalette);
+            _paletteIndicesUsed.UnionWith(tileData);
+            return new Tile(tileData);
         }
 
-        private bool SelectTilePalette(IList<byte> tileData)
+        private void SelectTilePalette(IList<byte> tileData)
         {
             // If all indices are high, we are good
             if (tileData.Min() > 15)
             {
-                return true;
+                return;
             }
 
             // Else we try to remap to either the low or high palette.
@@ -599,13 +604,13 @@ namespace BMP2Tile
             if (RestrictTilePalette(tileData, palettes, 16, 31))
             {
                 // It fits in the high 16, so we return true to indicate to use the sprite palette
-                return true;
+                return;
             }
 
             if (RestrictTilePalette(tileData, palettes, 0, 15))
             {
                 // It fits in the low 16, so we return false to indicate not to use the sprite palette
-                return false;
+                return;
             }
 
             // Else it's a failure
@@ -628,11 +633,9 @@ namespace BMP2Tile
                         return false;
                     }
 
-                    // We truncate to 4 bits here
                     b = (byte)preferredIndex;
                 }
-                // We truncate to 4 bits here
-                tileData[i] = (byte)(b & 0xf);
+                tileData[i] = b;
             }
 
             // Success if we get to the end
@@ -676,20 +679,18 @@ namespace BMP2Tile
             GetBitmap();
 
             // First we read out the palette
-            // TODO check what we get on non-paletted images - I'm assuming null
-            if (_bitmap.Palette == null)
+            if (_bitmap.Palette == null || _bitmap.Palette.Entries.Length == 0)
             {
                 throw new AppException("Image is not paletted. You must provide a 4- or 8-bit paletted image.");
             }
 
             // We want to find the highest index used in the data
-            // We do that by getting the tiles...
+            // We do that by getting the tiles, as this also "corrects" mixed-palette-range tiles.
             GetTiles();
-            var highestIndexUsed = _tiles.SelectMany(tile => tile.Indices).Max();
+            var highestIndexUsed = _paletteIndicesUsed.Max();
             if (highestIndexUsed > 31)
             {
-                var numIndicesUsed = _tiles.SelectMany(tile => tile.Indices).Distinct().Count();
-                throw new AppException($"Image uses colors up to index {highestIndexUsed} - this must be no more than 31 (0-based). There are {numIndicesUsed} palette entries used.");
+                throw new AppException($"Image uses colors up to index {highestIndexUsed} - this must be no more than 31 (0-based). There are {_paletteIndicesUsed.Count} palette entries used.");
             }
 
             var paletteEntries = _bitmap.Palette.Entries.ToList();

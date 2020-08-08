@@ -5,14 +5,18 @@ namespace BMP2Tile
 {
     internal class Tile
     {
-        public bool UseSpritePalette { get; }
         private readonly byte[] _data;
 
-        public Tile(byte[] data, bool useSpritePalette)
+        public Tile(byte[] data)
         {
-            UseSpritePalette = useSpritePalette;
-            _data = data;
+            // Truncate to 4bpp
+            _data = data.Select(x => (byte)(x & 0xf)).ToArray();
+            // Note if the tile was using the sprite palette
+            UseSpritePalette = data.Any(x => x > 15);
         }
+
+        // Note that this is only relevant to the "unoptimised" tile data, it is meaningless post-optimisation
+        public bool UseSpritePalette { get; }
 
         public IEnumerable<byte> Indices => _data;
 
@@ -110,10 +114,7 @@ namespace BMP2Tile
                     return Match.BothFlip;
                 }
             }
-
             return Match.None;
         }
-
-
     }
 }
