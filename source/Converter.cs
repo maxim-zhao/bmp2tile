@@ -626,8 +626,11 @@ namespace BMP2Tile
                         return false;
                     }
 
-                    tileData[i] = (byte)preferredIndex;
+                    // We truncate to 4 bits here
+                    b = (byte)preferredIndex;
                 }
+                // We truncate to 4 bits here
+                tileData[i] = (byte)(b & 0xf);
             }
 
             // Success if we get to the end
