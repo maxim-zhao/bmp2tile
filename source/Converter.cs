@@ -356,7 +356,9 @@ namespace BMP2Tile
                     }
                     else
                     {
-                        _bitmap = new Bitmap(_filename);
+                        // Loading this way avoids locking the file
+                        var converter = new ImageConverter();
+                        _bitmap = (Bitmap) converter.ConvertFrom(File.ReadAllBytes(_filename));
                     }
 
                     Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
