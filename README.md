@@ -141,37 +141,37 @@ in the same directory as the program, with filenames starting with "gfxcomp_".
 Each plugin must define a unique file extension for its data. (Double
 extensions don't work.) This allows the commandline mode (see below) to infer
 the plugin to use. It also helps to have it define a reasonable name for itself.
-plugins can be tiles-only, tilemap-only or both.
+Plugins can be tiles-only, tilemap-only or both.
 
 If you want to write a plugin, make a DLL with the right filename that exports
 these functions (with cdecl calling convention, which is the default for most
 C/C++ DLLs):
 
 ```C
-const char* getName()`
+extern "C" __declspec(dllexport) const char* getName()
 ```
 Returns a null-terminated string giving the name of the format, for display.
 
 ```C
-const char* getExt()
+extern "C" __declspec(dllexport) const char* getExt()
 ```
 Returns a null-terminated file extension (without any preceding dot) that is
 used to build filename masks and to tell which plugin to use in commandline
 mode.
 
 ```C
-int compressTiles(const char* source, int numTiles, char* dest, int destLen)
+extern "C" __declspec(dllexport) int compressTiles(const uint8_t* pSource, const uint32_t numTiles, uint8_t* pDestination, const uint32_t destinationLength)
 ```
-Compresses the tile data from source to dest. Each tile is 32 bytes. If
-destLen is too small, you must return 0. If there is an error while
+Compresses the tile data from pSource to pDestination. Each tile is 32 bytes. If
+destinationLength is too small, you must return 0. If there is an error while
 compressing (perhaps the tile data does not conform to some restriction),
 return -1. Else return the number of bytes inserted into the buffer.
 
 ```C
-int compressTilemap(const char* source, int width, int height, char* dest, int destLen)
+extern "C" __declspec(dllexport) int compressTilemap(const uint8_t* pSource, const uint32_t width, const uint32_t height, uint8_t* pDestination, const uint32_t destinationLength)
 ```
-Compresses the tilemap data from source to dest. Each tilemap entry is 2
-bytes in little-endian order. If destLen is too small, you must return 0. If
+Compresses the tilemap data from pSource to pDestination. Each tilemap entry is 2
+bytes in little-endian order. If destinationLength is too small, you must return 0. If
 there is an error (perhaps some restriction on the data), return -1. Else
 return the number of bytes inserted into the buffer.
 

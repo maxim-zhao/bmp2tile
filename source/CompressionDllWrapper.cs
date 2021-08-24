@@ -20,9 +20,9 @@ namespace BMP2Tile
 
         // BMP2Tile exported function signatures
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int SaveTilesDelegate(byte[] source, int numtiles, byte[] dest, int destLen); 
+        private delegate int SaveTilesDelegate(byte[] source, uint numTiles, byte[] dest, uint destLen); 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate int SaveTilemapDelegate(byte[] source, int width, int height, byte[] dest, int destLen);
+        private delegate int SaveTilemapDelegate(byte[] source, uint width, uint height, byte[] dest, uint destLen);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate IntPtr GetStringDelegate();
 
@@ -70,7 +70,7 @@ namespace BMP2Tile
             // First we convert the tiles to a buffer
             var source = tiles.SelectMany(tile => tile.GetValue(asChunky)).ToArray();
 
-            return Compress(dest => _saveTiles(source, tiles.Count, dest, dest.Length));
+            return Compress(dest => _saveTiles(source, (uint)tiles.Count, dest, (uint)dest.Length));
         }
 
         public IEnumerable<byte> CompressTilemap(Tilemap tilemap)
@@ -90,7 +90,7 @@ namespace BMP2Tile
                 source.Add((byte)((entry >> 8) & 0xff));
             }
 
-            return Compress(dest => _saveTilemap(source.ToArray(), tilemap.Width, tilemap.Height, dest, dest.Length));
+            return Compress(dest => _saveTilemap(source.ToArray(), (uint)tilemap.Width, (uint)tilemap.Height, dest, (uint)dest.Length));
         }
 
         private IEnumerable<byte> Compress(Func<byte[], int> compressor)
