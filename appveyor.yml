@@ -5,6 +5,9 @@ platform: x86
 build:
   verbosity: minimal
 after_build:
-- cmd: 7z a bmp2tile.zip *.exe readme.* license
+- cmd: |
+    appveyor DownloadFile https://github.com/maxim-zhao/bmp2tilecompressors/releases/download/Build-54/bmp2tilecompressors.zip
+    7z x bmp2tilecompressors.zip
+    7z a bmp2tile.zip *.exe readme.* license gfxcomp*.dll
 artifacts:
 - path: '*.zip'
