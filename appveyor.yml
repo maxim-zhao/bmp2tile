@@ -10,4 +10,4 @@ after_build:
     7z x bmp2tilecompressors.zip
     7z a bmp2tile.zip *.exe readme.* license gfxcomp*.dll
 artifacts:
-- path: '*.zip'
+- path: 'bmp2tile.zip'
