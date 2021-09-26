@@ -81,8 +81,8 @@ namespace BMP2Tile
             }
             // First we convert the tilemap to a buffer
             var source = new List<byte>();
-            for (int y = 0; y < tilemap.Height; ++y)
-            for (int x = 0; x < tilemap.Width; ++x)
+            for (var y = 0; y < tilemap.Height; ++y)
+            for (var x = 0; x < tilemap.Width; ++x)
             {
                 var entry = tilemap[x, y].GetValue();
                 // Little-endian
@@ -93,7 +93,7 @@ namespace BMP2Tile
             return Compress(dest => _saveTilemap(source.ToArray(), (uint)tilemap.Width, (uint)tilemap.Height, dest, (uint)dest.Length));
         }
 
-        private IEnumerable<byte> Compress(Func<byte[], int> compressor)
+        private static IEnumerable<byte> Compress(Func<byte[], int> compressor)
         {
             // Then we make a buffer to compress into... we try bigger sizes if it doesn't seem big enough
             for (var bufferSize = 16 * 1024; bufferSize <= 1024 * 1024; bufferSize *= 2)

@@ -327,21 +327,21 @@ namespace BMP2Tile
                         // Convert the planar data into a chunky bitmap...
                         var row = new byte[4];
                         var chunky = new byte[8];
-                        for (int y = 0; y < height; ++y)
+                        for (var y = 0; y < height; ++y)
                         {
                             // Get the data for a row of pixels
                             Array.Copy(data, y*4, row, 0, 4);
                             // Convert to chunky
-                            for (int x = 0; x < 8; ++x)
+                            for (var x = 0; x < 8; ++x)
                             {
                                 var pixel = 0;
                                 var bitPosition = 7 - x;
-                                for (int b = 0; b < 4; ++b)
+                                for (var b = 0; b < 4; ++b)
                                 {
                                     // Get bit from bitplane
                                     var bitplane = row[b];
                                     // Mask
-                                    int bit = (bitplane >> bitPosition) & 1;
+                                    var bit = (bitplane >> bitPosition) & 1;
                                     // Merge into pixel at right place
                                     pixel |= bit << b;
                                 }
@@ -398,13 +398,13 @@ namespace BMP2Tile
             var tileCountBefore = _tiles.Count;
 
             // We pass through the tiles and clear out any duplicates
-            for (int i = 0; i < _tiles.Count; ++i)
+            for (var i = 0; i < _tiles.Count; ++i)
             {
                 // Compare tile i to the ones following it
                 // Replace duplicates with this one
                 var thisTile = _tiles[i];
                 var thisTileIndex = (int)(i + _tileOffset);
-                for (int j = i + 1; j < _tiles.Count; /* increment in loop */)
+                for (var j = i + 1; j < _tiles.Count; /* increment in loop */)
                 {
                     var comparedTile = _tiles[j];
                     var comparison = thisTile.Compare(comparedTile, _useMirroring);
@@ -535,7 +535,7 @@ namespace BMP2Tile
             switch (bitmapData.PixelFormat)
             {
                 case PixelFormat.Format8bppIndexed:
-                    for (int y = 0; y < 8; ++y)
+                    for (var y = 0; y < 8; ++y)
                     {
                         // Copy data 8 pixels at a time
                         Marshal.Copy(
@@ -559,11 +559,11 @@ namespace BMP2Tile
 
                     break;
                 case PixelFormat.Format4bppIndexed:
-                    for (int y = 0; y < 8; ++y)
+                    for (var y = 0; y < 8; ++y)
                     {
                         // We need to extend from 4bpp to 8bpp
                         var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 2;
-                        for (int i = 0; i < 4; ++i)
+                        for (var i = 0; i < 4; ++i)
                         {
                             var b = Marshal.ReadByte(data, i);
                             tileData[y * 8 + i * 2 + 0] = (byte)((b >> 4) & 0xf);
@@ -572,12 +572,12 @@ namespace BMP2Tile
                     }
                     break;
                 case PixelFormat.Format1bppIndexed:
-                    for (int y = 0; y < 8; ++y)
+                    for (var y = 0; y < 8; ++y)
                     {
                         // We need to extend from 1bpp to 8bpp
                         var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 8;
                         var b = Marshal.ReadByte(data);
-                        for (int i = 0; i < 8; ++i)
+                        for (var i = 0; i < 8; ++i)
                         {
                             tileData[y * 8 + i] = (byte)((b >> (7 - i)) & 0b1);
                         }
@@ -617,9 +617,9 @@ namespace BMP2Tile
             throw new AppException("Image uses colors from both palettes");
         }
 
-        private bool RestrictTilePalette(IList<byte> tileData, List<Color> palette, int minimumIndex, int maximumIndex)
+        private static bool RestrictTilePalette(IList<byte> tileData, List<Color> palette, int minimumIndex, int maximumIndex)
         {
-            int range = Math.Min(maximumIndex, palette.Count - 1) - minimumIndex + 1;
+            var range = Math.Min(maximumIndex, palette.Count - 1) - minimumIndex + 1;
             for (var i = 0; i < tileData.Count; i++)
             {
                 var b = tileData[i];
@@ -652,8 +652,8 @@ namespace BMP2Tile
                     throw new AppException($"Image's height ({_bitmap.Height}) is not a multiple of 16");
                 }
 
-                for (int y = 0; y < height; y += 16)
-                for (int x = 0; x < width; x += 8)
+                for (var y = 0; y < height; y += 16)
+                for (var x = 0; x < width; x += 8)
                 {
                     yield return new Point(x, y);
                     yield return new Point(x, y+8);
@@ -661,8 +661,8 @@ namespace BMP2Tile
             }
             else
             {
-                for (int y = 0; y < height; y += 8)
-                for (int x = 0; x < width; x += 8)
+                for (var y = 0; y < height; y += 8)
+                for (var x = 0; x < width; x += 8)
                 {
                     yield return new Point(x, y);
                 }
@@ -698,7 +698,7 @@ namespace BMP2Tile
             if (_fullPalette)
             {
                 // Extend if smaller, truncate if larger
-                int requiredSize = highestIndexUsed > 15 ? 32 : 16;
+                var requiredSize = highestIndexUsed > 15 ? 32 : 16;
                 if (paletteEntries.Count < requiredSize)
                 {
                     Log($"Extending palette to {requiredSize} entries", LogLevel.Verbose);

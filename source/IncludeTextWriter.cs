@@ -20,14 +20,14 @@ namespace BMP2Tile
             return TextToBytes(TilesToText(tiles, asChunky));
         }
 
-        private IEnumerable<byte> TextToBytes(IEnumerable<string> lines)
+        private static IEnumerable<byte> TextToBytes(IEnumerable<string> lines)
         {
             return lines.SelectMany(s => Encoding.ASCII.GetBytes(s + Environment.NewLine));
         }
 
-        private IEnumerable<string> TilesToText(ICollection<Tile> tiles, bool asChunky)
+        private static IEnumerable<string> TilesToText(IEnumerable<Tile> tiles, bool asChunky)
         {
-            int index = 0;
+            var index = 0;
             foreach (var rawData in tiles.Select(t => t.GetValue(asChunky)))
             {
                 yield return $"; Tile index ${index++:X3}";
@@ -40,12 +40,12 @@ namespace BMP2Tile
             return TextToBytes(TilemapToText(tilemap));
         }
 
-        private IEnumerable<string> TilemapToText(Tilemap tilemap)
+        private static IEnumerable<string> TilemapToText(Tilemap tilemap)
         {
             for (var y = 0; y < tilemap.Height; ++y)
             {
                 var row = ".dw";
-                for (int x = 0; x < tilemap.Width; ++x)
+                for (var x = 0; x < tilemap.Width; ++x)
                 {
                     row += " $" + tilemap[x, y].GetValue().ToString("X4");
                 }

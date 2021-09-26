@@ -149,7 +149,7 @@ namespace BMP2TileGUI
         {
             Try(() =>
             {
-                string filter = "Include files (*.inc)|*.inc";
+                var filter = "Include files (*.inc)|*.inc";
                 if (rbHexGG.Checked || (rbHexSMS.Checked && !cbPaletteConstants.Checked))
                 {
                     filter += "|Binary files (*.bin)|*.bin";
@@ -209,22 +209,22 @@ namespace BMP2TileGUI
             using (var g = Graphics.FromImage(bitmap))
             {
                 var n = palettes[0].Count;
-                for (int x = 0; x < n; ++x)
+                for (var x = 0; x < n; ++x)
                 {
-                    var xpos = x * bitmap.Width / n;
-                    var ypos = 0;
-                    var width = (x + 1) * bitmap.Width / n - xpos;
+                    var xPos = x * bitmap.Width / n;
+                    var yPos = 0;
+                    var width = (x + 1) * bitmap.Width / n - xPos;
                     var height = bitmap.Height / 2;
                     using (var brush = new SolidBrush(palettes[0][x]))
                     {
-                        g.FillRectangle(brush, xpos, ypos, width, height);
+                        g.FillRectangle(brush, xPos, yPos, width, height);
                     }
 
-                    ypos = height;
+                    yPos = height;
                     height = bitmap.Height - height;
                     using (var brush = new SolidBrush(palettes[1][x]))
                     {
-                        g.FillRectangle(brush, xpos, ypos, width, height);
+                        g.FillRectangle(brush, xPos, yPos, width, height);
                     }
                 }
             }

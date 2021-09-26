@@ -15,17 +15,15 @@ namespace BMP2Tile
             UseSpritePalette = data.Any(x => x > 15);
         }
 
-        // Note that this is only relevant to the "unoptimised" tile data, it is meaningless post-optimisation
+        // Note that this is only relevant to the "unoptimized" tile data, it is meaningless post-optimization
         public bool UseSpritePalette { get; }
-
-        public IEnumerable<byte> Indices => _data;
 
         public IEnumerable<byte> GetValue(bool asChunky)
         {
             if (asChunky)
             {
                 // Our data is chunky - each byte corresponds to one pixel. We just need to pack nibbles into bytes.
-                for (int i = 0; i < _data.Length; i += 2)
+                for (var i = 0; i < _data.Length; i += 2)
                 {
                     yield return (byte) (((_data[i] & 0xf) << 4) | (_data[i + 1] & 0xf));
                 }
@@ -33,14 +31,14 @@ namespace BMP2Tile
             else
             {
                 // We want to convert to planar, where each group of four bytes is the bitplanes of one row of pixels
-                for (int rowOffset = 0; rowOffset < _data.Length; rowOffset += 8)
+                for (var rowOffset = 0; rowOffset < _data.Length; rowOffset += 8)
                 {
                     // For this row of pixels, we want to select one bitplane at a time, least significant first
-                    for (int shift = 0; shift < 4; ++shift)
+                    for (var shift = 0; shift < 4; ++shift)
                     {
                         // We then collect one bit from each pixel, left to right
                         var rowValue = 0;
-                        for (int pixelOffset = 0; pixelOffset < 8; ++pixelOffset)
+                        for (var pixelOffset = 0; pixelOffset < 8; ++pixelOffset)
                         {
                             // Get bit for this pixel
                             var bit = (_data[rowOffset + pixelOffset] >> shift) & 1;
@@ -57,8 +55,8 @@ namespace BMP2Tile
 
         private IEnumerable<byte> HFlipped()
         {
-            for (int y = 0; y < 8; ++y)
-            for (int x = 0; x < 8; ++x)
+            for (var y = 0; y < 8; ++y)
+            for (var x = 0; x < 8; ++x)
             {
                 yield return _data[y * 8 + (7 - x)];
             }
@@ -66,8 +64,8 @@ namespace BMP2Tile
 
         private IEnumerable<byte> VFlipped()
         {
-            for (int y = 0; y < 8; ++y)
-            for (int x = 0; x < 8; ++x)
+            for (var y = 0; y < 8; ++y)
+            for (var x = 0; x < 8; ++x)
             {
                 yield return _data[(7 - y) * 8 + x];
             }
@@ -75,8 +73,8 @@ namespace BMP2Tile
 
         private IEnumerable<byte> HAndVFlipped()
         {
-            for (int y = 0; y < 8; ++y)
-            for (int x = 0; x < 8; ++x)
+            for (var y = 0; y < 8; ++y)
+            for (var x = 0; x < 8; ++x)
             {
                 yield return _data[(7 - y) * 8 + (7 - x)];
             }
