@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgParser.cs" />
     <Compile Include="CompressionDllWrapper.cs" />
     <Compile Include="Converter.cs" />
     <Compile Include="AppException.cs" />
