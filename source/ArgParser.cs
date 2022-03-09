@@ -124,7 +124,10 @@ namespace BMP2Tile
 
         private IEnumerable<IList<string>> GetArgs()
         {
-            foreach (var arg in _args.Where(x => x.Key == x.Value.Names[0]).Select(x => x.Value))
+            // We iterate over the "primary" args, so we can list synonyms separately
+            foreach (var arg in _args
+                .Where(x => x.Key == x.Value.Names[0])
+                .Select(x => x.Value))
             {
                 if (arg.ValueName == null)
                 {
