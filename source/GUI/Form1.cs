@@ -186,6 +186,11 @@ namespace BMP2TileGUI
             _converter.HighPriority = cbHighPriority.Checked;
 
             _converter.FullPalette = cbFullPalette.Checked;
+            _converter.PaletteFormat = rbHexSMS.Checked
+                ? cbPaletteConstants.Checked
+                    ? Palette.Formats.MasterSystemConstants
+                    : Palette.Formats.MasterSystem
+                : Palette.Formats.GameGear;
 
             // Disable mirroring checkbox if optimization is off
             cbUseMirroring.Enabled = cbRemoveDuplicates.Checked;
@@ -196,15 +201,10 @@ namespace BMP2TileGUI
             // We want to generate text versions of everything for the text boxes
             tbTiles.Text = _converter.GetTilesAsText();
             tbTilemap.Text = _converter.GetTilemapAsText();
-            var format = rbHexSMS.Checked
-                ? cbPaletteConstants.Checked
-                    ? Palette.Formats.MasterSystemConstants
-                    : Palette.Formats.MasterSystem
-                : Palette.Formats.GameGear;
-            tbPalette.Text = _converter.GetPaletteAsText(format);
+            tbPalette.Text = _converter.GetPaletteAsText();
 
             // We also want to display the palette before and after conversion
-            var palettes = _converter.GetPalettes(format);
+            var palettes = _converter.GetPalettes();
             var bitmap = new Bitmap(pbPalette.Width, pbPalette.Height);
             using (var g = Graphics.FromImage(bitmap))
             {

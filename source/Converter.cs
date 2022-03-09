@@ -214,16 +214,16 @@ namespace BMP2Tile
             Log($"Saved palette to {filename}");
         }
 
-        public string GetPaletteAsText(Palette.Formats format)
+        public string GetPaletteAsText()
         {
             GetPalette();
-            return _palette.ToString(format);
+            return _palette.ToString(PaletteFormat);
         }
 
-        public List<List<Color>> GetPalettes(Palette.Formats format)
+        public List<List<Color>> GetPalettes()
         {
             GetPalette();
-            var convertedPalette = _palette.ForDisplay(format);
+            var convertedPalette = _palette.ForDisplay(PaletteFormat);
             return new List<List<Color>>
             {
                 _bitmap.Palette.Entries.Take(convertedPalette.Count).ToList(),
