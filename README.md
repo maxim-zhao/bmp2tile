@@ -220,6 +220,18 @@ Most of the plugins are written in C++.
 
 # History
 
+0.61
+- Fixed bug in GUI regarding palette format controls
+
+0.6
+- Support reading "raw" data as the input image (SMS/GG raw tile data, .bin extension)
+- Print time taken to console
+- Support 32-colour images (provided they fit in the dual-palette limitations of SMS/GG)
+- Avoid holding image file handles open
+- Fixed planar mode checkbox
+- Bundling tile compression DLLs
+- Show help in commandline mode
+
 0.5
 - Rewrite to C#. Commandline mode is now much faster and operates sequentially.
 
