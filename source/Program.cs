@@ -13,23 +13,24 @@ namespace BMP2Tile
             try
             {
                 using (var converter = new Converter((message, level) =>
-                {
-                    switch (level)
-                    {
-                        case Converter.LogLevel.Verbose:
-                            if (_verbose)
-                            {
-                                Console.Out.WriteLine(message);
-                            }
-                            break;
-                        case Converter.LogLevel.Normal:
-                            Console.Out.WriteLine(message);
-                            break;
-                        case Converter.LogLevel.Error:
-                            Console.Error.WriteLine(message);
-                            break;
-                    }
-                }))
+                       {
+                           switch (level)
+                           {
+                               case Converter.LogLevel.Verbose:
+                                   if (_verbose)
+                                   {
+                                       Console.Out.WriteLine(message);
+                                   }
+
+                                   break;
+                               case Converter.LogLevel.Normal:
+                                   Console.Out.WriteLine(message);
+                                   break;
+                               case Converter.LogLevel.Error:
+                                   Console.Error.WriteLine(message);
+                                   break;
+                           }
+                       }))
                 {
                     // We parse the args in order.
                     // This is different from "BMP2Tile Classic" which would accumulate the settings and
@@ -41,45 +42,45 @@ namespace BMP2Tile
                         filename => converter.Filename = filename,
                         () => GetCompressorInfo(converter));
                     parser.Add(
-                        new[]{"loadimage"},
+                        new[] { "loadimage" },
                         "Load the image specified. Can be specified without the action.",
                         s => converter.Filename = s,
                         "filename");
                     parser.Add(
-                        new[]{"removeduplicates", "removedupes"}, 
-                        "Remove duplicate tiles (default)", 
+                        new[] { "removeduplicates", "removedupes" },
+                        "Remove duplicate tiles (default)",
                         _ => converter.RemoveDuplicates = true);
                     parser.Add(
-                        new[]{"noremoveduplicates", "noremovedupes"}, 
-                        "Do not remove duplicate tiles", 
+                        new[] { "noremoveduplicates", "noremovedupes" },
+                        "Do not remove duplicate tiles",
                         _ => converter.RemoveDuplicates = false);
                     parser.Add(
-                        new[]{"usemirroring", "mirror"}, 
-                        "Use tile mirroring to remove duplicates (default)", 
+                        new[] { "usemirroring", "mirror" },
+                        "Use tile mirroring to remove duplicates (default)",
                         _ => converter.UseMirroring = true);
                     parser.Add(
-                        new[]{"nomirroring", "nomirror"}, 
-                        "Use tile mirroring to remove duplicates", 
+                        new[] { "nomirroring", "nomirror" },
+                        "Use tile mirroring to remove duplicates",
                         _ => converter.UseMirroring = false);
                     parser.Add(
-                        new[]{"8x8"}, 
-                        "Treat image as 8x8 tiles (default)", 
+                        new[] { "8x8" },
+                        "Treat image as 8x8 tiles (default)",
                         _ => converter.AdjacentBelow = false);
                     parser.Add(
-                        new[]{"8x16"}, 
-                        "Treat image as 8x16 tiles (does not work will with duplicate removal)", 
+                        new[] { "8x16" },
+                        "Treat image as 8x16 tiles (does not work will with duplicate removal)",
                         _ => converter.AdjacentBelow = true);
                     parser.Add(
-                        new[]{"planar"}, 
-                        "Convert tiles to 4bpp planar format (e.g. for SMS, GG) (default)", 
+                        new[] { "planar" },
+                        "Convert tiles to 4bpp planar format (e.g. for SMS, GG) (default)",
                         _ => converter.Chunky = false);
                     parser.Add(
-                        new[]{"chunky"}, 
-                        "Convert tiles to 4bpp chunky format (e.g. for GBA, MD)", 
+                        new[] { "chunky" },
+                        "Convert tiles to 4bpp chunky format (e.g. for GBA, MD)",
                         _ => converter.Chunky = true);
                     parser.Add(
-                        new[]{"tileoffset"}, 
-                        "Tile offset for first tile found (default is 0)", 
+                        new[] { "tileoffset" },
+                        "Tile offset for first tile found (default is 0)",
                         x => converter.TileOffset = Convert.ToUInt32(x),
                         "offset");
                     parser.Add(
@@ -95,7 +96,7 @@ namespace BMP2Tile
                         "Emit palette data using cl123-style constants (for SMS)",
                         _ => converter.PaletteFormat = Palette.Formats.MasterSystemConstants);
                     parser.Add(
-                        new[] { "smspalette", "palsms"},
+                        new[] { "smspalette", "palsms" },
                         "Emit palette in SMS format (6bpp)",
                         _ => converter.PaletteFormat = Palette.Formats.MasterSystem);
                     parser.Add(
@@ -107,9 +108,9 @@ namespace BMP2Tile
                         "Emit 16 palette entries regardless of image palette size",
                         _ => converter.FullPalette = true);
                     parser.Add(
-                        new[] { "minimumpalette"},
-                            "Emit only as many palette entries as needed to include values used in the image",
-                            _ => converter.FullPalette = false);
+                        new[] { "minimumpalette" },
+                        "Emit only as many palette entries as needed to include values used in the image",
+                        _ => converter.FullPalette = false);
                     parser.Add(
                         new[] { "savetiles" },
                         "Save tiles to the given filename. Extension selects compression.",
@@ -128,7 +129,7 @@ namespace BMP2Tile
                     parser.Add(
                         new[] { "exit" },
                         "Exit the program. Later actions are ignored.",
-                        s => throw new Exception("Program exited"));
+                        s => throw new ExitException("Program exited"));
                     parser.Add(
                         new[] { "verbose", "v" },
                         "Enable verbose logging",
@@ -143,13 +144,14 @@ namespace BMP2Tile
                     return parser.Parse(args);
                 }
             }
+            catch (ExitException)
+            {
+                return 0;
+            }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Fatal error: {ex.Message}");
-                if (!(ex is AppException))
-                {
-                    Console.Error.WriteLine($"Guru meditation:\n{ex.StackTrace}");
-                }
+                Console.Error.WriteLine($"Guru meditation:\n{ex.StackTrace}");
                 return 1;
             }
         }
@@ -171,6 +173,13 @@ namespace BMP2Tile
                         }))
                 .Cast<IList<string>>()
                 .ToList();
+        }
+    }
+
+    internal class ExitException : Exception
+    {
+        public ExitException(string s): base(s)
+        {
         }
     }
 }
