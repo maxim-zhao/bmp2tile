@@ -86,6 +86,7 @@ namespace BMP2Tile
             set 
             { 
                 _tileOffset = value;
+                _tiles = null;
                 _tilemap = null;
             }
         }
@@ -151,11 +152,14 @@ namespace BMP2Tile
 
             var compressor = GetCompressor(filename);
             var sw = Stopwatch.StartNew();
-            var bytes = compressor.CompressTiles(_tiles, Chunky);
-            File.WriteAllBytes(filename, bytes.ToArray());
+            var compressed = compressor.CompressTiles(_tiles, Chunky).ToArray();
+            File.WriteAllBytes(filename, compressed);
             sw.Stop();
 
-            Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}");
+            var before = _tiles.Count * 32;
+            var ratio = (before - compressed.Length) / (double)before;
+
+            Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
         }
 
         public string GetTilesAsText()
