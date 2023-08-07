@@ -129,7 +129,7 @@ namespace BMP2Tile
                     parser.Add(
                         new[] { "exit" },
                         "Exit the program. Later actions are ignored.",
-                        s => throw new ExitException("Program exited"));
+                        s => Environment.Exit(0));
                     parser.Add(
                         new[] { "verbose", "v" },
                         "Enable verbose logging",
@@ -143,10 +143,6 @@ namespace BMP2Tile
 
                     return parser.Parse(args);
                 }
-            }
-            catch (ExitException)
-            {
-                return 0;
             }
             catch (Exception ex)
             {
@@ -173,13 +169,6 @@ namespace BMP2Tile
                         }))
                 .Cast<IList<string>>()
                 .ToList();
-        }
-    }
-
-    internal class ExitException : Exception
-    {
-        public ExitException(string s): base(s)
-        {
         }
     }
 }
