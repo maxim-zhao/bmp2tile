@@ -1,11 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace BMP2Tile
 {
     internal class Tile
     {
-        private readonly byte[] _data;
+        private byte[] _data;
+
+        public Tile Split()
+        {
+            byte[] d = this._data.Take(64).ToArray();
+            byte[] e = this._data.Skip(64).Take(64).ToArray();
+            _data = d;
+            var t = new Tile(e);
+            return t;
+        }
 
         public Tile(byte[] data)
         {
@@ -53,30 +63,30 @@ namespace BMP2Tile
             }
         }
 
-        private IEnumerable<byte> HFlipped()
+        private IEnumerable<byte> HFlipped(bool tallTile)
         {
-            for (var y = 0; y < 8; ++y)
+            for (var y = 0; y < (tallTile ? 16 : 8); ++y)
             for (var x = 0; x < 8; ++x)
             {
                 yield return _data[y * 8 + (7 - x)];
             }
         }
 
-        private IEnumerable<byte> VFlipped()
+        private IEnumerable<byte> VFlipped(bool tallTile)
         {
-            for (var y = 0; y < 8; ++y)
+            for (var y = 0; y < (tallTile ? 16 : 8); ++y)
             for (var x = 0; x < 8; ++x)
             {
-                yield return _data[(7 - y) * 8 + x];
+                yield return _data[((tallTile ? 15 : 7) - y) * 8 + x];
             }
         }
 
-        private IEnumerable<byte> HAndVFlipped()
+        private IEnumerable<byte> HAndVFlipped(bool tallTile)
         {
-            for (var y = 0; y < 8; ++y)
+            for (var y = 0; y < (tallTile ? 16 : 8); ++y)
             for (var x = 0; x < 8; ++x)
             {
-                yield return _data[(7 - y) * 8 + (7 - x)];
+                yield return _data[((tallTile ? 15 : 7) - y) * 8 + (7 - x)];
             }
         }
 
@@ -89,7 +99,7 @@ namespace BMP2Tile
             None
         }
 
-        public Match Compare(Tile candidate, bool useMirroring)
+        public Match Compare(Tile candidate, bool useMirroring, bool tallTile)
         {
             if (_data.SequenceEqual(candidate._data))
             {
@@ -98,16 +108,16 @@ namespace BMP2Tile
 
             if (useMirroring)
             {
-                if (_data.SequenceEqual(candidate.HFlipped()))
+                if (_data.SequenceEqual(candidate.HFlipped(tallTile)))
                 {
                     return Match.HFlip;
                 }
 
-                if (_data.SequenceEqual(candidate.VFlipped()))
+                if (_data.SequenceEqual(candidate.VFlipped(tallTile)))
                 {
                     return Match.VFlip;
                 }
-                if (_data.SequenceEqual(candidate.HAndVFlipped()))
+                if (_data.SequenceEqual(candidate.HAndVFlipped(tallTile)))
                 {
                     return Match.BothFlip;
                 }
