@@ -68,7 +68,7 @@ namespace BMP2Tile
                         _ => converter.AdjacentBelow = false);
                     parser.Add(
                         new[] { "8x16" },
-                        "Treat image as 8x16 tiles (does not work will with duplicate removal)",
+                        "Treat image as 8x16 tiles",
                         _ => converter.AdjacentBelow = true);
                     parser.Add(
                         new[] { "planar" },

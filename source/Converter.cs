@@ -148,6 +148,10 @@ namespace BMP2Tile
                 Optimize();
             }
 
+            if (_adjacentBelow)
+                for (var a = _tiles.Count - 1; a >= 0; a--)
+                    _tiles.Insert(a+1, _tiles[a].Split());
+
             Log("Saving tiles...", LogLevel.Verbose);
 
             var compressor = GetCompressor(filename);
@@ -156,7 +160,7 @@ namespace BMP2Tile
             File.WriteAllBytes(filename, compressed);
             sw.Stop();
 
-            var before = _tiles.Count * 32;
+            var before = _tiles.Count *32;
             var ratio = (before - compressed.Length) / (double)before;
 
             Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
@@ -179,6 +183,14 @@ namespace BMP2Tile
             if (_removeDuplicates)
             {
                 Optimize();
+            }
+
+            if (_adjacentBelow)
+            {
+                foreach (var entry in _tilemap)
+                {
+                    entry.TileIndex *= 2;
+                }
             }
 
             var compressor = GetCompressor(filename);
@@ -411,7 +423,7 @@ namespace BMP2Tile
                 for (var j = i + 1; j < _tiles.Count; /* increment in loop */)
                 {
                     var comparedTile = _tiles[j];
-                    var comparison = thisTile.Compare(comparedTile, _useMirroring);
+                    var comparison = thisTile.Compare(comparedTile, _useMirroring, _adjacentBelow);
                     if (comparison == Tile.Match.None)
                     {
                         ++j;
@@ -466,21 +478,35 @@ namespace BMP2Tile
             Log("Creating tilemap", LogLevel.Verbose);
 
             // This is an unoptimised tilemap
-            // So we just need to fill space
-            var tilemap = new Tilemap(_bitmap.Width / 8, _bitmap.Height / 8);
+            // So we just need to fill space+
+            var tilemap = new Tilemap(_bitmap.Width / 8, (_adjacentBelow)?(_bitmap.Height / 16):(_bitmap.Height / 8));
 
             var i = (int)_tileOffset;
             // We fill space by using the same function used to extract the tiles
             foreach (var point in GetTileCoordinates(_bitmap.Width, _bitmap.Height))
             {
-                tilemap[point.X / 8, point.Y / 8] = new Tilemap.Entry
+                if (_adjacentBelow)
                 {
-                    TileIndex = i,
-                    HFlip = false,
-                    VFlip = false,
-                    HighPriority = _highPriority,
-                    UseSpritePalette = _useSpritePalette || _tiles[i - (int)_tileOffset].UseSpritePalette
-                };
+                    tilemap[point.X / 8, point.Y / 16] = new Tilemap.Entry
+                    {
+                        TileIndex = i,
+                        HFlip = false,
+                        VFlip = false,
+                        HighPriority = _highPriority,
+                        UseSpritePalette = _useSpritePalette || _tiles[i - (int)_tileOffset].UseSpritePalette
+                    };
+                }
+                else
+                {
+                    tilemap[point.X / 8, point.Y / 8] = new Tilemap.Entry
+                    {
+                        TileIndex = i,
+                        HFlip = false,
+                        VFlip = false,
+                        HighPriority = _highPriority,
+                        UseSpritePalette = _useSpritePalette || _tiles[i - (int)_tileOffset].UseSpritePalette
+                    };
+                }
                 ++i;
             }
 
@@ -514,7 +540,7 @@ namespace BMP2Tile
                 // We want to find some info about the palette as we go here, so we reset the values now.
                 _paletteIndicesUsed.Clear();
 
-                // We want to split the image to 8x8 chunks in the required order
+                // We want to split the image to 8x8 or 8x16 chunks in the required order
                 _tiles = GetTileCoordinates(_bitmap.Width, _bitmap.Height)
                     .Select(coordinate => GetTile(coordinate, bitmapData))
                     .ToList();
@@ -534,12 +560,13 @@ namespace BMP2Tile
 
         private Tile GetTile(Point coordinate, BitmapData bitmapData)
         {
-            var tileData = new byte[8 * 8];
+            var tileData = new byte[(_adjacentBelow)?(8 * 16):(8*8)];
+
 
             switch (bitmapData.PixelFormat)
             {
                 case PixelFormat.Format8bppIndexed:
-                    for (var y = 0; y < 8; ++y)
+                    for (var y = 0; y < (_adjacentBelow?16:8); ++y)
                     {
                         // Copy data 8 pixels at a time
                         Marshal.Copy(
@@ -563,7 +590,7 @@ namespace BMP2Tile
 
                     break;
                 case PixelFormat.Format4bppIndexed:
-                    for (var y = 0; y < 8; ++y)
+                    for (var y = 0; y < (_adjacentBelow ? 16 : 8); ++y)
                     {
                         // We need to extend from 4bpp to 8bpp
                         var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 2;
@@ -576,7 +603,7 @@ namespace BMP2Tile
                     }
                     break;
                 case PixelFormat.Format1bppIndexed:
-                    for (var y = 0; y < 8; ++y)
+                    for (var y = 0; y < (_adjacentBelow ? 16 : 8); ++y)
                     {
                         // We need to extend from 1bpp to 8bpp
                         var data = bitmapData.Scan0 + bitmapData.Stride * (coordinate.Y + y) + coordinate.X / 8;
@@ -660,7 +687,6 @@ namespace BMP2Tile
                 for (var x = 0; x < width; x += 8)
                 {
                     yield return new Point(x, y);
-                    yield return new Point(x, y+8);
                 }
             }
             else
