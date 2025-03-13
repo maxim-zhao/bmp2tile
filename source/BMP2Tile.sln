@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BMP2Tile", "BMP2Tile.csproj", "{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BMP2TileGUI", "GUI\BMP2TileGUI.csproj", "{26357CF4-31A6-4C8B-9C0B-F24B2C5A96E5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DC7BF2DB-F03D-4A96-BB74-5C3B4E2FAD6A}"
@@ -13,20 +11,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BMP2Tile", "bmp2tile\BMP2Tile.csproj", "{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.ActiveCfg = Debug|x86
-		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.Build.0 = Debug|x86
-		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.ActiveCfg = Release|x86
-		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.Build.0 = Release|x86
 		{26357CF4-31A6-4C8B-9C0B-F24B2C5A96E5}.Debug|x86.ActiveCfg = Debug|x86
 		{26357CF4-31A6-4C8B-9C0B-F24B2C5A96E5}.Debug|x86.Build.0 = Debug|x86
 		{26357CF4-31A6-4C8B-9C0B-F24B2C5A96E5}.Release|x86.ActiveCfg = Release|x86
 		{26357CF4-31A6-4C8B-9C0B-F24B2C5A96E5}.Release|x86.Build.0 = Release|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.ActiveCfg = Debug|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Debug|x86.Build.0 = Debug|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.ActiveCfg = Release|x86
+		{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

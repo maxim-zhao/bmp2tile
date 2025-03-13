@@ -33,3 +33,6 @@ demo/*.inc
 /*.exe
 /*.pdb
 /*.exe.config
+bin/
+obj/
+.vs/

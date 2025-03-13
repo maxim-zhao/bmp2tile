@@ -78,13 +78,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BMP2Tile.csproj">
-      <Project>{ea0ce582-152c-4f6a-b367-3bbe73a1a83d}</Project>
-      <Name>BMP2Tile</Name>
-    </ProjectReference>
+    <Content Include="Alisa.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Alisa.ico" />
+    <ProjectReference Include="..\bmp2tile\BMP2Tile.csproj">
+      <Project>{EA0CE582-152C-4F6A-B367-3BBE73A1A83D}</Project>
+      <Name>BMP2Tile</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
