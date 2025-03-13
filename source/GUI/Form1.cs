@@ -6,7 +6,7 @@ using BMP2Tile;
 
 namespace BMP2TileGUI
 {
-    public partial class Form1 : Form
+    public sealed partial class Form1 : Form
     {
         private readonly Converter _converter;
 
@@ -16,6 +16,7 @@ namespace BMP2TileGUI
 
             _converter = new Converter(OnMessageLogged);
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            Font = SystemFonts.MessageBoxFont;
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)

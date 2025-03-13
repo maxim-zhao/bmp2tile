@@ -6,8 +6,8 @@ build:
   verbosity: minimal
 after_build:
 - cmd: |
-    appveyor DownloadFile https://github.com/maxim-zhao/bmp2tilecompressors/releases/download/Build-126/bmp2tilecompressors.zip
+    appveyor DownloadFile https://github.com/maxim-zhao/bmp2tilecompressors/releases/download/Build-207/bmp2tilecompressors.zip
     7z x bmp2tilecompressors.zip
-    7z a bmp2tile.zip *.exe readme.* license gfxcomp*.dll
+    7z a bmp2tile.zip source\bmp2tile\bin\x86\Release\net48\BMP2Tile.exe source\GUI\bin\x86\Release\net48\BMP2TileGUI.exe readme.* license gfxcomp*.dll
 artifacts:
 - path: 'bmp2tile.zip'
