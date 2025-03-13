@@ -36,3 +36,4 @@ demo/*.inc
 bin/
 obj/
 .vs/
+launchSettings.json

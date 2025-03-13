@@ -220,6 +220,11 @@ Most of the plugins are written in C++.
 
 # History
 
+0.62
+- Switched to a slightly more modern version of C# (4.8)
+- Enabled some DPI awareness
+- Added support for loading raw tiles and tilemap data
+
 0.61
 - Fixed bug in GUI regarding palette format controls
 

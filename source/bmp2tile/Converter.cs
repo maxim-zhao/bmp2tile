@@ -18,7 +18,7 @@ namespace BMP2Tile
         private Palette _palette;
         private List<Tile> _tiles;
         private Tilemap _tilemap;
-        private readonly Dictionary<string, ICompressorImpl> _compressors = new Dictionary<string, ICompressorImpl>();
+        private readonly Dictionary<string, ICompressorImpl> _compressors = new();
 
         private bool _removeDuplicates = true;
         private bool _useMirroring = true;
@@ -31,7 +31,7 @@ namespace BMP2Tile
         private Bitmap _bitmap;
         private bool _optimized;
         private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
-        private readonly HashSet<byte> _paletteIndicesUsed = new HashSet<byte>();
+        private readonly HashSet<byte> _paletteIndicesUsed = [];
 
         #endregion
 
@@ -228,11 +228,11 @@ namespace BMP2Tile
         {
             GetPalette();
             var convertedPalette = _palette.ForDisplay(PaletteFormat);
-            return new List<List<Color>>
-            {
+            return
+            [
                 _bitmap.Palette.Entries.Take(convertedPalette.Count).ToList(),
                 convertedPalette
-            };
+            ];
         }
 
         public IEnumerable<ICompressor> GetCompressorInfo()
@@ -301,89 +301,96 @@ namespace BMP2Tile
 
         private void GetBitmap()
         {
-            if (_bitmap == null)
+            if (_bitmap != null)
             {
-                if (string.IsNullOrEmpty(_filename))
-                {
-                    throw new AppException("Filename has not been specified");
-                }
+                return;
+            }
 
-                try
-                {
-                    Log($"Loading {_filename}...");
+            if (string.IsNullOrEmpty(_filename))
+            {
+                throw new AppException("Filename has not been specified");
+            }
 
-                    if (_filename.EndsWith(".bin"))
+            try
+            {
+                Log($"Loading {_filename}...");
+
+                if (_filename.EndsWith(".bin"))
+                {
+                    // Raw tiles
+                    // We convert to a tall bitmap
+                    var data = File.ReadAllBytes(_filename);
+                    if (data.Length % 32 != 0)
                     {
-                        // Raw tiles
-                        // We convert to a tall bitmap
-                        var data = File.ReadAllBytes(_filename);
-                        if (data.Length % 32 != 0)
-                        {
-                            throw new Exception($"{_filename} is {data.Length} bytes, not a multiple of 32!");
-                        }
+                        throw new Exception($"{_filename} is {data.Length} bytes, not a multiple of 32!");
+                    }
 
-                        var height = data.Length / 32 * 8;
-                        _bitmap = new Bitmap(8, height, PixelFormat.Format8bppIndexed);
-                        var bitmapData = _bitmap.LockBits(
-                            new Rectangle(0, 0, 8, height), 
-                            ImageLockMode.ReadWrite,
-                            PixelFormat.Format8bppIndexed);
-                        // Convert the planar data into a chunky bitmap...
-                        var row = new byte[4];
-                        var chunky = new byte[8];
-                        for (var y = 0; y < height; ++y)
+                    var height = data.Length / 32 * 8;
+                    _bitmap = new Bitmap(8, height, PixelFormat.Format8bppIndexed);
+                    var bitmapData = _bitmap.LockBits(
+                        new Rectangle(0, 0, 8, height), 
+                        ImageLockMode.ReadWrite,
+                        PixelFormat.Format8bppIndexed);
+                    // Convert the planar data into a chunky bitmap...
+                    var row = new byte[4];
+                    var chunky = new byte[8];
+                    for (var y = 0; y < height; ++y)
+                    {
+                        // Get the data for a row of pixels
+                        Array.Copy(data, y*4, row, 0, 4);
+                        // Convert to chunky
+                        for (var x = 0; x < 8; ++x)
                         {
-                            // Get the data for a row of pixels
-                            Array.Copy(data, y*4, row, 0, 4);
-                            // Convert to chunky
-                            for (var x = 0; x < 8; ++x)
+                            var pixel = 0;
+                            var bitPosition = 7 - x;
+                            for (var b = 0; b < 4; ++b)
                             {
-                                var pixel = 0;
-                                var bitPosition = 7 - x;
-                                for (var b = 0; b < 4; ++b)
-                                {
-                                    // Get bit from bitplane
-                                    var bitplane = row[b];
-                                    // Mask
-                                    var bit = (bitplane >> bitPosition) & 1;
-                                    // Merge into pixel at right place
-                                    pixel |= bit << b;
-                                }
-                                // Then set it
-                                chunky[x] = (byte)pixel;
+                                // Get bit from bitplane
+                                var bitplane = row[b];
+                                // Mask
+                                var bit = (bitplane >> bitPosition) & 1;
+                                // Merge into pixel at right place
+                                pixel |= bit << b;
                             }
-                            // Then copy to the image
-                            Marshal.Copy(chunky, 0, bitmapData.Scan0 + bitmapData.Stride * y, 8);
+                            // Then set it
+                            chunky[x] = (byte)pixel;
                         }
-                        _bitmap.UnlockBits(bitmapData);
-                        _bitmap.Palette.Entries[0] = Color.Red;
-                        _bitmap.Palette.Entries[1] = Color.White;
+                        // Then copy to the image
+                        Marshal.Copy(chunky, 0, bitmapData.Scan0 + bitmapData.Stride * y, 8);
                     }
-                    else
-                    {
-                        // Loading this way avoids locking the file
-                        var converter = new ImageConverter();
-                        _bitmap = (Bitmap) converter.ConvertFrom(File.ReadAllBytes(_filename));
-                    }
-
-                    Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
-
-                    // Check the dimensions
-                    if (_bitmap.Width % 8 != 0)
-                    {
-                        throw new AppException($"Image's width ({_bitmap.Width}) is not a multiple of 8");
-                    }
-
-                    if (_bitmap.Height % 8 != 0)
-                    {
-                        throw new AppException($"Image's height ({_bitmap.Height})is not a multiple of 8");
-                    }
+                    _bitmap.UnlockBits(bitmapData);
+                    _bitmap.Palette.Entries[0] = Color.Red;
+                    _bitmap.Palette.Entries[1] = Color.White;
                 }
-                catch (AppException)
+                else
                 {
-                    _bitmap = null;
-                    throw;
+                    // Loading this way avoids locking the file
+                    var converter = new ImageConverter();
+                    _bitmap = (Bitmap) converter.ConvertFrom(File.ReadAllBytes(_filename));
                 }
+
+                if (_bitmap == null)
+                {
+                    throw new AppException($"Failed to load \"{_filename}\"");
+                }
+
+                Log($"Loaded bitmap from {_filename}", LogLevel.Verbose);
+
+                // Check the dimensions
+                if (_bitmap.Width % 8 != 0)
+                {
+                    throw new AppException($"Image's width ({_bitmap.Width}) is not a multiple of 8");
+                }
+
+                if (_bitmap.Height % 8 != 0)
+                {
+                    throw new AppException($"Image's height ({_bitmap.Height})is not a multiple of 8");
+                }
+            }
+            catch (AppException)
+            {
+                _bitmap = null;
+                throw;
             }
         }
 
@@ -504,8 +511,8 @@ namespace BMP2Tile
             BitmapData bitmapData = null;
             try
             {
-                // In Windows we can just specify 8bpp here and GDI+ extends 4bpp images for us.
-                // However this is not implemented in Wine so we convert it ourselves.
+                // In Windows, we can just specify 8bpp here and GDI+ extends 4bpp images for us.
+                // However, this is not implemented in Wine so we convert it ourselves.
                 bitmapData = _bitmap.LockBits(
                     new Rectangle(0, 0, _bitmap.Width, _bitmap.Height),
                     ImageLockMode.ReadOnly,
@@ -734,6 +741,77 @@ namespace BMP2Tile
                 compressor.Dispose();
             }
             _compressors.Clear();
+        }
+
+        public void LoadTiles(string filename)
+        {
+            _filename = null;
+            Log($"Loading {filename}...");
+            var data = File.ReadAllBytes(filename);
+            if (data.Length % 32 != 0)
+            {
+                throw new AppException($"File \"{filename}\" is not a multiple of 32 bytes cannot be loaded as tiles");
+            }
+
+            _tiles = [];
+            // We need to convert the data to 8x8 arrays of 4-bit numbers
+            for (var tileOffset = 0; tileOffset < data.Length; tileOffset += 32)
+            {
+                // Tiles are 64 bytes of tile indices - not planar.
+                // The file data is planar so we have to convert it.
+                // This is ugly...
+                var tile = new byte[8 * 8];
+
+                for (var row = 0; row < 8; ++row)
+                {
+                    // Point to the data for this row
+                    var offset = tileOffset + row * 4;
+                    // Iterate over the bitplanes
+                    for (var bitplane = 0; bitplane < 4; ++bitplane)
+                    {
+                        // Iterate over the pixels
+                        for (var x = 0; x < 8; ++x)
+                        {
+                            // Get the bit
+                            var bit = (data[offset + bitplane] >> (7 - x)) & 1;
+                            // Merge into the value
+                            tile[row * 8 + x] |= (byte)(bit << bitplane);
+                        }
+                    }
+                }
+
+                // Each byte is made of four bitplanes.
+                _tiles.Add(new Tile(tile));
+            }
+        }
+
+        public void LoadTilemap(string filename)
+        {
+            _filename = null;
+            Log($"Loading {filename}...");
+            var data = File.ReadAllBytes(filename);
+            if (data.Length % 2 != 0)
+            {
+                throw new AppException($"File \"{filename}\" is not a multiple of 2 bytes cannot be loaded as a tilemap");
+            }
+
+            // We don't know the dimensions of the tilemap so we squash into a giant column
+            var numEntries = data.Length / 2;
+            _tilemap = new Tilemap(1, numEntries);
+            for (var i = 0; i < numEntries; ++i)
+            {
+                // Get the two bytes
+                var entry = data[i * 2] | (data[i * 2 + 1] << 8);
+                // Put into the tilemap
+                _tilemap[0, i] = new Tilemap.Entry
+                {
+                    TileIndex =         entry & 0b0_0001_1111_1111,
+                    HFlip =            (entry & 0b0_0010_0000_0000) != 0,
+                    VFlip =            (entry & 0b0_0100_0000_0000) != 0,
+                    UseSpritePalette = (entry & 0b0_1000_0000_0000) != 0,
+                    HighPriority =     (entry & 0b1_0000_0000_0000) != 0
+                };
+            }
         }
     }
 }

@@ -41,20 +41,16 @@ namespace BMP2TileGUI
 
         private void btnBrowse_Click(object sender, EventArgs e)
         {
-            using (var ofd = new OpenFileDialog
+            using var ofd = new OpenFileDialog();
+            ofd.Filter = "Image files (*.bmp;*.png;*.gif)|*.bmp;*.png;*.gif|All files (*.*)|*.*";
+            ofd.CheckFileExists = true;
+            ofd.Multiselect = false;
+            if (ofd.ShowDialog(this) != DialogResult.OK)
             {
-                Filter = "Image files (*.bmp;*.png;*.gif)|*.bmp;*.png;*.gif|All files (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            })
-            {
-                if (ofd.ShowDialog(this) != DialogResult.OK)
-                {
-                    return;
-                }
-
-                LoadImage(ofd.FileName);
+                return;
             }
+
+            LoadImage(ofd.FileName);
         }
 
         private void Try(Action a)
@@ -114,12 +110,11 @@ namespace BMP2TileGUI
                 var filter = string.Join("|",
                     compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
 
-                using (var sfd = new SaveFileDialog {Filter = filter})
+                using var sfd = new SaveFileDialog();
+                sfd.Filter = filter;
+                if (sfd.ShowDialog(this) == DialogResult.OK)
                 {
-                    if (sfd.ShowDialog(this) == DialogResult.OK)
-                    {
-                        _converter.SaveTiles(sfd.FileName);
-                    }
+                    _converter.SaveTiles(sfd.FileName);
                 }
             });
         }
@@ -136,12 +131,11 @@ namespace BMP2TileGUI
                 var filter = string.Join("|",
                     compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
 
-                using (var sfd = new SaveFileDialog {Filter = filter})
+                using var sfd = new SaveFileDialog();
+                sfd.Filter = filter;
+                if (sfd.ShowDialog(this) == DialogResult.OK)
                 {
-                    if (sfd.ShowDialog(this) == DialogResult.OK)
-                    {
-                        _converter.SaveTilemap(sfd.FileName);
-                    }
+                    _converter.SaveTilemap(sfd.FileName);
                 }
             });
         }
@@ -156,12 +150,11 @@ namespace BMP2TileGUI
                     filter += "|Binary files (*.bin)|*.bin";
                 }
 
-                using (var sfd = new SaveFileDialog {Filter = filter})
+                using var sfd = new SaveFileDialog();
+                sfd.Filter = filter;
+                if (sfd.ShowDialog(this) == DialogResult.OK)
                 {
-                    if (sfd.ShowDialog(this) == DialogResult.OK)
-                    {
-                        _converter.SavePalette(sfd.FileName);
-                    }
+                    _converter.SavePalette(sfd.FileName);
                 }
             });
         }

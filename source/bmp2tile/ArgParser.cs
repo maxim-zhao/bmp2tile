@@ -24,9 +24,9 @@ namespace BMP2Tile
             public Action<string> Action { get; set; }
             public string ValueName { get; set; }
         }
-        private readonly Dictionary<string, ArgHandler> _args = new Dictionary<string, ArgHandler>();
+        private readonly Dictionary<string, ArgHandler> _args = new();
 
-        public void Add(IList<string> names, string description, Action<string> action, string argName = null)
+        public ArgParser Add(IList<string> names, string description, Action<string> action, string argName = null)
         {
             var arg = new ArgHandler
             {
@@ -39,6 +39,8 @@ namespace BMP2Tile
             {
                 _args.Add(name, arg);
             }
+
+            return this;
         }
 
         public int Parse(string[] args)
@@ -67,7 +69,7 @@ namespace BMP2Tile
                     {
                         if (i == args.Length - 1)
                         {
-                            throw new Exception($"Missing value for action {arg} <{handler.ValueName}>");
+                            throw new AppException($"Missing value for action {arg} <{handler.ValueName}>");
                         }
 
                         handler.Action(args[++i]);
@@ -131,16 +133,16 @@ namespace BMP2Tile
             {
                 if (arg.ValueName == null)
                 {
-                    yield return new[] { $"-{arg.Names[0]}", arg.Description };
+                    yield return [$"-{arg.Names[0]}", arg.Description];
                 }
                 else
                 {
-                    yield return new[] { $"-{arg.Names[0]} <{arg.ValueName}>", arg.Description };
+                    yield return [$"-{arg.Names[0]} <{arg.ValueName}>", arg.Description];
                 }
 
                 foreach (var s in arg.Names.Skip(1))
                 {
-                    yield return new[] { $"-{s}", $"Synonym of -{arg.Names[0]}" };
+                    yield return [$"-{s}", $"Synonym of -{arg.Names[0]}"];
                 }
             }
         }

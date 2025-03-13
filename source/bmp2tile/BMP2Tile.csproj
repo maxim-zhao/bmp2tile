@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
-    <OutputType>Exe</OutputType>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <Platform>x86</Platform>
-      <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net48</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <WarningLevel>9999</WarningLevel>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Platform>x86</Platform>
+        <PlatformTarget>x86</PlatformTarget>
+        <LangVersion>13</LangVersion>
+    </PropertyGroup>
 </Project>
