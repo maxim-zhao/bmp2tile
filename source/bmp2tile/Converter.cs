@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BMP2Tile
 {
@@ -788,6 +789,15 @@ namespace BMP2Tile
         public void LoadTilemap(string filename)
         {
             _filename = null;
+            var width = 1;
+            // Filename might be a filename, or might be <filename>:<width>, where <width> is the tilemap width
+            var m = Regex.Match(filename, "^(?<filename>.+):(?<width>\\d+)$");
+            if (m.Success)
+            {
+                filename = m.Groups["filename"].Value;
+                width = Convert.ToInt32(m.Groups["width"].Value);
+            }
+
             Log($"Loading {filename}...");
             var data = File.ReadAllBytes(filename);
             if (data.Length % 2 != 0)
@@ -797,19 +807,27 @@ namespace BMP2Tile
 
             // We don't know the dimensions of the tilemap so we squash into a giant column
             var numEntries = data.Length / 2;
-            _tilemap = new Tilemap(1, numEntries);
-            for (var i = 0; i < numEntries; ++i)
+            var height = numEntries / width;
+            // Sanity-check the width
+            if (width * height != numEntries)
+            {
+                throw new AppException($"File \"{filename}\" is not a multiple of {width * 2} bytes so it cannot have a width of {width}");
+            }
+            _tilemap = new Tilemap(width, height);
+            for (var x = 0; x < width; ++x)
+            for (var y = 0; y < height; ++y)
             {
                 // Get the two bytes
-                var entry = data[i * 2] | (data[i * 2 + 1] << 8);
+                var offset = ((y * width) + x) * 2;
+                var word = data[offset] | (data[offset + 1] << 8);
                 // Put into the tilemap
-                _tilemap[0, i] = new Tilemap.Entry
+                _tilemap[x, y] = new Tilemap.Entry
                 {
-                    TileIndex =         entry & 0b0_0001_1111_1111,
-                    HFlip =            (entry & 0b0_0010_0000_0000) != 0,
-                    VFlip =            (entry & 0b0_0100_0000_0000) != 0,
-                    UseSpritePalette = (entry & 0b0_1000_0000_0000) != 0,
-                    HighPriority =     (entry & 0b1_0000_0000_0000) != 0
+                    TileIndex =         word & 0b0_0001_1111_1111,
+                    HFlip =            (word & 0b0_0010_0000_0000) != 0,
+                    VFlip =            (word & 0b0_0100_0000_0000) != 0,
+                    UseSpritePalette = (word & 0b0_1000_0000_0000) != 0,
+                    HighPriority =     (word & 0b1_0000_0000_0000) != 0
                 };
             }
         }

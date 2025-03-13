@@ -54,7 +54,7 @@ namespace BMP2Tile
                         "filename")
                     .Add(
                         ["loadtilemap"],
-                        "Load raw data as tilemap",
+                        "Load raw data as tilemap. Suffix with width after a colon, e.g. \":32\", to specify the tilemap width if needed.",
                         s => converter.LoadTilemap(s),
                         "filename")
                     .Add(
