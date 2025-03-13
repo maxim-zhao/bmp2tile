@@ -182,27 +182,30 @@ You can support one or both `compress*` functions.
 Pass the following on the commandline to make the corresponding option/action
 choices. Defaults are marked with :star:.
 
-|Command switch           |Effect                                       |
-|-------------------------|---------------------------------------------|
-|`<filename>`             |Load the specified bitmap. Note that the format restrictions are the same as before.           |
-|`-removedupes`           |:star: Optimise out duplicate tiles                                                                  |
-|`-noremovedupes`         |Or don't                                                                                       |
-|`-mirror`                |:star: Use tile mirroring to further optimise duplicates                                             |
-|`-nomirror`              |Or don't                                                                                       |
-|`-8x8`                   |:star: Treat tile data as 8x8                                                                        |
-|`-8x16`                  |Treat tile data as 8x16                                                                        |
-|`-planar`                |:star: Output planar tile data                                                                       |
-|`-chunky`                |Output chunky tile data                                                                        |
-|`-tileoffset <n>`        |The starting index of the first tile. :star: Default is 0.                                           |
-|`-spritepalette`         |Set the tilemap bit to make tiles use the sprite palette. :star: Default is unset.                   |
-|`-infrontofsprites`      |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset.               |
-|`-palsms`                |:star: Output the palette in SMS colour format                                                       |
-|`-palgg`                 |Output the palette in GG colour format                                                         |
-|`-palcl123`              |Output the palette in SMS colour format, using constants of the form cl123 (see above).        |
-|`-fullpalette`           |Output 16 colours rather than as many as are present in the image.                             |
-|`-savetiles <filename>`  |Save tile data to `<filename>`. The format will be inferred from the extension of `<filename>`.    |
-|`-savetilemap <filename>`|Save tilemap data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
-|`-savepalette <filename>`|Save palette data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
+|Command switch            |Effect                                       |
+|--------------------------|---------------------------------------------|
+|`<filename>`              |Load the specified bitmap. Note that the format restrictions are the same as in the GUI. |
+|`-loadtiles <filename>`   |Load the specified raw tile data file        |
+|`-loadtilemap <filename>` |Load the specified raw tilemap data file     |
+|`-removedupes`            |:star: Optimise out duplicate tiles          |
+|`-noremovedupes`          |Or don't                                     |
+|`-mirror`                 |:star: Use tile mirroring to further optimise duplicates |
+|`-nomirror`               |Or don't                                     |
+|`-8x8`                    |:star: Treat tile data as 8x8                |
+|`-8x16`                   |Treat tile data as 8x16                      |
+|`-planar`                 |:star: Output planar tile data               |
+|`-chunky`                 |Output chunky tile data                      |
+|`-tileoffset <n>`         |The starting index of the first tile. :star: Default is 0. |
+|`-spritepalette`          |Set the tilemap bit to make tiles use the sprite palette. :star: Default is to set it only if the image is a 32-colour image and the tile uses the upper palette. |
+|`-infrontofsprites`       |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset. |
+|`-palsms`                 |:star: Output the palette in SMS colour format |
+|`-palgg`                  |Output the palette in GG colour format       |
+|`-palcl123`               |Output the palette in SMS colour format, using constants of the form cl123 (see above). |
+|`-minimumpalette`         |:star:Output only as many colours as are present in the image. |
+|`-fullpalette`            |Output 16 colours rather than as many as are present in the image. |
+|`-savetiles <filename>`   |Save tile data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
+|`-savetilemap <filename>` |Save tilemap data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
+|`-savepalette <filename>` |Save palette data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 
 Note that options are interpreted sequentially. That means you should specify any options (and the input file) before any
 `-save*` actions. It also you can chain together operations, as so:
@@ -210,6 +213,8 @@ Note that options are interpreted sequentially. That means you should specify an
 ```
 bmp2tile.exe foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "fool.tilemap.withmirroring.zx7" -nomirror -savetilemap "fool.tilemap.nomirroring.zx7"
 ```
+
+Note also that if loading raw tiles and tilemap data, optimisation can only work if you load both. Add `-noremovedupes` before loading if necessary.
 
 # Source
 
