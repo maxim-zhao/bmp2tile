@@ -2,6 +2,8 @@ version: 0.62.{build}
 image: Visual Studio 2022
 configuration: Release
 platform: x86
+before_build:
+- cmd: nuget restore
 build:
   verbosity: minimal
 after_build:
