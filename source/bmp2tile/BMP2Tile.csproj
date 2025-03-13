@@ -4,7 +4,7 @@
         <OutputType>Exe</OutputType>
         <WarningLevel>9999</WarningLevel>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <Platform>x86</Platform>
+        <Platforms>x86</Platforms>
         <PlatformTarget>x86</PlatformTarget>
         <LangVersion>13</LangVersion>
     </PropertyGroup>

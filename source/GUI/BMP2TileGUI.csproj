@@ -7,7 +7,7 @@
         <WarningLevel>9999</WarningLevel>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <ApplicationIcon>Alisa.ico</ApplicationIcon>
-        <Platform>x86</Platform>
+        <Platforms>x86</Platforms>
         <PlatformTarget>x86</PlatformTarget>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <LangVersion>13</LangVersion>
