@@ -58,6 +58,11 @@ namespace BMP2Tile
                         s => converter.RawTilemapFilename = s,
                         "filename")
                     .Add(
+                        ["spritesheet"],
+                        "Process the image from a spritesheet to a vertical stack of sprites of the given size, e.g. \"32x16\"",
+                        x => converter.SpriteSheet(x),
+                        "dimensions")
+                    .Add(
                         ["removeduplicates", "removedupes"],
                         "Remove duplicate tiles (default)",
                         _ => converter.RemoveDuplicates = true)

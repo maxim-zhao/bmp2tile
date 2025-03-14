@@ -35,6 +35,8 @@ namespace BMP2Tile
         private bool _optimized;
         private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
         private readonly HashSet<byte> _paletteIndicesUsed = [];
+        private int _spriteWidth;
+        private int _spriteHeight;
 
         #endregion
 
@@ -420,6 +422,11 @@ namespace BMP2Tile
                 if (_bitmap.Height % 8 != 0)
                 {
                     throw new AppException($"Image's height ({_bitmap.Height})is not a multiple of 8");
+                }
+
+                if (_spriteWidth > 0 && _spriteHeight > 0)
+                {
+                    RearrangeSpriteSheet();
                 }
             }
             catch (AppException)
@@ -899,91 +906,112 @@ namespace BMP2Tile
             _compressors.Clear();
         }
 
-        public void LoadTiles(string filename)
+        public void SpriteSheet(string s)
         {
-            _filename = null;
-            Log($"Loading {filename}...");
-            var data = File.ReadAllBytes(filename);
-            if (data.Length % 32 != 0)
+            var match = Regex.Match(s, @"^(?<width>\d+)x(?<height>\d+)$");
+            if (!match.Success)
             {
-                throw new AppException($"File \"{filename}\" is not a multiple of 32 bytes cannot be loaded as tiles");
+                throw new AppException($"Unable to parse sprite sheet dimensions \"{s}\"");
             }
 
-            _tiles = [];
-            // We need to convert the data to 8x8 arrays of 4-bit numbers
-            for (var tileOffset = 0; tileOffset < data.Length; tileOffset += 32)
-            {
-                // Tiles are 64 bytes of tile indices - not planar.
-                // The file data is planar so we have to convert it.
-                // This is ugly...
-                var tile = new byte[8 * 8];
-
-                for (var row = 0; row < 8; ++row)
-                {
-                    // Point to the data for this row
-                    var offset = tileOffset + row * 4;
-                    // Iterate over the bitplanes
-                    for (var bitplane = 0; bitplane < 4; ++bitplane)
-                    {
-                        // Iterate over the pixels
-                        for (var x = 0; x < 8; ++x)
-                        {
-                            // Get the bit
-                            var bit = (data[offset + bitplane] >> (7 - x)) & 1;
-                            // Merge into the value
-                            tile[row * 8 + x] |= (byte)(bit << bitplane);
-                        }
-                    }
-                }
-
-                // Each byte is made of four bitplanes.
-                _tiles.Add(new Tile(tile));
-            }
+            _spriteWidth = Convert.ToInt32(match.Groups["width"].Value);
+            _spriteHeight = Convert.ToInt32(match.Groups["height"].Value);
         }
 
-        public void LoadTilemap(string filename)
+        public void RearrangeSpriteSheet()
         {
-            _filename = null;
-            var width = 1;
-            // Filename might be a filename, or might be <filename>:<width>, where <width> is the tilemap width
-            var m = Regex.Match(filename, "^(?<filename>.+):(?<width>\\d+)$");
-            if (m.Success)
+            GetBitmap();
+
+            // Compare to the image dimensions
+            if (_bitmap.Width % _spriteWidth != 0 || _bitmap.Height % _spriteHeight != 0)
             {
-                filename = m.Groups["filename"].Value;
-                width = Convert.ToInt32(m.Groups["width"].Value);
+                throw new AppException($"Image is not a multiple of {_spriteWidth}x{_spriteHeight} pixels, cannot split");
             }
 
-            Log($"Loading {filename}...");
-            var data = File.ReadAllBytes(filename);
-            if (data.Length % 2 != 0)
-            {
-                throw new AppException($"File \"{filename}\" is not a multiple of 2 bytes cannot be loaded as a tilemap");
-            }
+            Log("Rearranging image as a sprite sheet...");
 
-            // We don't know the dimensions of the tilemap so we squash into a giant column
-            var numEntries = data.Length / 2;
-            var height = numEntries / width;
-            // Sanity-check the width
-            if (width * height != numEntries)
+            var sourceColumns = _bitmap.Width / _spriteWidth;
+            var sourceRows = _bitmap.Height / _spriteHeight;
+            // Figure out the new image size and make it
+            var numSprites = sourceRows * sourceColumns;
+            Log($"New image is {_spriteWidth}x{numSprites * _spriteHeight}", LogLevel.Verbose);
+            var newImage = new Bitmap(_spriteWidth, numSprites * _spriteHeight, _bitmap.PixelFormat);
+            newImage.Save("blank.png");
+
+            // Transfer the data across
+            BitmapData oldBitmapData = null;
+            BitmapData newBitmapData = null;
+            try
             {
-                throw new AppException($"File \"{filename}\" is not a multiple of {width * 2} bytes so it cannot have a width of {width}");
-            }
-            _tilemap = new Tilemap(width, height);
-            for (var x = 0; x < width; ++x)
-            for (var y = 0; y < height; ++y)
-            {
-                // Get the two bytes
-                var offset = ((y * width) + x) * 2;
-                var word = data[offset] | (data[offset + 1] << 8);
-                // Put into the tilemap
-                _tilemap[x, y] = new Tilemap.Entry
+                oldBitmapData = _bitmap.LockBits(
+                    new Rectangle(0, 0, _bitmap.Width, _bitmap.Height),
+                    ImageLockMode.ReadOnly,
+                    _bitmap.PixelFormat);
+                newBitmapData = newImage.LockBits(
+                    new Rectangle(0, 0, newImage.Width, newImage.Height),
+                    ImageLockMode.WriteOnly,
+                    newImage.PixelFormat);
+
+                // Copy from the old one
+                for (var i = 0; i < numSprites; ++i)
                 {
-                    TileIndex =         word & 0b0_0001_1111_1111,
-                    HFlip =            (word & 0b0_0010_0000_0000) != 0,
-                    VFlip =            (word & 0b0_0100_0000_0000) != 0,
-                    UseSpritePalette = (word & 0b0_1000_0000_0000) != 0,
-                    HighPriority =     (word & 0b1_0000_0000_0000) != 0
-                };
+                    // Figure out the source rect
+                    var sourceRow = i / sourceColumns;
+                    var sourceColumn = i % sourceColumns;
+                    //// Copy it to the new image
+                    //CopyBitmap(
+                    //    oldBitmapData, 
+                    //    newBitmapData, 
+                    //    0, 
+                    //    i * _spriteHeight, 
+                    //    sourceColumn * _spriteWidth, 
+                    //    sourceRow * _spriteHeight,
+                    //    _spriteWidth,
+                    //    _spriteHeight);
+                    Log($"Copied sprite {i+1}/{numSprites}", LogLevel.Verbose);
+                }
+                // Copy the palette too
+                for (var i = 0; i < _bitmap.Palette.Entries.Length; ++i)
+                {
+                    newImage.Palette.Entries[i] = _bitmap.Palette.Entries[i];
+                }
+            }
+            finally
+            {
+                if (oldBitmapData != null)
+                {
+                    _bitmap.UnlockBits(oldBitmapData);
+                }
+                if (newBitmapData != null)
+                {
+                    newImage.UnlockBits(newBitmapData);
+                }
+            }
+
+            Log("hello 1");
+            newImage.Save("new.png");
+
+            // Finally, swap the new image in and dispose the old one
+            _bitmap.Dispose();
+            Log("hello 2");
+            _bitmap = newImage;
+
+            // Debugging: save the image
+            Log("hello 3");
+            Log("hello 4");
+        }
+
+        private static void CopyBitmap(BitmapData source, BitmapData dest, int destX, int destY, int sourceX, int sourceY, int width, int height)
+        {
+            var sourceOffset = source.Scan0 + sourceY * source.Stride + sourceX;
+            var destOffset = dest.Scan0 + destY * dest.Stride + destX;
+            var tempArray = new byte[width];
+            for (var i = 0; i < height; ++i)
+            {
+                Marshal.Copy(sourceOffset, tempArray, 0, width);
+                Marshal.Copy(tempArray, 0, destOffset, width);
+                sourceOffset += source.Stride;
+                destOffset += dest.Stride;
             }
         }
     }
