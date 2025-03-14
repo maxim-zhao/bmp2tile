@@ -187,6 +187,7 @@ choices. Defaults are marked with :star:.
 |`<filename>`              |Load the specified bitmap. Note that the format restrictions are the same as in the GUI. |
 |`-loadtiles <filename>`   |Load the specified raw tile data file        |
 |`-loadtilemap <filename>` |Load the specified raw tilemap data file     |
+|`-spritesheet <x>x<y>`    |Rearrange the bitmap so that the `x`x`y` areas are stacked top to bottom |
 |`-removedupes`            |:star: Optimise out duplicate tiles          |
 |`-noremovedupes`          |Or don't                                     |
 |`-mirror`                 |:star: Use tile mirroring to further optimise duplicates |
@@ -211,10 +212,10 @@ Note that options are interpreted sequentially. That means you should specify an
 `-save*` actions. It also you can chain together operations, as so:
 
 ```
-bmp2tile.exe foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "fool.tilemap.withmirroring.zx7" -nomirror -savetilemap "fool.tilemap.nomirroring.zx7"
+bmp2tile.exe foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "foo.tilemap.withmirroring.zx7" -nomirror -savetilemap "foo.tilemap.nomirroring.zx7"
 ```
 
-Note also that if loading raw tiles and tilemap data, optimisation can only work if you load both. Add `-noremovedupes` before loading if necessary.
+Note also that if loading raw tiles and tilemap data, optimisation can only work if you load both.
 
 # Source
 
@@ -224,6 +225,10 @@ BMP2Tile started life in Delphi 7, but as of version 0.5 became written in C#.
 Most of the plugins are written in C++.
 
 # History
+
+0.63
+- Improved raw tilemap/tiles support so you don't have to disable duplicate removal to avoid an error
+- Added [spritesheet rearrangement](https://github.com/maxim-zhao/bmp2tile/issues/28)
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)
