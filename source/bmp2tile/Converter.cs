@@ -312,6 +312,7 @@ namespace BMP2Tile
 
             // We enumerate files in the program folder
             var path = AppContext.BaseDirectory;
+            Log($"Looking for compressors in {path}...");
 
             // ReSharper disable once StringLiteralTypo
             foreach (var filename in Directory.EnumerateFiles(path, "gfxcomp_*.dll"))
@@ -527,7 +528,7 @@ namespace BMP2Tile
             }
             else
             {
-                throw new AppException("No tilemap can be created because there's no file");
+                throw new AppException("No tilemap can be created because there's no filename");
             }
         }
 
@@ -619,9 +620,13 @@ namespace BMP2Tile
             {
                 GetTilesFromFile();
             }
-            else
+            else if (_filename != null)
             {
                 GetTilesFromBitmap();
+            }
+            else
+            {
+                throw new AppException("No tiles can be created because there's no filename");
             }
         }
 
@@ -914,8 +919,20 @@ namespace BMP2Tile
                 throw new AppException($"Unable to parse sprite sheet dimensions \"{s}\"");
             }
 
-            _spriteWidth = Convert.ToInt32(match.Groups["width"].Value);
-            _spriteHeight = Convert.ToInt32(match.Groups["height"].Value);
+            var spriteWidth = Convert.ToInt32(match.Groups["width"].Value);
+            var spriteHeight = Convert.ToInt32(match.Groups["height"].Value);
+
+            if (spriteWidth <= 0 || spriteWidth % 8 != 0)
+            {
+                throw new AppException($"Sprite width {spriteWidth} must be a multiple of 8");
+            }
+            if (spriteHeight <= 0 || spriteHeight % 8 != 0)
+            {
+                throw new AppException($"Sprite height {spriteHeight} must be a multiple of 8");
+            }
+
+            _spriteWidth = spriteWidth;
+            _spriteHeight = spriteHeight;
         }
 
         public void RearrangeSpriteSheet()
@@ -949,7 +966,7 @@ namespace BMP2Tile
                     _bitmap.PixelFormat);
                 newBitmapData = newImage.LockBits(
                     new Rectangle(0, 0, newImage.Width, newImage.Height),
-                    ImageLockMode.WriteOnly,
+                    ImageLockMode.ReadWrite,
                     newImage.PixelFormat);
 
                 // Copy from the old one
@@ -958,22 +975,17 @@ namespace BMP2Tile
                     // Figure out the source rect
                     var sourceRow = i / sourceColumns;
                     var sourceColumn = i % sourceColumns;
-                    //// Copy it to the new image
-                    //CopyBitmap(
-                    //    oldBitmapData, 
-                    //    newBitmapData, 
-                    //    0, 
-                    //    i * _spriteHeight, 
-                    //    sourceColumn * _spriteWidth, 
-                    //    sourceRow * _spriteHeight,
-                    //    _spriteWidth,
-                    //    _spriteHeight);
+                    // Copy it to the new image
+                    CopyBitmap(
+                        oldBitmapData,
+                        newBitmapData,
+                        0,
+                        i * _spriteHeight,
+                        sourceColumn * _spriteWidth,
+                        sourceRow * _spriteHeight,
+                        _spriteWidth,
+                        _spriteHeight);
                     Log($"Copied sprite {i+1}/{numSprites}", LogLevel.Verbose);
-                }
-                // Copy the palette too
-                for (var i = 0; i < _bitmap.Palette.Entries.Length; ++i)
-                {
-                    newImage.Palette.Entries[i] = _bitmap.Palette.Entries[i];
                 }
             }
             finally
@@ -987,6 +999,8 @@ namespace BMP2Tile
                     newImage.UnlockBits(newBitmapData);
                 }
             }
+            // Copy the palette too
+            newImage.Palette = _bitmap.Palette;
 
             Log("hello 1");
             newImage.Save("new.png");
@@ -1006,10 +1020,17 @@ namespace BMP2Tile
             var sourceOffset = source.Scan0 + sourceY * source.Stride + sourceX;
             var destOffset = dest.Scan0 + destY * dest.Stride + destX;
             var tempArray = new byte[width];
+            var bytes = dest.PixelFormat switch
+            {
+                PixelFormat.Format8bppIndexed => width,
+                PixelFormat.Format4bppIndexed => width / 2,
+                PixelFormat.Format1bppIndexed => width / 8,
+                _ => throw new AppException($"Can't handle non-paletted images. Image is {dest.PixelFormat}")
+            };
             for (var i = 0; i < height; ++i)
             {
-                Marshal.Copy(sourceOffset, tempArray, 0, width);
-                Marshal.Copy(tempArray, 0, destOffset, width);
+                Marshal.Copy(sourceOffset, tempArray, 0, bytes);
+                Marshal.Copy(tempArray, 0, destOffset, bytes);
                 sourceOffset += source.Stride;
                 destOffset += dest.Stride;
             }
