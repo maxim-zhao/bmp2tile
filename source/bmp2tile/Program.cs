@@ -50,12 +50,12 @@ namespace BMP2Tile
                     .Add(
                         ["loadtiles"],
                         "Load raw data as tiles",
-                        s => converter.LoadTiles(s),
+                        s => converter.RawTilesFilename = s,
                         "filename")
                     .Add(
                         ["loadtilemap"],
                         "Load raw data as tilemap. Suffix with width after a colon, e.g. \":32\", to specify the tilemap width if needed.",
-                        s => converter.LoadTilemap(s),
+                        s => converter.RawTilemapFilename = s,
                         "filename")
                     .Add(
                         ["removeduplicates", "removedupes"],
@@ -79,7 +79,7 @@ namespace BMP2Tile
                         _ => converter.AdjacentBelow = false)
                     .Add(
                         ["8x16"],
-                        "Treat image as 8x16 tiles (does not work will with duplicate removal)",
+                        "Treat image as 8x16 tiles (does not work well with duplicate removal)",
                         _ => converter.AdjacentBelow = true)
                     .Add(
                         ["planar"],

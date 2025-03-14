@@ -29,6 +29,8 @@ namespace BMP2Tile
         private bool _useSpritePalette;
         private bool _fullPalette;
         private string _filename;
+        private string _tilesFilename;
+        private string _tilemapFilename;
         private Bitmap _bitmap;
         private bool _optimized;
         private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
@@ -125,6 +127,38 @@ namespace BMP2Tile
             {
                 _filename = value;
                 _tiles = null;
+                _tilemap = null;
+
+                if (_bitmap != null)
+                {
+                    _bitmap.Dispose();
+                    _bitmap = null;
+                }
+            }
+        }
+
+        public string RawTilesFilename
+        {
+            set
+            {
+                _tilesFilename = value;
+                _filename = null;
+                _tiles = null;
+
+                if (_bitmap != null)
+                {
+                    _bitmap.Dispose();
+                    _bitmap = null;
+                }
+            }
+        }
+
+        public string RawTilemapFilename
+        {
+            set
+            {
+                _tilemapFilename = value;
+                _filename = null;
                 _tilemap = null;
 
                 if (_bitmap != null)
@@ -402,6 +436,14 @@ namespace BMP2Tile
                 return;
             }
 
+            // If we are in tilemap-only or tiles-only mode then we can't optimize
+            if ((_tilemapFilename != null && _tilesFilename == null) ||
+                (_tilemapFilename == null && _tilesFilename != null))
+            {
+                Log("Skipping optimize because we do not have both tiles and tilemap", LogLevel.Verbose);
+                return;
+            }
+
             GetTiles();
             GetTilemap();
 
@@ -468,6 +510,67 @@ namespace BMP2Tile
                 return;
             }
 
+            if (_tilemapFilename != null)
+            {
+                GetTilemapFromFile();
+            }
+            else if (_filename != null)
+            {
+                GetTilemapFromBitmap();
+            }
+            else
+            {
+                throw new AppException("No tilemap can be created because there's no file");
+            }
+        }
+
+        public void GetTilemapFromFile()
+        {
+            string filename = _tilemapFilename;
+            var width = 1;
+            // Filename might be a filename, or might be <filename>:<width>, where <width> is the tilemap width
+            var m = Regex.Match(filename, "^(?<filename>.+):(?<width>\\d+)$");
+            if (m.Success)
+            {
+                filename = m.Groups["filename"].Value;
+                width = Convert.ToInt32(m.Groups["width"].Value);
+            }
+
+            Log($"Loading {filename}...");
+            var data = File.ReadAllBytes(filename);
+            if (data.Length % 2 != 0)
+            {
+                throw new AppException($"File \"{filename}\" is not a multiple of 2 bytes cannot be loaded as a tilemap");
+            }
+
+            var numEntries = data.Length / 2;
+            var height = numEntries / width;
+            // Sanity-check the width
+            if (width * height != numEntries)
+            {
+                throw new AppException($"File \"{filename}\" is not a multiple of {width * 2} bytes so it cannot have a width of {width}");
+            }
+            _tilemap = new Tilemap(width, height);
+            for (var x = 0; x < width; ++x)
+            for (var y = 0; y < height; ++y)
+            {
+                // Get the two bytes
+                var offset = ((y * width) + x) * 2;
+                var word = data[offset] | (data[offset + 1] << 8);
+                // Put into the tilemap
+                _tilemap[x, y] = new Tilemap.Entry
+                {
+                    TileIndex =         word & 0b0_0001_1111_1111,
+                    HFlip =            (word & 0b0_0010_0000_0000) != 0,
+                    VFlip =            (word & 0b0_0100_0000_0000) != 0,
+                    UseSpritePalette = (word & 0b0_1000_0000_0000) != 0,
+                    HighPriority =     (word & 0b1_0000_0000_0000) != 0
+                };
+            }
+        }
+
+        public void GetTilemapFromBitmap()
+        {
             GetBitmap();
             GetTiles();
 
@@ -505,6 +608,58 @@ namespace BMP2Tile
                 return;
             }
 
+            if (_tilesFilename != null)
+            {
+                GetTilesFromFile();
+            }
+            else
+            {
+                GetTilesFromBitmap();
+            }
+        }
+
+        private void GetTilesFromFile()
+        {
+            Log($"Reading tiles from {_tilesFilename}", LogLevel.Verbose);
+            var data = File.ReadAllBytes(_tilesFilename);
+            if (data.Length % 32 != 0)
+            {
+                throw new AppException($"File \"{_tilesFilename}\" is not a multiple of 32 bytes cannot be loaded as tiles");
+            }
+
+            _tiles = [];
+            // We need to convert the data to 8x8 arrays of 4-bit numbers
+            for (var tileOffset = 0; tileOffset < data.Length; tileOffset += 32)
+            {
+                // Tiles are 64 bytes of tile indices - not planar.
+                // The file data is planar so we have to convert it.
+                // This is ugly...
+                var tile = new byte[8 * 8];
+
+                for (var row = 0; row < 8; ++row)
+                {
+                    // Point to the data for this row
+                    var offset = tileOffset + row * 4;
+                    // Iterate over the bitplanes
+                    for (var bitplane = 0; bitplane < 4; ++bitplane)
+                    {
+                        // Iterate over the pixels
+                        for (var x = 0; x < 8; ++x)
+                        {
+                            // Get the bit
+                            var bit = (data[offset + bitplane] >> (7 - x)) & 1;
+                            // Merge into the value
+                            tile[row * 8 + x] |= (byte)(bit << bitplane);
+                        }
+                    }
+                }
+
+                _tiles.Add(new Tile(tile));
+            }
+        }
+
+        private void GetTilesFromBitmap()
+        {
             GetBitmap();
 
             Log("Generating tiles from image", LogLevel.Verbose);
