@@ -953,7 +953,6 @@ namespace BMP2Tile
             var numSprites = sourceRows * sourceColumns;
             Log($"New image is {_spriteWidth}x{numSprites * _spriteHeight}", LogLevel.Verbose);
             var newImage = new Bitmap(_spriteWidth, numSprites * _spriteHeight, _bitmap.PixelFormat);
-            newImage.Save("blank.png");
 
             // Transfer the data across
             BitmapData oldBitmapData = null;
@@ -1002,17 +1001,9 @@ namespace BMP2Tile
             // Copy the palette too
             newImage.Palette = _bitmap.Palette;
 
-            Log("hello 1");
-            newImage.Save("new.png");
-
             // Finally, swap the new image in and dispose the old one
             _bitmap.Dispose();
-            Log("hello 2");
             _bitmap = newImage;
-
-            // Debugging: save the image
-            Log("hello 3");
-            Log("hello 4");
         }
 
         private static void CopyBitmap(BitmapData source, BitmapData dest, int destX, int destY, int sourceX, int sourceY, int width, int height)
