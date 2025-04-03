@@ -172,6 +172,7 @@ public class Converter: IDisposable
     }
 
     public Palette.Formats PaletteFormat { private get; set; }
+    public string DllPath { private get; set; } = AppContext.BaseDirectory;
 
     #endregion
 
@@ -311,11 +312,10 @@ public class Converter: IDisposable
         _compressors.Add(".inc", _includeTextWriter);
 
         // We enumerate files in the program folder
-        var path = AppContext.BaseDirectory;
-        Log($"Looking for compressors in {path}...");
+        Log($"Looking for compressors in {DllPath}...", LogLevel.Verbose);
 
         // ReSharper disable once StringLiteralTypo
-        foreach (var filename in Directory.EnumerateFiles(path, "gfxcomp_*.dll"))
+        foreach (var filename in Directory.EnumerateFiles(DllPath, "gfxcomp_*.dll"))
         {
             try
             {
@@ -934,7 +934,7 @@ public class Converter: IDisposable
             throw new AppException($"Image is not a multiple of {_spriteWidth}x{_spriteHeight} pixels, cannot split");
         }
 
-        Log("Rearranging image as a sprite sheet...");
+        Log("Rearranging image as a sprite sheet...", LogLevel.Verbose);
 
         var sourceColumns = _bitmap.Width / _spriteWidth;
         var sourceRows = _bitmap.Height / _spriteHeight;
@@ -975,6 +975,7 @@ public class Converter: IDisposable
                     _spriteHeight);
                 Log($"Copied sprite {i+1}/{numSprites}", LogLevel.Verbose);
             }
+            Log($"Rearranged image from {_bitmap.Width}x{_bitmap.Height} with {numSprites} {_spriteWidth}x{_spriteHeight} sprites to {newImage.Width}x{newImage.Height}");
         }
         finally
         {

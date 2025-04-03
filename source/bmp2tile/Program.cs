@@ -164,6 +164,11 @@ internal static class Program
                     ["quiet", "q"],
                     "Disable verbose logging",
                     _ => _verbose = false)
+                .Add(
+                    ["dllpath"],
+                    "Path to search for compression DLLs. Defaults to the app directory",
+                    s => converter.DllPath = s,
+                    "path")
                 // ReSharper restore StringLiteralTypo
                 // ReSharper restore AccessToDisposedClosure
                 .Parse(args);
