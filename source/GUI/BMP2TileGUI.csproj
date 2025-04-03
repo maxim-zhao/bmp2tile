@@ -1,16 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net48</TargetFramework>
         <OutputType>WinExe</OutputType>
         <UseWindowsForms>true</UseWindowsForms>
         <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-        <WarningLevel>9999</WarningLevel>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <ApplicationIcon>Alisa.ico</ApplicationIcon>
-        <Platforms>x86</Platforms>
-        <PlatformTarget>x86</PlatformTarget>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <LangVersion>13</LangVersion>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\bmp2tile\BMP2Tile.csproj" />
