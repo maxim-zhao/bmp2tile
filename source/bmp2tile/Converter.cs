@@ -37,6 +37,7 @@ public class Converter: IDisposable
     private readonly HashSet<byte> _paletteIndicesUsed = [];
     private int _spriteWidth;
     private int _spriteHeight;
+    private (int left, int top, int width, int height) _tilemapCrop;
 
     #endregion
 
@@ -219,10 +220,22 @@ public class Converter: IDisposable
             Optimize();
         }
 
+        var tilemap = _tilemap;
+
+        if (_tilemapCrop.width > 0)
+        {
+            Log($"Cropping tilemap to {_tilemapCrop.width}x{tilemap.Height} at {_tilemapCrop.left}, {_tilemapCrop.top}");
+            tilemap = tilemap.Crop(
+                _tilemapCrop.left / 8, 
+                _tilemapCrop.top / 8, 
+                _tilemapCrop.width / 8, 
+                _tilemapCrop.height / 8);
+        }
+
         var compressor = GetCompressor(filename);
         Log("Compressing tilemap...", LogLevel.Verbose);
         var sw = Stopwatch.StartNew();
-        var bytes = compressor.CompressTilemap(_tilemap);
+        var bytes = compressor.CompressTilemap(tilemap);
         File.WriteAllBytes(filename, bytes.ToArray());
         sw.Stop();
 
@@ -1015,5 +1028,18 @@ public class Converter: IDisposable
             sourceOffset += source.Stride;
             destOffset += dest.Stride;
         }
+    }
+
+    public void CropTo(int left, int top, int width, int height)
+    {
+        if (left % 8 != 0 ||
+            top % 8 != 0 ||
+            width % 8 != 0 ||
+            height % 8 != 0)
+        {
+            throw new ArgumentException("Crop area must be multiples of 8");
+        }
+
+        _tilemapCrop = (left, top, width, height);
     }
 }

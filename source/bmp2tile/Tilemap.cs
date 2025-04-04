@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace BMP2Tile;
@@ -67,5 +68,20 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return _tilemap.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Returns a new tilemap cropped to the tile area given
+    /// </summary>
+    public Tilemap Crop(int left, int top, int width, int height)
+    {
+        var result = new Tilemap(width, height);
+        for (var y = 0; y < height; ++y)
+        for (var x = 0; x < width; ++x)
+        {
+            result[x, y] = _tilemap[x + left, y + height];
+        }
+
+        return result;
     }
 }

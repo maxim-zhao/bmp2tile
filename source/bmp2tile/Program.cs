@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
 
@@ -46,32 +45,26 @@ internal static class Program
                 .Add(
                     ["loadimage"],
                     "Load the image specified. Can be specified without the action.",
-                    s => converter.Filename = s,
+                    d => converter.Filename = d["filename"],
                     "filename")
                 .Add(
                     ["loadtiles"],
                     "Load raw data as tiles",
-                    s => converter.RawTilesFilename = s,
+                    d => converter.RawTilesFilename = d["filename"],
                     "filename")
                 .Add(
                     ["loadtilemap"],
                     "Load raw data as tilemap. Suffix with width after a colon, e.g. \":32\", to specify the tilemap width if needed.",
-                    s => converter.RawTilemapFilename = s,
+                    d => converter.RawTilemapFilename = d["filename"],
                     "filename")
                 .Add(
                     ["spritesheet"],
-                    "Process the image from a spritesheet to a vertical stack of sprites of the given size, e.g. \"32x16\"",
-                    s =>
+                    "Process the image from a spritesheet to a vertical stack of sprites of the given size, e.g. 32 16",
+                    d =>
                     {
-                        var match = Regex.Match(s, @"^(?<width>\d+)x(?<height>\d+)$");
-                        if (!match.Success)
-                        {
-                            throw new AppException($"Unable to parse sprite sheet dimensions \"{s}\"");
-                        }
-
-                        converter.SpriteSheet(Convert.ToInt32(match.Groups["width"].Value), Convert.ToInt32(match.Groups["height"].Value));
+                        converter.SpriteSheet(Convert.ToInt32(d["x"]), Convert.ToInt32(d["y"]));
                     },
-                    "dimensions")
+                    "x", "y")
                 .Add(
                     ["removeduplicates", "removedupes"],
                     "Remove duplicate tiles (default)",
@@ -107,8 +100,20 @@ internal static class Program
                 .Add(
                     ["tileoffset"],
                     "Tile offset for first tile found (default is 0)",
-                    x => converter.TileOffset = Convert.ToUInt32(x),
+                    d => converter.TileOffset = Convert.ToUInt32(d["offset"]),
                     "offset")
+                .Add(
+                    ["tilemaparea"],
+                    "Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8",
+                    d =>
+                    {
+                        converter.CropTo(
+                            Convert.ToInt32(d["x"]), 
+                            Convert.ToInt32(d["y"]), 
+                            Convert.ToInt32(d["w"]), 
+                            Convert.ToInt32(d["h"]));
+                    },
+                    "w", "h", "x", "y")
                 .Add(
                     ["spritepalette"],
                     "Set tilemap data to use sprite palette (default off)",
@@ -140,17 +145,17 @@ internal static class Program
                 .Add(
                     ["savetiles"],
                     "Save tiles to the given filename. Extension selects compression.",
-                    converter.SaveTiles,
+                    d => converter.SaveTiles(d["filename"]),
                     "filename")
                 .Add(
                     ["savetilemap"],
                     "Save tilemap to the given filename. Extension selects compression.",
-                    converter.SaveTilemap,
+                    d => converter.SaveTilemap(d["filename"]),
                     "filename")
                 .Add(
                     ["savepalette"],
                     "Save tilemap to the given filename. Format is controlled by other palette-related parameters.",
-                    converter.SavePalette,
+                    d => converter.SavePalette(d["filename"]),
                     "filename")
                 .Add(
                     ["exit"],
@@ -167,7 +172,7 @@ internal static class Program
                 .Add(
                     ["dllpath"],
                     "Path to search for compression DLLs. Defaults to the app directory",
-                    s => converter.DllPath = s,
+                    d => converter.DllPath = d["path"],
                     "path")
                 // ReSharper restore StringLiteralTypo
                 // ReSharper restore AccessToDisposedClosure

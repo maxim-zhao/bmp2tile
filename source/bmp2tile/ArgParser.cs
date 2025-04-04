@@ -21,19 +21,19 @@ internal class ArgParser
     {
         public IList<string> Names { get; set; }
         public string Description { get; set; }
-        public Action<string> Action { get; set; }
-        public string ValueName { get; set; }
+        public Action<Dictionary<string, string>> Action { get; set; }
+        public string[] ValueNames { get; set; }
     }
     private readonly Dictionary<string, ArgHandler> _args = new();
 
-    public ArgParser Add(IList<string> names, string description, Action<string> action, string valueName = null)
+    public ArgParser Add(IList<string> names, string description, Action<Dictionary<string, string>> action, params string[] valueNames)
     {
         var arg = new ArgHandler
         {
             Names = names,
             Description = description,
             Action = action,
-            ValueName = valueName
+            ValueNames = valueNames
         };
         foreach (var name in names)
         {
@@ -64,20 +64,19 @@ internal class ArgParser
                     return 1;
                 }
 
-                // We have a match, invoke the handler with the right number of args
-                if (handler.ValueName != null)
+                // We have a match, invoke the handler with the args
+                // We build a dictionary of the args
+                var actionArgs = new Dictionary<string, string>();
+                foreach (var valueName in handler.ValueNames)
                 {
-                    if (i == args.Length - 1)
+                    ++i;
+                    if (i == args.Length)
                     {
-                        throw new AppException($"Missing value for action {arg} <{handler.ValueName}>");
+                        throw new AppException($"Not enough parameters while processing {arg}");
                     }
-
-                    handler.Action(args[++i]);
+                    actionArgs[valueName] = args[i];
                 }
-                else
-                {
-                    handler.Action(null);
-                }
+                handler.Action(actionArgs);
             }
             else
             {
@@ -131,19 +130,19 @@ internal class ArgParser
                      .Where(x => x.Key == x.Value.Names[0])
                      .Select(x => x.Value))
         {
-            if (arg.ValueName == null)
-            {
-                yield return [$"-{arg.Names[0]}", arg.Description];
-            }
-            else
-            {
-                yield return [$"-{arg.Names[0]} <{arg.ValueName}>", arg.Description];
-            }
+            yield return [$"-{arg.Names[0]}{PrintArgs(arg.ValueNames)}", arg.Description];
 
             foreach (var s in arg.Names.Skip(1))
             {
                 yield return [$"-{s}", $"Synonym of -{arg.Names[0]}"];
             }
         }
+    }
+
+    private string PrintArgs(string[] names)
+    {
+        return names.Length == 0 
+            ? "" 
+            : names.Aggregate("", (s, arg) => s + $" <{arg}>");
     }
 }
