@@ -235,6 +235,7 @@ Most of the plugins are written in C++.
 - Added a way to specify the width of a raw tilemap when loading it (in commandline mode)
 - Support [saving tilemap sub-areas](https://github.com/maxim-zhao/bmp2tile/issues/2)
 - Support loading compression DLLs from another path (in commandline mode)
+- Fixed high DPI support, hopefully
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)
