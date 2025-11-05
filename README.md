@@ -185,25 +185,28 @@ choices. Defaults are marked with :star:.
 |Command switch            |Effect                                       |
 |--------------------------|---------------------------------------------|
 |`<filename>`              |Load the specified bitmap. Note that the format restrictions are the same as in the GUI. |
+|`-loadimage <filename>`   |Explicit version of the above                |
 |`-loadtiles <filename>`   |Load the specified raw tile data file        |
 |`-loadtilemap <filename>` |Load the specified raw tilemap data file     |
-|`-spritesheet <x>x<y>`    |Rearrange the bitmap so that the `x`x`y` areas are stacked top to bottom |
-|`-removedupes`            |:star: Optimise out duplicate tiles          |
-|`-noremovedupes`          |Or don't                                     |
-|`-mirror`                 |:star: Use tile mirroring to further optimise duplicates |
-|`-nomirror`               |Or don't                                     |
+|`-spritesheet <x> <y>`    |Rearrange the bitmap so that the `x`x`y` areas are stacked top to bottom |
+|`-removeduplicates`       |:star: Optimise out duplicate tiles          |
+|`-noremoveduplicates`     |Or don't                                     |
+|`-usemirroring`           |:star: Use tile mirroring to further optimise duplicates |
+|`-nomirroring`            |Or don't                                     |
 |`-8x8`                    |:star: Treat tile data as 8x8                |
 |`-8x16`                   |Treat tile data as 8x16                      |
 |`-planar`                 |:star: Output planar tile data               |
 |`-chunky`                 |Output chunky tile data                      |
 |`-tileoffset <n>`         |The starting index of the first tile. :star: Default is 0. |
+|`-tilemaparea <w> <h> <x> <y>` |Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8 |
 |`-spritepalette`          |Set the tilemap bit to make tiles use the sprite palette. :star: Default is to set it only if the image is a 32-colour image and the tile uses the upper palette. |
 |`-infrontofsprites`       |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset. |
-|`-palsms`                 |:star: Output the palette in SMS colour format |
-|`-palgg`                  |Output the palette in GG colour format       |
+|`-smspalette`             |:star: Output the palette in SMS colour format |
+|`-ggpalette`              |Output the palette in GG colour format       |
 |`-palcl123`               |Output the palette in SMS colour format, using constants of the form cl123 (see above). |
 |`-minimumpalette`         |:star:Output only as many colours as are present in the image. |
-|`-fullpalette`            |Output 16 colours rather than as many as are present in the image. |
+|`-fullpalette`            |Output 16 (or 32) colours rather than as many as are present in the image. |
+|`-dllpath <path>`         |Path to search for compression DLLs. Defaults to the app directory. Useful for testing a new plugin. |
 |`-savetiles <filename>`   |Save tile data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 |`-savetilemap <filename>` |Save tilemap data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 |`-savepalette <filename>` |Save palette data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
@@ -212,7 +215,7 @@ Note that options are interpreted sequentially. That means you should specify an
 `-save*` actions. It also you can chain together operations, as so:
 
 ```
-bmp2tile.exe foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "foo.tilemap.withmirroring.zx7" -nomirror -savetilemap "foo.tilemap.nomirroring.zx7"
+bmp2tile.exe -loadimage foo.png -savetiles "foo.tiles.zx7" -savetiles "foo.tiles.bin" -savetilemap "foo.tilemap.withmirroring.zx7" -nomirror -savetilemap "foo.tilemap.nomirroring.zx7"
 ```
 
 Note also that if loading raw tiles and tilemap data, optimisation can only work if you load both.
@@ -229,7 +232,9 @@ Most of the plugins are written in C++.
 0.63
 - Improved raw tilemap/tiles support so you don't have to disable duplicate removal to avoid an error
 - Added [spritesheet rearrangement](https://github.com/maxim-zhao/bmp2tile/issues/28)
-- Added a way to specify the width of a raw tilemap when loading it
+- Added a way to specify the width of a raw tilemap when loading it (in commandline mode)
+- Support [saving tilemap sub-areas](https://github.com/maxim-zhao/bmp2tile/issues/2)
+- Support loading compression DLLs from another path (in commandline mode)
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)
