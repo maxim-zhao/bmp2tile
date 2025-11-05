@@ -229,6 +229,7 @@ Most of the plugins are written in C++.
 0.63
 - Improved raw tilemap/tiles support so you don't have to disable duplicate removal to avoid an error
 - Added [spritesheet rearrangement](https://github.com/maxim-zhao/bmp2tile/issues/28)
+- Added a way to specify the width of a raw tilemap when loading it
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)

@@ -57,7 +57,12 @@ internal class ArgParser
             {
                 // We remove any number of leading - or /
                 var argName = Regex.Replace(arg, "^[-/]+", "");
-                if (argName == "?" || argName == "h" || argName == "help" || !_args.TryGetValue(argName, out var handler))
+                if (argName is "?" or "h" or "help")
+                {
+                    ShowHelp();
+                    return 0;
+                }
+                if (!_args.TryGetValue(argName, out var handler))
                 {
                     Console.Error.WriteLine($"Unknown action {arg}");
                     ShowHelp();
@@ -76,7 +81,15 @@ internal class ArgParser
                     }
                     actionArgs[valueName] = args[i];
                 }
-                handler.Action(actionArgs);
+
+                try
+                {
+                    handler.Action(actionArgs);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"Error parsing argument: {arg} {string.Join(" ", actionArgs.Values)}", e);
+                }
             }
             else
             {
@@ -114,6 +127,7 @@ internal class ArgParser
 
     private void ShowHelp()
     {
+        Console.Error.WriteLine($"BMP2Tile version {Program.GetVersion()}");
         Console.Error.WriteLine("Usage: bmp2tile <input file> <-action> <-action ...>");
         Console.Error.WriteLine("Actions take effect in order from left to right. Multiple input files can be processed this way.");
         Console.Error.WriteLine("\nActions:");

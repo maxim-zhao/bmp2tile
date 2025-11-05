@@ -37,3 +37,4 @@ bin/
 obj/
 .vs/
 launchSettings.json
+_ReSharper.Caches/

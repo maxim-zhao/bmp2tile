@@ -1,12 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace BMP2Tile;
 
-internal static class Program
+public static class Program
 {
     private static bool _verbose;
+
+    public static string GetVersion()
+    {
+        var fileVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetCallingAssembly().Location).FileVersion;
+        while (fileVersion.EndsWith(".0"))
+        {
+            Console.Error.WriteLine($"{fileVersion}");
+            fileVersion = fileVersion.Substring(0, fileVersion.Length - 2);
+        }
+
+        return fileVersion;
+    }
 
     public static int Main(string[] args)
     {
