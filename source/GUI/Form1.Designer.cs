@@ -78,9 +78,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.btnBrowse);
             this.groupBox1.Controls.Add(this.tbFilename);
-            this.groupBox1.Location = new System.Drawing.Point(13, 14);
+            this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(641, 58);
+            this.groupBox1.Size = new System.Drawing.Size(643, 58);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Bitmap";
@@ -88,7 +88,7 @@
             // btnBrowse
             // 
             this.btnBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBrowse.Location = new System.Drawing.Point(556, 25);
+            this.btnBrowse.Location = new System.Drawing.Point(558, 25);
             this.btnBrowse.Name = "btnBrowse";
             this.btnBrowse.Size = new System.Drawing.Size(77, 23);
             this.btnBrowse.TabIndex = 1;
@@ -103,7 +103,7 @@
             this.tbFilename.Location = new System.Drawing.Point(8, 26);
             this.tbFilename.Name = "tbFilename";
             this.tbFilename.ReadOnly = true;
-            this.tbFilename.Size = new System.Drawing.Size(540, 23);
+            this.tbFilename.Size = new System.Drawing.Size(542, 23);
             this.tbFilename.TabIndex = 0;
             this.tbFilename.Text = "Drag and drop a BMP or PNG file or click ->";
             // 
@@ -122,7 +122,7 @@
             // lblStatus
             // 
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(0, 56);
+            this.lblStatus.Size = new System.Drawing.Size(0, 17);
             // 
             // tabControl1
             // 
@@ -134,10 +134,10 @@
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage5);
-            this.tabControl1.Location = new System.Drawing.Point(13, 82);
+            this.tabControl1.Location = new System.Drawing.Point(12, 82);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(641, 284);
+            this.tabControl1.Size = new System.Drawing.Size(643, 284);
             this.tabControl1.TabIndex = 1;
             // 
             // tabPage1
@@ -145,7 +145,7 @@
             this.tabPage1.Controls.Add(this.pbPreview);
             this.tabPage1.Location = new System.Drawing.Point(4, 24);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Size = new System.Drawing.Size(633, 215);
+            this.tabPage1.Size = new System.Drawing.Size(635, 256);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Source";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -155,7 +155,7 @@
             this.pbPreview.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pbPreview.Location = new System.Drawing.Point(0, 0);
             this.pbPreview.Name = "pbPreview";
-            this.pbPreview.Size = new System.Drawing.Size(633, 215);
+            this.pbPreview.Size = new System.Drawing.Size(635, 256);
             this.pbPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pbPreview.TabIndex = 0;
             this.pbPreview.TabStop = false;
@@ -170,7 +170,7 @@
             this.tabPage2.Controls.Add(this.tbTiles);
             this.tabPage2.Location = new System.Drawing.Point(4, 24);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Size = new System.Drawing.Size(633, 215);
+            this.tabPage2.Size = new System.Drawing.Size(635, 256);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Tiles";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -178,7 +178,7 @@
             // btnSave
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSave.Location = new System.Drawing.Point(546, 182);
+            this.btnSave.Location = new System.Drawing.Point(551, 225);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(81, 28);
             this.btnSave.TabIndex = 5;
@@ -192,7 +192,7 @@
             this.cbPlanar.AutoSize = true;
             this.cbPlanar.Checked = true;
             this.cbPlanar.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbPlanar.Location = new System.Drawing.Point(146, 188);
+            this.cbPlanar.Location = new System.Drawing.Point(135, 231);
             this.cbPlanar.Name = "cbPlanar";
             this.cbPlanar.Size = new System.Drawing.Size(117, 19);
             this.cbPlanar.TabIndex = 4;
@@ -204,7 +204,7 @@
             // 
             this.cb8x16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cb8x16.AutoSize = true;
-            this.cb8x16.Location = new System.Drawing.Point(146, 163);
+            this.cb8x16.Location = new System.Drawing.Point(135, 206);
             this.cb8x16.Name = "cb8x16";
             this.cb8x16.Size = new System.Drawing.Size(95, 19);
             this.cb8x16.TabIndex = 3;
@@ -218,7 +218,7 @@
             this.cbUseMirroring.AutoSize = true;
             this.cbUseMirroring.Checked = true;
             this.cbUseMirroring.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbUseMirroring.Location = new System.Drawing.Point(8, 188);
+            this.cbUseMirroring.Location = new System.Drawing.Point(4, 231);
             this.cbUseMirroring.Name = "cbUseMirroring";
             this.cbUseMirroring.Size = new System.Drawing.Size(117, 19);
             this.cbUseMirroring.TabIndex = 2;
@@ -232,7 +232,7 @@
             this.cbRemoveDuplicates.AutoSize = true;
             this.cbRemoveDuplicates.Checked = true;
             this.cbRemoveDuplicates.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cbRemoveDuplicates.Location = new System.Drawing.Point(7, 163);
+            this.cbRemoveDuplicates.Location = new System.Drawing.Point(4, 206);
             this.cbRemoveDuplicates.Name = "cbRemoveDuplicates";
             this.cbRemoveDuplicates.Size = new System.Drawing.Size(126, 19);
             this.cbRemoveDuplicates.TabIndex = 1;
@@ -246,11 +246,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbTiles.Font = new System.Drawing.Font("Consolas", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbTiles.Location = new System.Drawing.Point(7, 5);
+            this.tbTiles.Location = new System.Drawing.Point(3, 3);
             this.tbTiles.Multiline = true;
             this.tbTiles.Name = "tbTiles";
             this.tbTiles.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbTiles.Size = new System.Drawing.Size(620, 152);
+            this.tbTiles.Size = new System.Drawing.Size(629, 197);
             this.tbTiles.TabIndex = 0;
             this.tbTiles.WordWrap = false;
             // 
@@ -264,7 +264,7 @@
             this.tabPage3.Controls.Add(this.tbTilemap);
             this.tabPage3.Location = new System.Drawing.Point(4, 24);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Size = new System.Drawing.Size(633, 215);
+            this.tabPage3.Size = new System.Drawing.Size(635, 256);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Tilemap";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -272,7 +272,7 @@
             // tbFirstTileIndex
             // 
             this.tbFirstTileIndex.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.tbFirstTileIndex.Location = new System.Drawing.Point(458, 82);
+            this.tbFirstTileIndex.Location = new System.Drawing.Point(232, 204);
             this.tbFirstTileIndex.MaxLength = 4;
             this.tbFirstTileIndex.Name = "tbFirstTileIndex";
             this.tbFirstTileIndex.Size = new System.Drawing.Size(73, 23);
@@ -284,7 +284,7 @@
             // 
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(258, 85);
+            this.label1.Location = new System.Drawing.Point(135, 207);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(91, 15);
             this.label1.TabIndex = 3;
@@ -293,7 +293,7 @@
             // btnSaveTilemap
             // 
             this.btnSaveTilemap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSaveTilemap.Location = new System.Drawing.Point(449, 117);
+            this.btnSaveTilemap.Location = new System.Drawing.Point(551, 225);
             this.btnSaveTilemap.Name = "btnSaveTilemap";
             this.btnSaveTilemap.Size = new System.Drawing.Size(81, 28);
             this.btnSaveTilemap.TabIndex = 5;
@@ -305,7 +305,7 @@
             // 
             this.cbHighPriority.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbHighPriority.AutoSize = true;
-            this.cbHighPriority.Location = new System.Drawing.Point(14, 154);
+            this.cbHighPriority.Location = new System.Drawing.Point(4, 231);
             this.cbHighPriority.Name = "cbHighPriority";
             this.cbHighPriority.Size = new System.Drawing.Size(116, 19);
             this.cbHighPriority.TabIndex = 2;
@@ -317,7 +317,7 @@
             // 
             this.cbSpritePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbSpritePalette.AutoSize = true;
-            this.cbSpritePalette.Location = new System.Drawing.Point(14, 102);
+            this.cbSpritePalette.Location = new System.Drawing.Point(4, 206);
             this.cbSpritePalette.Name = "cbSpritePalette";
             this.cbSpritePalette.Size = new System.Drawing.Size(116, 19);
             this.cbSpritePalette.TabIndex = 1;
@@ -331,11 +331,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbTilemap.Font = new System.Drawing.Font("Consolas", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbTilemap.Location = new System.Drawing.Point(4, 3);
+            this.tbTilemap.Location = new System.Drawing.Point(3, 3);
             this.tbTilemap.Multiline = true;
             this.tbTilemap.Name = "tbTilemap";
             this.tbTilemap.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbTilemap.Size = new System.Drawing.Size(601, 56);
+            this.tbTilemap.Size = new System.Drawing.Size(629, 197);
             this.tbTilemap.TabIndex = 0;
             this.tbTilemap.WordWrap = false;
             // 
@@ -350,7 +350,7 @@
             this.tabPage4.Controls.Add(this.tbPalette);
             this.tabPage4.Location = new System.Drawing.Point(4, 24);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Size = new System.Drawing.Size(633, 215);
+            this.tabPage4.Size = new System.Drawing.Size(635, 256);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Palette";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -359,7 +359,7 @@
             // 
             this.rbHexGG.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.rbHexGG.AutoSize = true;
-            this.rbHexGG.Location = new System.Drawing.Point(14, 405);
+            this.rbHexGG.Location = new System.Drawing.Point(3, 230);
             this.rbHexGG.Name = "rbHexGG";
             this.rbHexGG.Size = new System.Drawing.Size(108, 19);
             this.rbHexGG.TabIndex = 2;
@@ -372,7 +372,7 @@
             this.rbHexSMS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.rbHexSMS.AutoSize = true;
             this.rbHexSMS.Checked = true;
-            this.rbHexSMS.Location = new System.Drawing.Point(11, 353);
+            this.rbHexSMS.Location = new System.Drawing.Point(3, 205);
             this.rbHexSMS.Name = "rbHexSMS";
             this.rbHexSMS.Size = new System.Drawing.Size(109, 19);
             this.rbHexSMS.TabIndex = 0;
@@ -385,7 +385,7 @@
             // 
             this.cbPaletteConstants.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbPaletteConstants.AutoSize = true;
-            this.cbPaletteConstants.Location = new System.Drawing.Point(242, 354);
+            this.cbPaletteConstants.Location = new System.Drawing.Point(135, 206);
             this.cbPaletteConstants.Name = "cbPaletteConstants";
             this.cbPaletteConstants.Size = new System.Drawing.Size(137, 19);
             this.cbPaletteConstants.TabIndex = 10;
@@ -395,9 +395,11 @@
             // 
             // pbPalette
             // 
-            this.pbPalette.Location = new System.Drawing.Point(11, 13);
+            this.pbPalette.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pbPalette.Location = new System.Drawing.Point(3, 162);
             this.pbPalette.Name = "pbPalette";
-            this.pbPalette.Size = new System.Drawing.Size(1417, 96);
+            this.pbPalette.Size = new System.Drawing.Size(629, 37);
             this.pbPalette.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pbPalette.TabIndex = 8;
             this.pbPalette.TabStop = false;
@@ -405,9 +407,9 @@
             // btnSavePalette
             // 
             this.btnSavePalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSavePalette.Location = new System.Drawing.Point(1221, 368);
+            this.btnSavePalette.Location = new System.Drawing.Point(550, 225);
             this.btnSavePalette.Name = "btnSavePalette";
-            this.btnSavePalette.Size = new System.Drawing.Size(162, 56);
+            this.btnSavePalette.Size = new System.Drawing.Size(82, 28);
             this.btnSavePalette.TabIndex = 4;
             this.btnSavePalette.Text = "&Save";
             this.btnSavePalette.UseVisualStyleBackColor = true;
@@ -417,7 +419,7 @@
             // 
             this.cbFullPalette.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbFullPalette.AutoSize = true;
-            this.cbFullPalette.Location = new System.Drawing.Point(242, 406);
+            this.cbFullPalette.Location = new System.Drawing.Point(135, 231);
             this.cbFullPalette.Name = "cbFullPalette";
             this.cbFullPalette.Size = new System.Drawing.Size(176, 19);
             this.cbFullPalette.TabIndex = 3;
@@ -431,11 +433,11 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tbPalette.Font = new System.Drawing.Font("Consolas", 10.125F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tbPalette.Location = new System.Drawing.Point(19, 122);
+            this.tbPalette.Location = new System.Drawing.Point(3, 3);
             this.tbPalette.Multiline = true;
             this.tbPalette.Name = "tbPalette";
             this.tbPalette.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbPalette.Size = new System.Drawing.Size(1364, 201);
+            this.tbPalette.Size = new System.Drawing.Size(629, 153);
             this.tbPalette.TabIndex = 0;
             this.tbPalette.WordWrap = false;
             // 
@@ -444,7 +446,8 @@
             this.tabPage5.Controls.Add(this.tbMessages);
             this.tabPage5.Location = new System.Drawing.Point(4, 24);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Size = new System.Drawing.Size(633, 256);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(635, 256);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Messages";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -452,18 +455,18 @@
             // tbMessages
             // 
             this.tbMessages.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tbMessages.Location = new System.Drawing.Point(0, 0);
+            this.tbMessages.Location = new System.Drawing.Point(3, 3);
             this.tbMessages.Multiline = true;
             this.tbMessages.Name = "tbMessages";
             this.tbMessages.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.tbMessages.Size = new System.Drawing.Size(633, 256);
+            this.tbMessages.Size = new System.Drawing.Size(629, 250);
             this.tbMessages.TabIndex = 0;
             // 
             // Form1
             // 
             this.AllowDrop = true;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(667, 391);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.statusStrip1);
