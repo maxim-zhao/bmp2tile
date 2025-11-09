@@ -3,6 +3,6 @@
         <OutputType>Exe</OutputType>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+        <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     </ItemGroup>
 </Project>
