@@ -2,15 +2,13 @@ version: 0.63.{build}
 image: Visual Studio 2022
 configuration: Release
 platform: x86
-before_build:
-- cmd: nuget restore source\BMP2Tile.sln
-build:
-  verbosity: minimal
+build_script:
+- cmd: |
+    dotnet publish source --configuration Release --runtime win-x86
 after_build:
 - cmd: |
     appveyor DownloadFile https://github.com/maxim-zhao/bmp2tilecompressors/releases/latest/download/bmp2tilecompressors.zip
     7z x bmp2tilecompressors.zip
-    dotnet publish source --configuration Release --runtime win-x86
     7z a bmp2tile.zip .\source\GUI\bin\x86\Release\net8-windows\win-x86\publish\* readme.* license gfxcomp*.dll
 artifacts:
 - path: 'bmp2tile.zip'
