@@ -4,7 +4,6 @@
         <UseWindowsForms>true</UseWindowsForms>
         <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
         <ApplicationIcon>Alisa.ico</ApplicationIcon>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\bmp2tile\BMP2Tile.csproj" />

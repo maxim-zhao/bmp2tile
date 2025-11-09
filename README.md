@@ -9,6 +9,18 @@ It has a Winamp-inspired plugin interface for data compression. Source for compr
 
 https://github.com/maxim-zhao/bmp2tilecompressors
 
+It requires the .net 8 runtime. Try this in a commandline:
+
+```
+winget install --exact Microsoft.DotNet.Runtime.8
+```
+
+If the compressors don't work, you may need to install the MSVC x86 runtime. Try this in a commandline:
+
+```
+winget install --exact Microsoft.VCRedist.2015+.x86
+```
+
 # Instructions
 
 FIRST you have to prepare your file in an image editor. This is the important
@@ -236,6 +248,7 @@ Most of the plugins are written in C++.
 - Support [saving tilemap sub-areas](https://github.com/maxim-zhao/bmp2tile/issues/2)
 - Support loading compression DLLs from another path (in commandline mode)
 - Fixed high DPI support, hopefully
+- Moved to .net 8
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)
