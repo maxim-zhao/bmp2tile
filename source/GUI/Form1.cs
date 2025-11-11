@@ -228,6 +228,7 @@ public sealed partial class Form1 : Form
 
     private void Form1_Load(object sender, EventArgs e)
     {
+        HighDpiHelper.AdjustControlImagesDpiScale(this);
         Text = $"Bitmap to SMS/GG tile converter {BMP2Tile.Program.GetVersion()} by Maxim :: smspower.org";
     }
 }

@@ -2,8 +2,9 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <UseWindowsForms>true</UseWindowsForms>
-        <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
         <ApplicationIcon>Alisa.ico</ApplicationIcon>
+        <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+        <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\bmp2tile\BMP2Tile.csproj" />

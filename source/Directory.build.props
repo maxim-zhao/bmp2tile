@@ -1,11 +1,12 @@
 <Project>
     <PropertyGroup>
-        <TargetFramework>net8-windows</TargetFramework>
+        <TargetFramework>net8.0-windows</TargetFramework>
         <WarningLevel>9999</WarningLevel>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Platforms>x86</Platforms>
         <PlatformTarget>x86</PlatformTarget>
         <LangVersion>latest</LangVersion>
         <Version>0.63</Version>
+        <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
     </PropertyGroup>
 </Project>
