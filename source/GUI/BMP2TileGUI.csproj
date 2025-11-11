@@ -7,6 +7,27 @@
         <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
     </PropertyGroup>
     <ItemGroup>
+      <None Remove="Resources\application_view_tile.png" />
+      <None Remove="Resources\picture.png" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\bmp2tile\BMP2Tile.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Resource Include="Resources\application_view_tile.png" />
+      <Resource Include="Resources\picture.png" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Update="Resources.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Resources.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Update="Resources.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
     </ItemGroup>
 </Project>

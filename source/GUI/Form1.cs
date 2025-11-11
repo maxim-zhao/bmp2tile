@@ -228,6 +228,20 @@ public sealed partial class Form1 : Form
 
     private void Form1_Load(object sender, EventArgs e)
     {
+        // Load images into the image list the hard way, because the old way causes a compiler warning
+        var tabIcons = new ImageList();
+        tabIcons.Images.Add(Resources.picture);
+        tabIcons.Images.Add(Resources.application_view_tile);
+        tabIcons.Images.Add(Resources.map);
+        tabIcons.Images.Add(Resources.palette);
+        tabIcons.Images.Add(Resources.page_white_text);
+        tabControl1.ImageList = tabIcons;
+        tabPage1.ImageIndex = 0;
+        tabPage2.ImageIndex = 1;
+        tabPage3.ImageIndex = 2;
+        tabPage4.ImageIndex = 3;
+        tabPage5.ImageIndex = 4;
+
         HighDpiHelper.AdjustControlImagesDpiScale(this);
         Text = $"Bitmap to SMS/GG tile converter {BMP2Tile.Program.GetVersion()} by Maxim :: smspower.org";
     }

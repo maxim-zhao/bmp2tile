@@ -28,8 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             groupBox1 = new System.Windows.Forms.GroupBox();
             btnBrowse = new System.Windows.Forms.Button();
             tbFilename = new System.Windows.Forms.TextBox();
@@ -62,7 +60,6 @@
             tbPalette = new System.Windows.Forms.TextBox();
             tabPage5 = new System.Windows.Forms.TabPage();
             tbMessages = new System.Windows.Forms.TextBox();
-            imageList1 = new System.Windows.Forms.ImageList(components);
             groupBox1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -132,7 +129,6 @@
             tabControl1.Controls.Add(tabPage3);
             tabControl1.Controls.Add(tabPage4);
             tabControl1.Controls.Add(tabPage5);
-            tabControl1.ImageList = imageList1;
             tabControl1.Location = new System.Drawing.Point(12, 82);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -459,17 +455,6 @@
             tbMessages.Size = new System.Drawing.Size(629, 250);
             tbMessages.TabIndex = 0;
             // 
-            // imageList1
-            // 
-            imageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
-            imageList1.ImageStream = (System.Windows.Forms.ImageListStreamer)resources.GetObject("imageList1.ImageStream");
-            imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            imageList1.Images.SetKeyName(0, "picture.png");
-            imageList1.Images.SetKeyName(1, "application_view_tile.png");
-            imageList1.Images.SetKeyName(2, "map.png");
-            imageList1.Images.SetKeyName(3, "palette.png");
-            imageList1.Images.SetKeyName(4, "page_white_text.png");
-            // 
             // Form1
             // 
             AllowDrop = true;
@@ -540,7 +525,6 @@
         private System.Windows.Forms.TextBox tbFirstTileIndex;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox cbPaletteConstants;
-        private System.Windows.Forms.ImageList imageList1;
     }
 }
 
