@@ -34,7 +34,7 @@ internal class CompressionDllWrapper: ICompressorImpl
         _hModule = LoadLibrary(filename);
         if (_hModule == IntPtr.Zero)
         {
-            return;
+            throw new AppException($"Failed to load {filename}: {Marshal.GetLastPInvokeErrorMessage()}. Maybe the MSVC runtime is missing?");
         }
 
         Name = Marshal.PtrToStringAnsi(GetFunction<GetStringDelegate>("getName")());

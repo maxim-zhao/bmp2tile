@@ -336,9 +336,17 @@ public class Converter: IDisposable
                 if (compressor.Capabilities == CompressorCapabilities.None)
                 {
                     Log($"Loaded {filename} but found no compressors");
+                    compressor.Dispose();
                     continue;
                 }
-                _compressors["." + compressor.Extension.ToLowerInvariant()] = compressor;
+
+                var key = "." + compressor.Extension.ToLowerInvariant();
+                if (!_compressors.TryAdd(key, compressor))
+                {
+                    compressor.Dispose();
+                    throw new AppException($"Compressor {_compressors[key].Name} already registered for extension {key}");
+                }
+
                 Log($"Added \"{compressor.Name}\" ({compressor.Extension}) from {filename}", LogLevel.Verbose);
             }
             catch (Exception ex)
