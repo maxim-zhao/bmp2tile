@@ -249,6 +249,7 @@ Most of the plugins are written in C++.
 - Support loading compression DLLs from another path (in commandline mode)
 - Fixed high DPI support, hopefully
 - Moved to .net 8
+- Added tab icons, using the classic famfamfam "Silk" icons: http://www.famfamfam.com/lab/icons/silk/
 
 0.62
 - Switched to a slightly more modern version of C# (4.8)
