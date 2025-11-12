@@ -39,6 +39,18 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
 
             return result;
         }
+
+        public Entry Clone()
+        {
+            return new Entry
+            {
+                HFlip = HFlip,
+                HighPriority = HighPriority,
+                TileIndex = TileIndex,
+                UseSpritePalette = UseSpritePalette,
+                VFlip = VFlip
+            };
+        }
     }
 
     public int Width { get; }
@@ -57,7 +69,7 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
         set => _tilemap[x, y] = value;
     }
 
-    private readonly Entry[,] _tilemap;
+    private Entry[,] _tilemap;
 
     public IEnumerator<Entry> GetEnumerator()
     {
@@ -70,15 +82,27 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
     }
 
     /// <summary>
-    /// Returns a new tilemap cropped to the tile area given
+    /// Crops to the tile area given
     /// </summary>
-    public Tilemap Crop(int left, int top, int width, int height)
+    public void Crop(int left, int top, int width, int height)
     {
-        var result = new Tilemap(width, height);
+        var newTilemap = new Entry[width, height];
         for (var y = 0; y < height; ++y)
         for (var x = 0; x < width; ++x)
         {
-            result[x, y] = _tilemap[x + left, y + height];
+            newTilemap[x, y] = _tilemap[x + left, y + height];
+        }
+
+        _tilemap = newTilemap;
+    }
+
+    public Tilemap Clone()
+    {
+        var result = new Tilemap(Width, Height);
+        for (var y = 0; y < Height; ++y)
+        for (var x = 0; x < Width; ++x)
+        {
+            result[x, y] = _tilemap[x, y].Clone();
         }
 
         return result;

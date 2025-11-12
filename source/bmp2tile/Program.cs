@@ -79,6 +79,15 @@ public static class Program
                     },
                     "x", "y")
                 .Add(
+                    ["replacefirsttilewith"],
+                    "Exclude the first tile from the tile data, and replace its usage in the tilemap with the given index",
+                    d =>
+                    {
+                        converter.ReplaceFirstTileWith(Convert.ToInt32(d["index"]));
+                    },
+                    "index"
+                    )
+                .Add(
                     ["removeduplicates", "removedupes"],
                     "Remove duplicate tiles (default)",
                     _ => converter.RemoveDuplicates = true)
@@ -195,6 +204,13 @@ public static class Program
         {
             Console.Error.WriteLine($"Fatal error: {ex.Message}");
             Console.Error.WriteLine($"Guru meditation:\n{ex.StackTrace}");
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+                Console.Error.WriteLine($"Caused by: {ex.Message}");
+                Console.Error.WriteLine($"Guru meditation:\n{ex.StackTrace}");
+            }
+
             return 1;
         }
     }

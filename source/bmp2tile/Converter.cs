@@ -38,6 +38,7 @@ public class Converter: IDisposable
     private int _spriteWidth;
     private int _spriteHeight;
     private (int left, int top, int width, int height) _tilemapCrop;
+    private int _firstTileReplacement = -1;
 
     #endregion
 
@@ -187,15 +188,23 @@ public class Converter: IDisposable
             Optimize();
         }
 
+        // Duplicate the list so we can manipulate it without losing data
+        var tilesToSave = new List<Tile>(_tiles);
+
+        if (_firstTileReplacement > -1)
+        {
+            tilesToSave.RemoveAt(0);
+        }
+
         Log("Saving tiles...", LogLevel.Verbose);
 
         var compressor = GetCompressor(filename);
         var sw = Stopwatch.StartNew();
-        var compressed = compressor.CompressTiles(_tiles, Chunky).ToArray();
+        var compressed = compressor.CompressTiles(tilesToSave, Chunky).ToArray();
         File.WriteAllBytes(filename, compressed);
         sw.Stop();
 
-        var before = _tiles.Count * 32;
+        var before = tilesToSave.Count * 32;
         var ratio = (before - compressed.Length) / (double)before;
 
         Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
@@ -220,26 +229,49 @@ public class Converter: IDisposable
             Optimize();
         }
 
-        var tilemap = _tilemap;
+        Log("Saving tilemap...", LogLevel.Verbose);
+
+        // CLone the tilemap so we can alter it non-destructively
+        var tilemap = _tilemap.Clone();
 
         if (_tilemapCrop.width > 0)
         {
             Log($"Cropping tilemap to {_tilemapCrop.width}x{tilemap.Height} at {_tilemapCrop.left}, {_tilemapCrop.top}");
-            tilemap = tilemap.Crop(
+            tilemap.Crop(
                 _tilemapCrop.left / 8, 
                 _tilemapCrop.top / 8, 
                 _tilemapCrop.width / 8, 
                 _tilemapCrop.height / 8);
         }
 
+        if (_firstTileReplacement > -1)
+        {
+            // Change all entries using the first tile to use the replacement instead
+            foreach (var entry in tilemap)
+            {
+                if (entry.TileIndex == _tileOffset)
+                {
+                    entry.TileIndex = _firstTileReplacement;
+                }
+                else
+                {
+                    // All other entries need to use an index decremented by 1
+                    --entry.TileIndex;
+                }
+            }
+        }
+
         var compressor = GetCompressor(filename);
         Log("Compressing tilemap...", LogLevel.Verbose);
         var sw = Stopwatch.StartNew();
-        var bytes = compressor.CompressTilemap(tilemap);
-        File.WriteAllBytes(filename, bytes.ToArray());
+        var compressed = compressor.CompressTilemap(tilemap).ToArray();
+        File.WriteAllBytes(filename, compressed);
         sw.Stop();
 
-        Log($"Saved tilemap in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}");
+        var before = _tilemap.Height * _tilemap.Width * 2;
+        var ratio = (before - compressed.Length) / (double)before;
+
+        Log($"Saved tilemap in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
     }
 
     public string GetTilemapAsText()
@@ -551,6 +583,11 @@ public class Converter: IDisposable
         {
             throw new AppException("No tilemap can be created because there's no filename");
         }
+
+        if (_tilemap == null)
+        {
+            throw new AppException("No tilemap could be generated");
+        }
     }
 
     public void GetTilemapFromFile()
@@ -633,7 +670,6 @@ public class Converter: IDisposable
     {
         if (_tiles != null)
         {
-            // No need to regenerate
             return;
         }
 
@@ -943,6 +979,9 @@ public class Converter: IDisposable
 
         _spriteWidth = spriteWidth;
         _spriteHeight = spriteHeight;
+
+        _tiles = null;
+        _tilemap = null;
     }
 
     public void RearrangeSpriteSheet()
@@ -1049,5 +1088,13 @@ public class Converter: IDisposable
         }
 
         _tilemapCrop = (left, top, width, height);
+        _tilemap = null;
+    }
+
+    public void ReplaceFirstTileWith(int index)
+    {
+        _firstTileReplacement = index;
+        _tiles = null;
+        _tilemap = null;
     }
 }

@@ -60,6 +60,8 @@
             tbPalette = new System.Windows.Forms.TextBox();
             tabPage5 = new System.Windows.Forms.TabPage();
             tbMessages = new System.Windows.Forms.TextBox();
+            cbFirstTile = new System.Windows.Forms.CheckBox();
+            tbFirstTileReplacementIndex = new System.Windows.Forms.TextBox();
             groupBox1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -158,6 +160,8 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(tbFirstTileReplacementIndex);
+            tabPage2.Controls.Add(cbFirstTile);
             tabPage2.Controls.Add(btnSave);
             tabPage2.Controls.Add(cbPlanar);
             tabPage2.Controls.Add(cb8x16);
@@ -455,6 +459,27 @@
             tbMessages.Size = new System.Drawing.Size(629, 250);
             tbMessages.TabIndex = 0;
             // 
+            // cbFirstTile
+            // 
+            cbFirstTile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            cbFirstTile.AutoSize = true;
+            cbFirstTile.Location = new System.Drawing.Point(258, 206);
+            cbFirstTile.Name = "cbFirstTile";
+            cbFirstTile.Size = new System.Drawing.Size(229, 19);
+            cbFirstTile.TabIndex = 6;
+            cbFirstTile.Text = "Exclude &first tile and replace with index";
+            cbFirstTile.UseVisualStyleBackColor = true;
+            // 
+            // tbFirstTileReplacementIndex
+            // 
+            tbFirstTileReplacementIndex.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            tbFirstTileReplacementIndex.Location = new System.Drawing.Point(493, 204);
+            tbFirstTileReplacementIndex.MaxLength = 4;
+            tbFirstTileReplacementIndex.Name = "tbFirstTileReplacementIndex";
+            tbFirstTileReplacementIndex.Size = new System.Drawing.Size(53, 23);
+            tbFirstTileReplacementIndex.TabIndex = 7;
+            tbFirstTileReplacementIndex.Text = "0";
+            // 
             // Form1
             // 
             AllowDrop = true;
@@ -525,6 +550,8 @@
         private System.Windows.Forms.TextBox tbFirstTileIndex;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox cbPaletteConstants;
+        private System.Windows.Forms.TextBox tbFirstTileReplacementIndex;
+        private System.Windows.Forms.CheckBox cbFirstTile;
     }
 }
 
