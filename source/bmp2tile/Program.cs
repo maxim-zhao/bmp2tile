@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
 
@@ -11,11 +14,11 @@ public static class Program
 
     public static string GetVersion()
     {
-        var fileVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetCallingAssembly().Location).FileVersion;
+        var fileVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetCallingAssembly().Location).FileVersion ?? "?.?";
         while (fileVersion.EndsWith(".0"))
         {
             Console.Error.WriteLine($"{fileVersion}");
-            fileVersion = fileVersion.Substring(0, fileVersion.Length - 2);
+            fileVersion = fileVersion[..^2];
         }
 
         return fileVersion;
@@ -45,11 +48,10 @@ public static class Program
                         break;
                 }
             });
+
             // We parse the args in order.
             // This is different from "BMP2Tile Classic" which would accumulate the settings and
             // then act on them at the end; but I think this way is better.
-
-
             // ReSharper disable AccessToDisposedClosure
             return new ArgParser(
                     filename => converter.Filename = filename,
@@ -165,6 +167,11 @@ public static class Program
                     "Emit only as many palette entries as needed to include values used in the image",
                     _ => converter.FullPalette = false)
                 .Add(
+                    ["setpalette"],
+                    "Sets palette index n to colour. Colour must be in RGB hex form, e.g. #0055aa",
+                    d => converter.AddPaletteOverride(Convert.ToInt32(d["n"]), ParseHexColour(d["colour"])),
+                    "n", "colour")
+                .Add(
                     ["savetiles"],
                     "Save tiles to the given filename. Extension selects compression.",
                     d => converter.SaveTiles(d["filename"]),
@@ -213,6 +220,22 @@ public static class Program
 
             return 1;
         }
+    }
+
+    private static Color ParseHexColour(string s)
+    {
+        // Expecting #RRGGBB
+        var match = Regex.Match(s, @"^#([0-9A-Fa-f]{2}){3}$");
+        if (!match.Success)
+        {
+            throw new Exception($"Colour must be in #RRGGBB format: {s}");
+        }
+
+        var r = int.Parse(match.Captures[0].Value, NumberStyles.HexNumber);
+        var g = int.Parse(match.Captures[1].Value, NumberStyles.HexNumber);
+        var b = int.Parse(match.Captures[2].Value, NumberStyles.HexNumber);
+
+        return Color.FromArgb(r, g, b);
     }
 
     private static IList<IList<string>> GetCompressorInfo(Converter converter)

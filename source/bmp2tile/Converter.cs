@@ -39,6 +39,7 @@ public class Converter: IDisposable
     private int _spriteHeight;
     private (int left, int top, int width, int height) _tilemapCrop;
     private int _firstTileReplacement = -1;
+    private readonly Dictionary<int, Color> _paletteOverrides = [];
 
     #endregion
 
@@ -949,6 +950,12 @@ public class Converter: IDisposable
             paletteEntries.RemoveRange(highestIndexUsed + 1, paletteEntries.Count - (highestIndexUsed + 1));
         }
 
+        // Finally, apply our replacements
+        foreach (var kvp in _paletteOverrides.Where(x => x.Key < paletteEntries.Count))
+        {
+            paletteEntries[kvp.Key] = kvp.Value;
+        }
+
         _palette = new Palette(paletteEntries);
     }
 
@@ -1096,5 +1103,17 @@ public class Converter: IDisposable
         _firstTileReplacement = index;
         _tiles = null;
         _tilemap = null;
+    }
+
+    public void ClearPaletteOverrides()
+    {
+        _paletteOverrides.Clear();
+        _palette = null;
+    }
+
+    public void AddPaletteOverride(int index, Color colour)
+    {
+        _paletteOverrides[index] = colour;
+        _palette = null;
     }
 }

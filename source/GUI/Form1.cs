@@ -108,7 +108,7 @@ public sealed partial class Form1 : Form
                 .ToList();
 
             var filter = string.Join("|",
-                compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
+                compressors.SelectMany(x => new[] { $"{x.Name} (*.{x.Extension})", $"*.{x.Extension}" }));
 
             using var sfd = new SaveFileDialog();
             sfd.Filter = filter;
@@ -129,7 +129,7 @@ public sealed partial class Form1 : Form
                 .ToList();
 
             var filter = string.Join("|",
-                compressors.SelectMany(x => new[] {$"{x.Name} (*.{x.Extension})", $"*.{x.Extension}"}));
+                compressors.SelectMany(x => new[] { $"{x.Name} (*.{x.Extension})", $"*.{x.Extension}" }));
 
             using var sfd = new SaveFileDialog();
             sfd.Filter = filter;
@@ -195,6 +195,19 @@ public sealed partial class Form1 : Form
                 : Palette.Formats.MasterSystem
             : Palette.Formats.GameGear;
 
+        if (cbBlackenFirst.Checked)
+        {
+            _converter.AddPaletteOverride(
+                _converter.GetPalettes()[0].Count > 16
+                    ? 16
+                    : 0,
+                Color.Black);
+        }
+        else
+        {
+            _converter.ClearPaletteOverrides();
+        }
+
         // Disable mirroring checkbox if optimization is off
         cbUseMirroring.Enabled = cbRemoveDuplicates.Checked;
 
@@ -253,5 +266,10 @@ public sealed partial class Form1 : Form
 
         HighDpiHelper.AdjustControlImagesDpiScale(this);
         Text = $"Bitmap to SMS/GG tile converter {BMP2Tile.Program.GetVersion()} by Maxim :: smspower.org";
+    }
+
+    private void PreviewSizeCheckedChanged(object sender, EventArgs e)
+    {
+        pbPreview.SizeMode = rb100Percent.Checked ? PictureBoxSizeMode.CenterImage : PictureBoxSizeMode.Zoom;
     }
 }

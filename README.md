@@ -21,6 +21,11 @@ If the compressors don't work, you may need to install the MSVC x86 runtime. Try
 winget install --exact Microsoft.VCRedist.2015+.x86
 ```
 
+If you want to try bleeding-edge features, you can also build the program from source, or grab a CI build from here:
+
+[![Build status](https://ci.appveyor.com/api/projects/status/c34d7oig7115x4f9?svg=true)](https://ci.appveyor.com/project/maxim-zhao/bmp2tile)
+
+
 # Instructions
 
 FIRST you have to prepare your file in an image editor. This is the important
@@ -194,6 +199,9 @@ You can support one or both `compress*` functions.
 Pass the following on the commandline to make the corresponding option/action
 choices. Defaults are marked with :star:.
 
+Note that if reading this on GitHub, it refers to the latest code in master and may include some
+features not yet in a released version.
+
 |Command switch            |Effect                                       |
 |--------------------------|---------------------------------------------|
 |`<filename>`              |Load the specified bitmap. Note that the format restrictions are the same as in the GUI. |
@@ -211,6 +219,7 @@ choices. Defaults are marked with :star:.
 |`-chunky`                 |Output chunky tile data                      |
 |`-tileoffset <n>`         |The starting index of the first tile. :star: Default is 0. |
 |`-tilemaparea <w> <h> <x> <y>` |Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8 |
+|`-replacefirsttilewith <n>` |Substitute the first tile with tile index `<n>` (decimal), and remove it from the tile data |`
 |`-spritepalette`          |Set the tilemap bit to make tiles use the sprite palette. :star: Default is to set it only if the image is a 32-colour image and the tile uses the upper palette. |
 |`-infrontofsprites`       |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset. |
 |`-smspalette`             |:star: Output the palette in SMS colour format |
@@ -218,12 +227,13 @@ choices. Defaults are marked with :star:.
 |`-palcl123`               |Output the palette in SMS colour format, using constants of the form cl123 (see above). |
 |`-minimumpalette`         |:star:Output only as many colours as are present in the image. |
 |`-fullpalette`            |Output 16 (or 32) colours rather than as many as are present in the image. |
+|`-setpalette <n> <colour>` |Override palette entry `<n>` (decimal) with `<colour>` (hex RGB, e.g. #FF00FF for magenta). Can be used multiple times. |
 |`-dllpath <path>`         |Path to search for compression DLLs. Defaults to the app directory. Useful for testing a new plugin. |
 |`-savetiles <filename>`   |Save tile data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 |`-savetilemap <filename>` |Save tilemap data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 |`-savepalette <filename>` |Save palette data to `<filename>`. The format will be inferred from the extension of `<filename>`. |
 
-Note that options are interpreted sequentially. That means you should specify any options (and the input file) before any
+Note that options are interpreted sequentially. That means you should specify any options after loading the input file(s) and before any
 `-save*` actions. It also you can chain together operations, as so:
 
 ```
@@ -240,6 +250,11 @@ BMP2Tile started life in Delphi 7, but as of version 0.5 became written in C#.
 Most of the plugins are written in C++.
 
 # History
+
+0.64 (WIP)
+- Support [substituting the first tile with another index](https://github.com/maxim-zhao/bmp2tile/issues/17)
+- Support [overriding palette entries](https://github.com/maxim-zhao/bmp2tile/issues/29)
+- You can choose to see the preview image at 100% size or scaled to fit the window
 
 0.63
 - Improved raw tilemap/tiles support so you don't have to disable duplicate removal to avoid an error

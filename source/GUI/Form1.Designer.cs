@@ -53,6 +53,7 @@
             cbSpritePalette = new System.Windows.Forms.CheckBox();
             tbTilemap = new System.Windows.Forms.TextBox();
             tabPage4 = new System.Windows.Forms.TabPage();
+            cbBlackenFirst = new System.Windows.Forms.CheckBox();
             rbHexGG = new System.Windows.Forms.RadioButton();
             rbHexSMS = new System.Windows.Forms.RadioButton();
             cbPaletteConstants = new System.Windows.Forms.CheckBox();
@@ -62,6 +63,8 @@
             tbPalette = new System.Windows.Forms.TextBox();
             tabPage5 = new System.Windows.Forms.TabPage();
             tbMessages = new System.Windows.Forms.TextBox();
+            rb100Percent = new System.Windows.Forms.RadioButton();
+            rbZoom = new System.Windows.Forms.RadioButton();
             groupBox1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -139,6 +142,8 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(rbZoom);
+            tabPage1.Controls.Add(rb100Percent);
             tabPage1.Controls.Add(pbPreview);
             tabPage1.ImageKey = "picture.png";
             tabPage1.Location = new System.Drawing.Point(4, 24);
@@ -150,10 +155,10 @@
             // 
             // pbPreview
             // 
-            pbPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            pbPreview.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             pbPreview.Location = new System.Drawing.Point(0, 0);
             pbPreview.Name = "pbPreview";
-            pbPreview.Size = new System.Drawing.Size(635, 256);
+            pbPreview.Size = new System.Drawing.Size(635, 228);
             pbPreview.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             pbPreview.TabIndex = 0;
             pbPreview.TabStop = false;
@@ -179,6 +184,7 @@
             // tbFirstTileReplacementIndex
             // 
             tbFirstTileReplacementIndex.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            tbFirstTileReplacementIndex.Enabled = false;
             tbFirstTileReplacementIndex.Location = new System.Drawing.Point(493, 206);
             tbFirstTileReplacementIndex.MaxLength = 4;
             tbFirstTileReplacementIndex.Name = "tbFirstTileReplacementIndex";
@@ -271,6 +277,7 @@
             tbTiles.Location = new System.Drawing.Point(3, 3);
             tbTiles.Multiline = true;
             tbTiles.Name = "tbTiles";
+            tbTiles.ReadOnly = true;
             tbTiles.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             tbTiles.Size = new System.Drawing.Size(629, 197);
             tbTiles.TabIndex = 0;
@@ -355,6 +362,7 @@
             tbTilemap.Location = new System.Drawing.Point(3, 3);
             tbTilemap.Multiline = true;
             tbTilemap.Name = "tbTilemap";
+            tbTilemap.ReadOnly = true;
             tbTilemap.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             tbTilemap.Size = new System.Drawing.Size(629, 197);
             tbTilemap.TabIndex = 0;
@@ -362,6 +370,7 @@
             // 
             // tabPage4
             // 
+            tabPage4.Controls.Add(cbBlackenFirst);
             tabPage4.Controls.Add(rbHexGG);
             tabPage4.Controls.Add(rbHexSMS);
             tabPage4.Controls.Add(cbPaletteConstants);
@@ -376,6 +385,18 @@
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Palette";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // cbBlackenFirst
+            // 
+            cbBlackenFirst.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            cbBlackenFirst.AutoSize = true;
+            cbBlackenFirst.Location = new System.Drawing.Point(317, 206);
+            cbBlackenFirst.Name = "cbBlackenFirst";
+            cbBlackenFirst.Size = new System.Drawing.Size(146, 19);
+            cbBlackenFirst.TabIndex = 11;
+            cbBlackenFirst.Text = "Force 1st/17th to black";
+            cbBlackenFirst.UseVisualStyleBackColor = true;
+            cbBlackenFirst.CheckedChanged += ControlChanged;
             // 
             // rbHexGG
             // 
@@ -455,6 +476,7 @@
             tbPalette.Location = new System.Drawing.Point(3, 3);
             tbPalette.Multiline = true;
             tbPalette.Name = "tbPalette";
+            tbPalette.ReadOnly = true;
             tbPalette.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             tbPalette.Size = new System.Drawing.Size(629, 153);
             tbPalette.TabIndex = 0;
@@ -478,9 +500,34 @@
             tbMessages.Location = new System.Drawing.Point(3, 3);
             tbMessages.Multiline = true;
             tbMessages.Name = "tbMessages";
+            tbMessages.ReadOnly = true;
             tbMessages.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             tbMessages.Size = new System.Drawing.Size(629, 250);
             tbMessages.TabIndex = 0;
+            // 
+            // rb100Percent
+            // 
+            rb100Percent.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            rb100Percent.AutoSize = true;
+            rb100Percent.Checked = true;
+            rb100Percent.Location = new System.Drawing.Point(4, 234);
+            rb100Percent.Name = "rb100Percent";
+            rb100Percent.Size = new System.Drawing.Size(53, 19);
+            rb100Percent.TabIndex = 1;
+            rb100Percent.Text = "100%";
+            rb100Percent.UseVisualStyleBackColor = true;
+            rb100Percent.CheckedChanged += PreviewSizeCheckedChanged;
+            // 
+            // rbZoom
+            // 
+            rbZoom.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            rbZoom.AutoSize = true;
+            rbZoom.Location = new System.Drawing.Point(63, 234);
+            rbZoom.Name = "rbZoom";
+            rbZoom.Size = new System.Drawing.Size(62, 19);
+            rbZoom.TabIndex = 2;
+            rbZoom.Text = "Stretch";
+            rbZoom.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -504,6 +551,7 @@
             statusStrip1.PerformLayout();
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pbPreview).EndInit();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
@@ -554,6 +602,9 @@
         private System.Windows.Forms.CheckBox cbPaletteConstants;
         private System.Windows.Forms.TextBox tbFirstTileReplacementIndex;
         private System.Windows.Forms.CheckBox cbFirstTile;
+        private System.Windows.Forms.CheckBox cbBlackenFirst;
+        private System.Windows.Forms.RadioButton rbZoom;
+        private System.Windows.Forms.RadioButton rb100Percent;
     }
 }
 
