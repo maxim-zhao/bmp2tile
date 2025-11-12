@@ -225,7 +225,7 @@ features not yet in a released version.
 |`-smspalette`             |:star: Output the palette in SMS colour format |
 |`-ggpalette`              |Output the palette in GG colour format       |
 |`-palcl123`               |Output the palette in SMS colour format, using constants of the form cl123 (see above). |
-|`-minimumpalette`         |:star:Output only as many colours as are present in the image. |
+|`-minimumpalette`         |:star: Output only as many colours as are present in the image. |
 |`-fullpalette`            |Output 16 (or 32) colours rather than as many as are present in the image. |
 |`-setpalette <n> <colour>` |Override palette entry `<n>` (decimal) with `<colour>` (hex RGB, e.g. #FF00FF for magenta). Can be used multiple times. |
 |`-dllpath <path>`         |Path to search for compression DLLs. Defaults to the app directory. Useful for testing a new plugin. |
