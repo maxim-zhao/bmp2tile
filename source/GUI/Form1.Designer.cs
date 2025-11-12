@@ -37,6 +37,8 @@
             tabPage1 = new System.Windows.Forms.TabPage();
             pbPreview = new System.Windows.Forms.PictureBox();
             tabPage2 = new System.Windows.Forms.TabPage();
+            tbFirstTileReplacementIndex = new System.Windows.Forms.TextBox();
+            cbFirstTile = new System.Windows.Forms.CheckBox();
             btnSave = new System.Windows.Forms.Button();
             cbPlanar = new System.Windows.Forms.CheckBox();
             cb8x16 = new System.Windows.Forms.CheckBox();
@@ -60,8 +62,6 @@
             tbPalette = new System.Windows.Forms.TextBox();
             tabPage5 = new System.Windows.Forms.TabPage();
             tbMessages = new System.Windows.Forms.TextBox();
-            cbFirstTile = new System.Windows.Forms.CheckBox();
-            tbFirstTileReplacementIndex = new System.Windows.Forms.TextBox();
             groupBox1.SuspendLayout();
             statusStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -175,6 +175,29 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Tiles";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // tbFirstTileReplacementIndex
+            // 
+            tbFirstTileReplacementIndex.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            tbFirstTileReplacementIndex.Location = new System.Drawing.Point(493, 206);
+            tbFirstTileReplacementIndex.MaxLength = 4;
+            tbFirstTileReplacementIndex.Name = "tbFirstTileReplacementIndex";
+            tbFirstTileReplacementIndex.Size = new System.Drawing.Size(53, 23);
+            tbFirstTileReplacementIndex.TabIndex = 7;
+            tbFirstTileReplacementIndex.Text = "0";
+            tbFirstTileReplacementIndex.TextChanged += ControlChanged;
+            // 
+            // cbFirstTile
+            // 
+            cbFirstTile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
+            cbFirstTile.AutoSize = true;
+            cbFirstTile.Location = new System.Drawing.Point(258, 206);
+            cbFirstTile.Name = "cbFirstTile";
+            cbFirstTile.Size = new System.Drawing.Size(229, 19);
+            cbFirstTile.TabIndex = 6;
+            cbFirstTile.Text = "Exclude &first tile and replace with index";
+            cbFirstTile.UseVisualStyleBackColor = true;
+            cbFirstTile.CheckedChanged += ControlChanged;
             // 
             // btnSave
             // 
@@ -458,27 +481,6 @@
             tbMessages.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             tbMessages.Size = new System.Drawing.Size(629, 250);
             tbMessages.TabIndex = 0;
-            // 
-            // cbFirstTile
-            // 
-            cbFirstTile.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-            cbFirstTile.AutoSize = true;
-            cbFirstTile.Location = new System.Drawing.Point(258, 206);
-            cbFirstTile.Name = "cbFirstTile";
-            cbFirstTile.Size = new System.Drawing.Size(229, 19);
-            cbFirstTile.TabIndex = 6;
-            cbFirstTile.Text = "Exclude &first tile and replace with index";
-            cbFirstTile.UseVisualStyleBackColor = true;
-            // 
-            // tbFirstTileReplacementIndex
-            // 
-            tbFirstTileReplacementIndex.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-            tbFirstTileReplacementIndex.Location = new System.Drawing.Point(493, 204);
-            tbFirstTileReplacementIndex.MaxLength = 4;
-            tbFirstTileReplacementIndex.Name = "tbFirstTileReplacementIndex";
-            tbFirstTileReplacementIndex.Size = new System.Drawing.Size(53, 23);
-            tbFirstTileReplacementIndex.TabIndex = 7;
-            tbFirstTileReplacementIndex.Text = "0";
             // 
             // Form1
             // 

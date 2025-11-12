@@ -22,7 +22,7 @@ internal class IncludeTextWriter : ICompressorImpl
 
     private static IEnumerable<byte> TextToBytes(IEnumerable<string> lines)
     {
-        return lines.SelectMany(s => Encoding.ASCII.GetBytes(s + Environment.NewLine));
+        return lines.SelectMany(s => Encoding.UTF8.GetBytes(s + Environment.NewLine));
     }
 
     private static IEnumerable<string> TilesToText(IEnumerable<Tile> tiles, bool asChunky)

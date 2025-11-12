@@ -182,19 +182,7 @@ public class Converter: IDisposable
 
     public void SaveTiles(string filename)
     {
-        GetTiles();
-        if (_removeDuplicates)
-        {
-            Optimize();
-        }
-
-        // Duplicate the list so we can manipulate it without losing data
-        var tilesToSave = new List<Tile>(_tiles);
-
-        if (_firstTileReplacement > -1)
-        {
-            tilesToSave.RemoveAt(0);
-        }
+        var tilesToSave = GetProcessedTiles();
 
         Log("Saving tiles...", LogLevel.Verbose);
 
@@ -210,7 +198,7 @@ public class Converter: IDisposable
         Log($"Saved tiles in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
     }
 
-    public string GetTilesAsText()
+    private List<Tile> GetProcessedTiles()
     {
         GetTiles();
         if (_removeDuplicates)
@@ -218,10 +206,40 @@ public class Converter: IDisposable
             Optimize();
         }
 
-        return Encoding.ASCII.GetString(_includeTextWriter.CompressTiles(_tiles, Chunky).ToArray());
+        // Duplicate the list so we can manipulate it without losing data
+        var tilesToSave = new List<Tile>(_tiles);
+
+        if (_firstTileReplacement > -1)
+        {
+            tilesToSave.RemoveAt(0);
+        }
+
+        return tilesToSave;
+    }
+
+    public string GetTilesAsText()
+    {
+        return Encoding.UTF8.GetString(_includeTextWriter.CompressTiles(GetProcessedTiles(), Chunky).ToArray());
     }
 
     public void SaveTilemap(string filename)
+    {
+        var tilemap = GetProcessedTilemap();
+
+        Log("Compressing tilemap...", LogLevel.Verbose);
+        var compressor = GetCompressor(filename);
+        var sw = Stopwatch.StartNew();
+        var compressed = compressor.CompressTilemap(tilemap).ToArray();
+        File.WriteAllBytes(filename, compressed);
+        sw.Stop();
+
+        var before = tilemap.Height * tilemap.Width * 2;
+        var ratio = (before - compressed.Length) / (double)before;
+
+        Log($"Saved tilemap in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
+    }
+
+    private Tilemap GetProcessedTilemap()
     {
         GetTilemap();
         if (_removeDuplicates)
@@ -229,9 +247,7 @@ public class Converter: IDisposable
             Optimize();
         }
 
-        Log("Saving tilemap...", LogLevel.Verbose);
-
-        // CLone the tilemap so we can alter it non-destructively
+        // Clone the tilemap so we can alter it non-destructively
         var tilemap = _tilemap.Clone();
 
         if (_tilemapCrop.width > 0)
@@ -261,28 +277,12 @@ public class Converter: IDisposable
             }
         }
 
-        var compressor = GetCompressor(filename);
-        Log("Compressing tilemap...", LogLevel.Verbose);
-        var sw = Stopwatch.StartNew();
-        var compressed = compressor.CompressTilemap(tilemap).ToArray();
-        File.WriteAllBytes(filename, compressed);
-        sw.Stop();
-
-        var before = _tilemap.Height * _tilemap.Width * 2;
-        var ratio = (before - compressed.Length) / (double)before;
-
-        Log($"Saved tilemap in format \"{compressor.Name}\" to {filename} in {sw.Elapsed}. Compression ratio {ratio:P}");
+        return tilemap;
     }
 
     public string GetTilemapAsText()
     {
-        GetTilemap();
-        if (_removeDuplicates)
-        {
-            Optimize();
-        }
-
-        return Encoding.ASCII.GetString(_includeTextWriter.CompressTilemap(_tilemap).ToArray());
+        return Encoding.UTF8.GetString(_includeTextWriter.CompressTilemap(GetProcessedTilemap()).ToArray());
     }
 
     public void SavePalette(string filename)

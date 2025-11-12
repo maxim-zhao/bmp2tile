@@ -16,7 +16,7 @@ public sealed partial class Form1 : Form
 
         _converter = new Converter(OnMessageLogged);
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-        Font = SystemFonts.MessageBoxFont;
+        Font = SystemFonts.MessageBoxFont ?? Font;
     }
 
     private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -83,7 +83,7 @@ public sealed partial class Form1 : Form
 
     private void Form1_DragEnter(object sender, DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             e.Effect = DragDropEffects.Copy;
         }
@@ -91,8 +91,8 @@ public sealed partial class Form1 : Form
 
     private void Form1_DragDrop(object sender, DragEventArgs e)
     {
-        var files = (string[]) e.Data.GetData(DataFormats.FileDrop);
-        if (files.Length > 0)
+        var files = (string[])e.Data?.GetData(DataFormats.FileDrop);
+        if (files is { Length: > 0 })
         {
             LoadImage(files[0]);
         }
@@ -170,6 +170,15 @@ public sealed partial class Form1 : Form
         _converter.UseMirroring = cbUseMirroring.Checked;
         _converter.AdjacentBelow = cb8x16.Checked;
         _converter.Chunky = !cbPlanar.Checked;
+        tbFirstTileReplacementIndex.Enabled = cbFirstTile.Checked;
+        if (cbFirstTile.Checked && uint.TryParse(tbFirstTileReplacementIndex.Text, out var index))
+        {
+            _converter.ReplaceFirstTileWith((int)index);
+        }
+        else
+        {
+            _converter.ReplaceFirstTileWith(-1);
+        }
         if (!uint.TryParse(tbFirstTileIndex.Text, out var tileOffset))
         {
             tileOffset = 0;
