@@ -105,6 +105,7 @@ public class Converter: IDisposable
         {
             _useSpritePalette = value;
             _tilemap = null;
+            _tiles = null;
         }
     }
 
@@ -114,6 +115,7 @@ public class Converter: IDisposable
         {
             _highPriority = value;
             _tilemap = null;
+            _tiles = null;
         }
     }
 
