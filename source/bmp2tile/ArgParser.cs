@@ -6,23 +6,17 @@ using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
 
-internal class ArgParser
+internal class ArgParser(
+    Action<string> extraParameterHandler,
+    Func<IEnumerable<string>> helpTextHandler,
+    Func<IList<IList<string>>> helpTextExtraHandler)
 {
-    private readonly Action<string> _extraParameterHandler;
-    private readonly Func<IList<IList<string>>> _helpTextExtraHandler;
-
-    public ArgParser(Action<string> extraParameterHandler, Func<IList<IList<string>>> helpTextExtraHandler)
-    {
-        _extraParameterHandler = extraParameterHandler;
-        _helpTextExtraHandler = helpTextExtraHandler;
-    }
-
     private class ArgHandler
     {
-        public IList<string> Names { get; set; }
-        public string Description { get; set; }
-        public Action<Dictionary<string, string>> Action { get; set; }
-        public string[] ValueNames { get; set; }
+        public IList<string> Names { get; init; }
+        public string Description { get; init; }
+        public Action<Dictionary<string, string>> Action { get; init; }
+        public string[] ValueNames { get; init; }
     }
     private readonly Dictionary<string, ArgHandler> _args = new();
 
@@ -53,7 +47,7 @@ internal class ArgParser
         for (var i = 0; i < args.Length; ++i)
         {
             var arg = args[i];
-            if (arg.StartsWith("-"))
+            if (arg.StartsWith('-') || arg.StartsWith('/'))
             {
                 // We remove any number of leading - or /
                 var argName = Regex.Replace(arg, "^[-/]+", "");
@@ -93,7 +87,7 @@ internal class ArgParser
             }
             else
             {
-                _extraParameterHandler(arg);
+                extraParameterHandler(arg);
             }
         }
 
@@ -127,14 +121,15 @@ internal class ArgParser
 
     private void ShowHelp()
     {
-        Console.Error.WriteLine($"BMP2Tile version {Program.GetVersion()}");
-        Console.Error.WriteLine("Usage: bmp2tile <input file> <-action> <-action ...>");
-        Console.Error.WriteLine("Actions take effect in order from left to right. Multiple input files can be processed this way.");
-        Console.Error.WriteLine("\nActions:");
+        foreach (var line in helpTextHandler())
+        {
+            Console.Error.WriteLine(line);
+        }
 
+        Console.Error.WriteLine("\nParameters:");
         Console.Error.WriteLine(PrintInGrid(GetArgs().ToList()));
 
-        Console.Error.WriteLine(PrintInGrid(_helpTextExtraHandler()));
+        Console.Error.WriteLine(PrintInGrid(helpTextExtraHandler()));
     }
 
     private IEnumerable<IList<string>> GetArgs()

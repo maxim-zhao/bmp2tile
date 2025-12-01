@@ -1,28 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
 using System.Linq;
-using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
 
 public static class Program
 {
     private static bool _verbose;
-
-    public static string GetVersion()
-    {
-        var fileVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(Assembly.GetCallingAssembly().Location).FileVersion ?? "?.?";
-        while (fileVersion.EndsWith(".0"))
-        {
-            Console.Error.WriteLine($"{fileVersion}");
-            fileVersion = fileVersion[..^2];
-        }
-
-        return fileVersion;
-    }
 
     public static int Main(string[] args)
     {
@@ -55,7 +39,14 @@ public static class Program
             // ReSharper disable AccessToDisposedClosure
             return new ArgParser(
                     filename => converter.Filename = filename,
-                    () => GetCompressorInfo(converter))
+                    () =>
+                    [
+                        $"BMP2Tile version {Utilities.GetVersion()}",
+                        "Usage: bmp2tile <input file> <-action> <-action ...>",
+                        "Actions take effect in order from left to right. Multiple input files can be processed this way."
+                    ],
+                    () => GetCompressorInfo(converter)
+                )
                 // ReSharper disable StringLiteralTypo
                 .Add(
                     ["loadimage"],
@@ -169,7 +160,7 @@ public static class Program
                 .Add(
                     ["setpalette"],
                     "Sets palette index n to colour. Colour must be in RGB hex form, e.g. #0055aa",
-                    d => converter.AddPaletteOverride(Convert.ToInt32(d["n"]), ParseHexColour(d["colour"])),
+                    d => converter.AddPaletteOverride(Convert.ToInt32(d["n"]), Utilities.ParseHexColour(d["colour"])),
                     "n", "colour")
                 .Add(
                     ["savetiles"],
@@ -220,22 +211,6 @@ public static class Program
 
             return 1;
         }
-    }
-
-    private static Color ParseHexColour(string s)
-    {
-        // Expecting #RRGGBB
-        var match = Regex.Match(s, @"^#([0-9A-Fa-f]{2}){3}$");
-        if (!match.Success)
-        {
-            throw new Exception($"Colour must be in #RRGGBB format: {s}");
-        }
-
-        var r = int.Parse(match.Captures[0].Value, NumberStyles.HexNumber);
-        var g = int.Parse(match.Captures[1].Value, NumberStyles.HexNumber);
-        var b = int.Parse(match.Captures[2].Value, NumberStyles.HexNumber);
-
-        return Color.FromArgb(r, g, b);
     }
 
     private static IList<IList<string>> GetCompressorInfo(Converter converter)

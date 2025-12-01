@@ -265,7 +265,7 @@ public sealed partial class Form1 : Form
         tabPage5.ImageIndex = 4;
 
         HighDpiHelper.AdjustControlImagesDpiScale(this);
-        Text = $"Bitmap to SMS/GG tile converter {BMP2Tile.Program.GetVersion()} by Maxim :: smspower.org";
+        Text = $"Bitmap to SMS/GG tile converter {BMP2Tile.Utilities.GetVersion()} by Maxim :: smspower.org";
     }
 
     private void PreviewSizeCheckedChanged(object sender, EventArgs e)
