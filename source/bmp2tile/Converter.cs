@@ -40,6 +40,7 @@ public class Converter: IDisposable
     private (int left, int top, int width, int height) _tilemapCrop;
     private int _firstTileReplacement = -1;
     private readonly Dictionary<int, Color> _paletteOverrides = [];
+    private readonly HashSet<int> _excludedIndices = [];
 
     #endregion
 
@@ -653,6 +654,11 @@ public class Converter: IDisposable
         // We fill space by using the same function used to extract the tiles
         foreach (var point in GetTileCoordinates(_bitmap.Width, _bitmap.Height))
         {
+            // Skip excluded indices
+            while (_excludedIndices.Contains(i))
+            {
+                ++i;
+            }
             tilemap[point.X / 8, point.Y / 8] = new Tilemap.Entry
             {
                 TileIndex = i,
@@ -1117,5 +1123,10 @@ public class Converter: IDisposable
     {
         _paletteOverrides[index] = colour;
         _palette = null;
+    }
+
+    public void ExcludeTileIndex(int index)
+    {
+        _excludedIndices.Add(index);
     }
 }

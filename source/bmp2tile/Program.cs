@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
 
@@ -117,6 +118,30 @@ public static class Program
                     "Tile offset for first tile found (default is 0)",
                     d => converter.TileOffset = Convert.ToUInt32(d["offset"]),
                     "offset")
+                .Add(
+                    ["excludeindices"],
+                    "Tile indices to exclude, e.g. 100,110-120. Ranges are inclusive.",
+                    d =>
+                    {
+                        foreach (var range in d["ranges"].Split(","))
+                        {
+                            var m = Regex.Match(range, "^(?<start>[0-9]+)-(?<end>[0-9]+)$");
+                            if (m.Success)
+                            {
+                                var start = Convert.ToInt32(m.Groups["start"].Value);
+                                var end = Convert.ToInt32(m.Groups["end"].Value);
+                                for (var i = start; i <= end; i++)
+                                {
+                                    converter.ExcludeTileIndex(i);
+                                }
+                            }
+                            else
+                            {
+                                converter.ExcludeTileIndex(Convert.ToInt32(range));
+                            }
+                        }
+                    },
+                    "ranges")
                 .Add(
                     ["tilemaparea"],
                     "Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8",
