@@ -251,10 +251,11 @@ Most of the plugins are written in C++.
 
 # History
 
-0.64 (WIP)
+0.64
 - Support [substituting the first tile with another index](https://github.com/maxim-zhao/bmp2tile/issues/17)
 - Support [overriding palette entries](https://github.com/maxim-zhao/bmp2tile/issues/29)
 - You can choose to see the preview image at 100% size or scaled to fit the window
+- Fixed [a bug causing some commandline sequences to cause an error](https://github.com/maxim-zhao/bmp2tile/issues/32)
 
 0.63
 - Improved raw tilemap/tiles support so you don't have to disable duplicate removal to avoid an error

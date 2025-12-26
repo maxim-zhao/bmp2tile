@@ -18,7 +18,7 @@ internal class ArgParser(
         public Action<Dictionary<string, string>> Action { get; init; }
         public string[] ValueNames { get; init; }
     }
-    private readonly Dictionary<string, ArgHandler> _args = new();
+    private readonly Dictionary<string, ArgHandler> _args = [];
 
     public ArgParser Add(IList<string> names, string description, Action<Dictionary<string, string>> action, params string[] valueNames)
     {
@@ -148,7 +148,7 @@ internal class ArgParser(
         }
     }
 
-    private string PrintArgs(string[] names)
+    private static string PrintArgs(string[] names)
     {
         return names.Length == 0 
             ? "" 

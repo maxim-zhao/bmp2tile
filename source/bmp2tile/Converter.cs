@@ -19,7 +19,7 @@ public class Converter: IDisposable
     private Palette _palette;
     private List<Tile> _tiles;
     private Tilemap _tilemap;
-    private readonly Dictionary<string, ICompressorImpl> _compressors = new();
+    private readonly Dictionary<string, ICompressorImpl> _compressors = [];
 
     private bool _removeDuplicates = true;
     private bool _useMirroring = true;

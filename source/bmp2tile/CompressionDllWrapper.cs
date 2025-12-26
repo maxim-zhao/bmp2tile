@@ -7,7 +7,7 @@ namespace BMP2Tile;
 
 internal class CompressionDllWrapper: ICompressorImpl
 {
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr LoadLibrary(string dllToLoad);
 
     [DllImport("kernel32.dll")]
