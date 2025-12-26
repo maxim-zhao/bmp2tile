@@ -1128,5 +1128,6 @@ public class Converter: IDisposable
     public void ExcludeTileIndex(int index)
     {
         _excludedIndices.Add(index);
+        _tilemap = null;
     }
 }
