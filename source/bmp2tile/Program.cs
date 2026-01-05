@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
@@ -120,7 +121,7 @@ public static class Program
                     "offset")
                 .Add(
                     ["excludeindices"],
-                    "Tile indices to exclude, e.g. 100,110-120. Ranges are inclusive.",
+                    "Tile indices to exclude, e.g. 100,110-120. Ranges are inclusive. Multiple uses are additive.",
                     d =>
                     {
                         foreach (var range in d["ranges"].Split(","))
@@ -142,6 +143,24 @@ public static class Program
                         }
                     },
                     "ranges")
+                .Add(
+                    ["tilerange"],
+                    "Inclusive range of tiles to save in the next save command, always counting from 0, e.g. 10-20",
+                    d =>
+                    {
+                        var m = Regex.Match(d["range"], "^(?<start>[0-9]+)-(?<end>[0-9]+)$");
+                        if (m.Success)
+                        {
+                            var start = Convert.ToInt32(m.Groups["start"].Value);
+                            var end = Convert.ToInt32(m.Groups["end"].Value);
+                            converter.SetTileRange(start, end);
+                        }
+                        else
+                        {
+                            throw new Exception($"Invalid range \"{d["range"]}");
+                        }
+                    },
+                    "range")
                 .Add(
                     ["tilemaparea"],
                     "Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8",

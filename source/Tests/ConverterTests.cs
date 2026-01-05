@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -157,6 +158,19 @@ public class ConverterTests
         Assert.That(
             Regex.Matches(conv.GetTilesAsText(), "; Tile index ").Count,
             Is.EqualTo(262));
+        // Now we ask for a subset
+        conv.ReplaceFirstTileWith(-1); // This turns it off
+        conv.SetTileRange(1, 2);
+        Assert.That(
+            conv.GetTilesAsText().Trim(),
+            Is.EqualTo(
+                // This is the original tiles 1..2. The comments are maybe now a bit confusing...
+                """
+                ; Tile index $000
+                .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $00 $00 $00
+                ; Tile index $001
+                .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF
+                """));
     }
 
     [Test]
@@ -221,4 +235,32 @@ public class ConverterTests
         }
     }
 
+    [Test]
+    public void TileOffset()
+    {
+        using var conv = new Converter((_, _) => { });
+        conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        Assert.That(
+            Regex.Matches(
+                    conv.GetTilemapAsText(),
+                    "\\$([0-9A-F]+)")
+                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)), 
+            Is.Zero);
+
+        conv.TileOffset = 10;
+        Assert.That(
+            Regex.Matches(
+                    conv.GetTilemapAsText(),
+                    "\\$([0-9A-F]+)")
+                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
+            Is.EqualTo(10));
+
+        conv.ExcludeTileIndex(10);
+        Assert.That(
+            Regex.Matches(
+                    conv.GetTilemapAsText(),
+                    "\\$([0-9A-F]+)")
+                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
+            Is.EqualTo(11));
+    }
 }

@@ -41,6 +41,8 @@ public class Converter: IDisposable
     private int _firstTileReplacement = -1;
     private readonly Dictionary<int, Color> _paletteOverrides = [];
     private readonly HashSet<int> _excludedIndices = [];
+    private int _tileRangeStart;
+    private int _tileRangeEnd = int.MaxValue - 1;
 
     #endregion
 
@@ -213,6 +215,8 @@ public class Converter: IDisposable
         // Duplicate the list so we can manipulate it without losing data
         var tilesToSave = new List<Tile>(_tiles);
 
+        tilesToSave = tilesToSave[_tileRangeStart..Math.Min(tilesToSave.Count, _tileRangeEnd + 1)];
+
         if (_firstTileReplacement > -1)
         {
             tilesToSave.RemoveAt(0);
@@ -278,6 +282,18 @@ public class Converter: IDisposable
                     // All other entries need to use an index decremented by 1
                     --entry.TileIndex;
                 }
+            }
+        }
+
+        if (_excludedIndices.Count != 0)
+        {
+            // Any tiles using an excluded index need to be bumped to the next non-excluded,
+            // and all higher numbers bumped up accordingly.
+            // The easiest way to do this (maybe not the fastest) is to increment like this.
+            foreach (var entry in _excludedIndices
+                .SelectMany(excludedIndex => tilemap.Where(x => x.TileIndex >= excludedIndex)))
+            {
+                ++entry.TileIndex;
             }
         }
 
@@ -654,11 +670,6 @@ public class Converter: IDisposable
         // We fill space by using the same function used to extract the tiles
         foreach (var point in GetTileCoordinates(_bitmap.Width, _bitmap.Height))
         {
-            // Skip excluded indices
-            while (_excludedIndices.Contains(i))
-            {
-                ++i;
-            }
             tilemap[point.X / 8, point.Y / 8] = new Tilemap.Entry
             {
                 TileIndex = i,
@@ -1129,5 +1140,12 @@ public class Converter: IDisposable
     {
         _excludedIndices.Add(index);
         _tilemap = null;
+        _tiles = null;
+    }
+
+    public void SetTileRange(int start, int end)
+    {
+        _tileRangeStart = start;
+        _tileRangeEnd = end;
     }
 }
