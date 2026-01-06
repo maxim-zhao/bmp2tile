@@ -4,6 +4,8 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using BMP2Tile;
@@ -29,7 +31,12 @@ public class ConverterTests
         }
         else
         {
-            Assert.Fail("Test directory not found");
+            Assert.Fail($"""
+                         Test directory not found
+                         TestDirectory={TestContext.CurrentContext.TestDirectory} 
+                         WorkDirectory={TestContext.CurrentContext.WorkDirectory}
+                         Assembly Location = {Assembly.GetCallingAssembly().Location}
+                         """);
         }
     }
 
@@ -45,12 +52,14 @@ public class ConverterTests
         _conv?.Dispose();
     }
 
-    private static string FindTestDirectory()
+    private static string FindTestDirectory(
+        [CallerFilePath] string filePath = "")
     {
-        // Walk up from the test output folder searching for a 'test' directory
-        var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+        // Walk up from the source folder looking for a "test" directory
+        var dir = new FileInfo(filePath).Directory;
         while (dir != null)
         {
+            Console.WriteLine($"Trying {dir}...");
             var candidate = Path.Combine(dir.FullName, "test");
             if (Directory.Exists(candidate))
             {
@@ -75,6 +84,19 @@ public class ConverterTests
         _conv.FullPalette = true;
         Assert.That(_conv.GetPaletteAsText(),
             Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0 $000 $000 $000 $000 $000 $000 $000 $000"));
+        _conv.FullPalette = false;
+        _conv.PaletteFormat = Palette.Formats.MasterSystemConstants;
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db cl000 cl010 cl110 cl003 cl020 cl030 cl023 cl033"));
+        var palettes = _conv.GetPalettes();
+        Assert.That(palettes.Count, Is.EqualTo(2));
+        Assert.That(palettes[0].Count, Is.EqualTo(8));
+        Assert.That(palettes[0], Is.EqualTo(palettes[1]));
+        _conv.PaletteFormat = Palette.Formats.GameGear;
+        palettes = _conv.GetPalettes();
+        Assert.That(palettes.Count, Is.EqualTo(2));
+        Assert.That(palettes[0].Count, Is.EqualTo(8));
+        Assert.That(palettes[0], Is.EqualTo(palettes[1]));
     }
 
     [Test]
@@ -231,6 +253,19 @@ public class ConverterTests
             """));
     }
 
+    [TestCase("akmw.bmp", ".db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF")]
+    [TestCase("akmw-8bpp.png", ".db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF")]
+    [TestCase("akmw-1bpp.png", ".db $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00")]
+    public void ImageBitDepth(string filename, string expectedTile11)
+    {
+        _conv.Filename = Path.Combine(_testDir, filename);
+        _conv.RemoveDuplicates = false;
+        _conv.SetTileRange(10, 10);
+        Assert.That(
+            StripToLines(_conv.GetTilesAsText())[0], 
+            Is.EqualTo(expectedTile11));
+    }
+
     private static List<string> StripToLines(string text)
     {
         return text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
@@ -350,6 +385,9 @@ public class ConverterTests
             .dw $0044
             .dw $0064
             """));
+        Assert.That(
+            () => {_conv.CropTo(1, 2, 3, 4);},
+            Throws.Exception.InstanceOf<ArgumentException>());
     }
 
     [Test]
@@ -365,5 +403,28 @@ public class ConverterTests
         _conv.SetTileRange(262, 300);
         Assert.That(StripToLines(_conv.GetTilesAsText()), Is.EqualTo(allTiles.Skip(262).Take(1)));
 
+    }
+
+    [Test]
+    public void GetCompressorInfo()
+    {
+        var info = _conv.GetCompressorInfo().ToList();
+        // We only have the built-in .inc "compressor"
+        Assert.That(info.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void SaveFiles()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        var tilesFilename = Path.Combine(TestContext.CurrentContext.WorkDirectory, "tiles.inc");
+        var tilemapFilename = Path.Combine(TestContext.CurrentContext.WorkDirectory, "tilemap.inc");
+        var paletteFilename = Path.Combine(TestContext.CurrentContext.WorkDirectory, "palette.inc");
+        _conv.SaveTiles(tilesFilename);
+        _conv.SaveTilemap(tilemapFilename);
+        _conv.SavePalette(paletteFilename);
+        Assert.That(File.ReadAllText(tilesFilename), Is.EqualTo(_conv.GetTilesAsText()));
+        Assert.That(File.ReadAllText(tilemapFilename), Is.EqualTo(_conv.GetTilemapAsText()));
+        Assert.That(File.ReadAllText(paletteFilename), Is.EqualTo(_conv.GetPaletteAsText()));
     }
 }

@@ -23,15 +23,15 @@ public static class Utilities
     public static Color ParseHexColour(string s)
     {
         // Expecting #RRGGBB
-        var match = Regex.Match(s, "^#([0-9A-Fa-f]{2}){3}$");
-        if (!match.Success)
+        var match = Regex.Matches(s, "^#([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})$");
+        if (match.Count != 1)
         {
             throw new Exception($"Colour must be in #RRGGBB format: {s}");
         }
 
-        var r = int.Parse(match.Captures[0].Value, NumberStyles.HexNumber);
-        var g = int.Parse(match.Captures[1].Value, NumberStyles.HexNumber);
-        var b = int.Parse(match.Captures[2].Value, NumberStyles.HexNumber);
+        var r = int.Parse(match[0].Groups[1].Value, NumberStyles.HexNumber);
+        var g = int.Parse(match[0].Groups[2].Value, NumberStyles.HexNumber);
+        var b = int.Parse(match[0].Groups[3].Value, NumberStyles.HexNumber);
 
         return Color.FromArgb(r, g, b);
     }
