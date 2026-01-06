@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace bmp2tile.Tests;
 public class ConverterTests
 {
     private string _testDir;
+    private Converter _conv;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
@@ -30,6 +33,18 @@ public class ConverterTests
         }
     }
 
+    [SetUp]
+    public void SetUp()
+    {
+        _conv = new Converter((s, level) => { TestContext.WriteLine($"[{level}] {s}"); });
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _conv?.Dispose();
+    }
+
     private static string FindTestDirectory()
     {
         // Walk up from the test output folder searching for a 'test' directory
@@ -41,6 +56,7 @@ public class ConverterTests
             {
                 return Path.GetFullPath(candidate);
             }
+
             dir = dir.Parent;
         }
 
@@ -50,71 +66,95 @@ public class ConverterTests
     [Test]
     public void PaletteFormats()
     {
-        using var conv = new Converter((_, _) => { });
         // This image uses the first 8 colours from the palette
-        conv.Filename = Path.Combine(_testDir, "0-7.png");
+        _conv.Filename = Path.Combine(_testDir, "0-7.png");
         // Start at SMS palette with 8 entries
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C"));
-        conv.PaletteFormat = Palette.Formats.GameGear;
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0"));
-        conv.FullPalette = true;
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0 $000 $000 $000 $000 $000 $000 $000 $000"));
+        Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C"));
+        _conv.PaletteFormat = Palette.Formats.GameGear;
+        Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0"));
+        _conv.FullPalette = true;
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0 $000 $000 $000 $000 $000 $000 $000 $000"));
     }
 
     [Test]
     public void DualPalette()
     {
-        using var conv = new Converter((_, _) => { });
-        conv.Filename = Path.Combine(_testDir, "dual-palette.png");
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".db $00 $0A $0F $2F $3F $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $20 $34 $3C $3F"));
-        Assert.That(conv.GetTilesAsText().Trim(), Is.EqualTo(
+        _conv.Filename = Path.Combine(_testDir, "dual-palette.png");
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db $00 $0A $0F $2F $3F $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $00 $20 $34 $3C $3F"));
+        Assert.That(_conv.GetTilesAsText().Trim(), Is.EqualTo(
             """
             ; Tile index $000
             .db $00 $00 $FF $00 $80 $80 $7F $00 $FF $80 $00 $00 $FE $81 $00 $00 $FD $82 $00 $00 $80 $FF $00 $00 $E8 $80 $00 $00 $50 $80 $00 $00
             ; Tile index $001
             .db $5F $5F $A0 $00 $BE $BF $40 $00 $51 $AE $00 $00 $A1 $5E $00 $00 $41 $BE $00 $00 $01 $FE $00 $00 $01 $00 $00 $00 $00 $00 $00 $00
             """));
-        Assert.That(conv.GetTilemapAsText().Trim(), Is.EqualTo(
+        Assert.That(_conv.GetTilemapAsText().Trim(), Is.EqualTo(
             """
             .dw $0000 $0001
             .dw $0800 $0801
             """)); // Use sprite palette bit is set for bottom row
-        conv.UseSpritePalette = true;
-        Assert.That(conv.GetTilemapAsText().Trim(), Is.EqualTo(
+        _conv.UseSpritePalette = true;
+        Assert.That(_conv.GetTilemapAsText().Trim(), Is.EqualTo(
             """
             .dw $0800 $0801
             .dw $0800 $0801
             """)); // Use sprite palette bit is set for all
-        conv.UseSpritePalette = false;
-        conv.HighPriority = true;
-        Assert.That(conv.GetTilemapAsText().Trim(), Is.EqualTo(
+        _conv.UseSpritePalette = false;
+        _conv.HighPriority = true;
+        Assert.That(_conv.GetTilemapAsText().Trim(), Is.EqualTo(
             """
             .dw $1000 $1001
             .dw $1800 $1801
             """)); // Use sprite palette bit is set for bottom row, priority bit is set for all
+    }
 
+    [Test]
+    public void PaletteOverrides()
+    {
+        // This image uses the first 8 colours from the palette
+        _conv.Filename = Path.Combine(_testDir, "0-7.png");
+        // Start at SMS palette with 8 entries
+        Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C"));
+        // Override some colours
+        _conv.AddPaletteOverride(0, Color.White);
+        _conv.AddPaletteOverride(2, Color.Red);
+        _conv.AddPaletteOverride(4, Color.Cyan);
+        _conv.AddPaletteOverride(6, Color.Magenta);
+        Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".db $3F $04 $03 $30 $3C $0C $33 $3C"));
+        // Add one at an unused index
+        _conv.AddPaletteOverride(14, Color.Lime);
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db $3F $04 $03 $30 $3C $0C $33 $3C $00 $00 $00 $00 $00 $00 $0C"));
+        _conv.FullPalette = true;
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db $3F $04 $03 $30 $3C $0C $33 $3C $00 $00 $00 $00 $00 $00 $0C $00"));
+        // Put them back
+        _conv.ClearPaletteOverrides();
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C $00 $00 $00 $00 $00 $00 $00 $00"));
     }
 
     [Test]
     public void PaletteTruncation()
     {
-        using var conv = new Converter((_, _) => { });
         // This image uses only the first entry in the palette
-        conv.Filename = Path.Combine(_testDir, "blanktile.png");
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".db $00"));
-        conv.FullPalette = true;
-        Assert.That(conv.GetPaletteAsText(), Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C $02 $06 $03 $0B $0F $3A $2F $3F"));
+        _conv.Filename = Path.Combine(_testDir, "blanktile.png");
+        Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".db $00"));
+        _conv.FullPalette = true;
+        Assert.That(_conv.GetPaletteAsText(),
+            Is.EqualTo(".db $00 $04 $05 $30 $08 $0C $38 $3C $02 $06 $03 $0B $0F $3A $2F $3F"));
     }
 
     [Test]
     public void ImageNotPaletted()
     {
-        using var conv = new Converter((_, _) => { });
         // This image is 24-bit
-        conv.Filename = Path.Combine(_testDir, "24bpp.png");
+        _conv.Filename = Path.Combine(_testDir, "24bpp.png");
         Assert.That(
             // ReSharper disable once AccessToDisposedClosure
-            () => { conv.GetTilesAsText(); },
+            () => { _conv.GetTilesAsText(); },
             Throws.InstanceOf<AppException>().With.Message.Contains("Unsupported bitmap format"));
     }
 
@@ -122,47 +162,45 @@ public class ConverterTests
     [Test]
     public void BadImageSize()
     {
-        using var conv = new Converter((_, _) => { });
         // This image is 24-bit
-        conv.Filename = Path.Combine(_testDir, "Bad width.png");
+        _conv.Filename = Path.Combine(_testDir, "Bad width.png");
         Assert.That(
             // ReSharper disable once AccessToDisposedClosure
-            () => { conv.GetTilesAsText(); },
+            () => { _conv.GetTilesAsText(); },
             Throws.InstanceOf<AppException>().With.Message.Contains("width"));
     }
 
     [Test]
     public void TileCount()
     {
-        using var conv = new Converter((_, _) => { });
-        conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
         // 263 distinct tiles at first
         Assert.That(
-            Regex.Matches(conv.GetTilesAsText(), "; Tile index ").Count,
+            Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count,
             Is.EqualTo(263));
         // 284 without mirroring
-        conv.UseMirroring = false;
+        _conv.UseMirroring = false;
         Assert.That(
-            Regex.Matches(conv.GetTilesAsText(), "; Tile index ").Count,
+            Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count,
             Is.EqualTo(284));
         // 768 without duplicate removal
-        conv.RemoveDuplicates = false;
+        _conv.RemoveDuplicates = false;
         Assert.That(
-            Regex.Matches(conv.GetTilesAsText(), "; Tile index ").Count,
+            Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count,
             Is.EqualTo(768));
         // Back to normal
-        conv.UseMirroring = true;
-        conv.RemoveDuplicates = true;
+        _conv.UseMirroring = true;
+        _conv.RemoveDuplicates = true;
         // This should make our tile count go down by 1
-        conv.ReplaceFirstTileWith(0);
+        _conv.ReplaceFirstTileWith(0);
         Assert.That(
-            Regex.Matches(conv.GetTilesAsText(), "; Tile index ").Count,
+            Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count,
             Is.EqualTo(262));
         // Now we ask for a subset
-        conv.ReplaceFirstTileWith(-1); // This turns it off
-        conv.SetTileRange(1, 2);
+        _conv.ReplaceFirstTileWith(-1); // This turns it off
+        _conv.SetTileRange(1, 2);
         Assert.That(
-            conv.GetTilesAsText().Trim(),
+            _conv.GetTilesAsText().Trim(),
             Is.EqualTo(
                 // This is the original tiles 1..2. The comments are maybe now a bit confusing...
                 """
@@ -176,39 +214,38 @@ public class ConverterTests
     [Test]
     public void TileFormats()
     {
-        using var conv = new Converter((_, _) => { });
         // This image uses the first 8 colours from the palette
-        conv.Filename = Path.Combine(_testDir, "0-7.png");
+        _conv.Filename = Path.Combine(_testDir, "0-7.png");
         // First planar...
-        Assert.That(conv.GetTilesAsText().Trim(), Is.EqualTo(
+        Assert.That(_conv.GetTilesAsText().Trim(), Is.EqualTo(
             """
             ; Tile index $000
             .db $00 $00 $00 $00 $FF $00 $00 $00 $00 $FF $00 $00 $FF $FF $00 $00 $00 $00 $FF $00 $FF $00 $FF $00 $00 $FF $FF $00 $FF $FF $FF $00
             """));
         // Then chunky
-        conv.Chunky = true;
-        Assert.That(conv.GetTilesAsText().Trim(), Is.EqualTo(
+        _conv.Chunky = true;
+        Assert.That(_conv.GetTilesAsText().Trim(), Is.EqualTo(
             """
             ; Tile index $000
             .db $00 $00 $00 $00 $11 $11 $11 $11 $22 $22 $22 $22 $33 $33 $33 $33 $44 $44 $44 $44 $55 $55 $55 $55 $66 $66 $66 $66 $77 $77 $77 $77
             """));
     }
 
+    private static List<string> StripToLines(string text)
+    {
+        return text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+            .Where(x => x.StartsWith(".d"))
+            .ToList();
+    }
+
     [Test]
     public void TileOrder()
     {
-        using var conv = new Converter((_, _) => { });
-        conv.Filename = Path.Combine(_testDir, "akmw.bmp");
-        conv.RemoveDuplicates = false;
-        var orderedTiles = conv.GetTilesAsText()
-            .Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
-            .Where(x => x.StartsWith(".db"))
-            .ToList();
-        conv.AdjacentBelow = true;
-        var newTiles = conv.GetTilesAsText()
-            .Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
-            .Where(x => x.StartsWith(".db"))
-            .ToList();
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.RemoveDuplicates = false;
+        var orderedTiles = StripToLines(_conv.GetTilesAsText());
+        _conv.AdjacentBelow = true;
+        var newTiles = StripToLines(_conv.GetTilesAsText());
         Assert.That(orderedTiles, Has.Count.EqualTo(768));
         Assert.That(newTiles, Has.Count.EqualTo(768));
         for (var index = 0; index < 768; ++index)
@@ -230,6 +267,7 @@ public class ConverterTests
             {
                 locationInReordered += 1;
             }
+
             var newTile = newTiles[locationInReordered];
             Assert.That(newTile, Is.EqualTo(oldTile), $"Tile {index} expected to be at {locationInReordered}");
         }
@@ -238,29 +276,94 @@ public class ConverterTests
     [Test]
     public void TileOffset()
     {
-        using var conv = new Converter((_, _) => { });
-        conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
         Assert.That(
             Regex.Matches(
-                    conv.GetTilemapAsText(),
+                    _conv.GetTilemapAsText(),
                     "\\$([0-9A-F]+)")
-                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)), 
+                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
             Is.Zero);
 
-        conv.TileOffset = 10;
+        _conv.TileOffset = 10;
         Assert.That(
             Regex.Matches(
-                    conv.GetTilemapAsText(),
+                    _conv.GetTilemapAsText(),
                     "\\$([0-9A-F]+)")
                 .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
             Is.EqualTo(10));
 
-        conv.ExcludeTileIndex(10);
+        _conv.ExcludeTileIndex(10);
         Assert.That(
             Regex.Matches(
-                    conv.GetTilemapAsText(),
+                    _conv.GetTilemapAsText(),
                     "\\$([0-9A-F]+)")
                 .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
             Is.EqualTo(11));
+    }
+
+    [TestCase("akmw.bmp")]
+    [TestCase("akmw-8bpp.png")]
+    [TestCase("akmw-1bpp.png")]
+    public void SpriteSheet(string filename)
+    {
+        _conv.Filename = Path.Combine(_testDir, filename);
+        _conv.RemoveDuplicates = false;
+        _conv.SpriteSheet(32, 32);
+        Assert.That(
+            string.Join("\r\n", StripToLines(_conv.GetTilemapAsText()).Take(4)),
+            Is.EqualTo(
+                """
+                .dw $0000 $0001 $0002 $0003
+                .dw $0004 $0005 $0006 $0007
+                .dw $0008 $0009 $000A $000B
+                .dw $000C $000D $000E $000F
+                """),
+            "Expected a 4 column wide tilemap");
+        var tileData = filename.Contains("1bpp")
+            ? """
+              .db $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $00 $00 $00 $00
+              .db $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $00 $00 $00 $00
+              .db $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $7F $00 $00 $00
+              .db $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00 $FF $00 $00 $00
+              """
+            : """
+              .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $00 $00 $00
+              .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $00 $00 $00
+              .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $7F $7F $7F
+              .db $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF $00 $FF $FF $FF
+              """;
+        Assert.That(
+            string.Join("\r\n", StripToLines(_conv.GetTilesAsText()).Skip(16).Take(4)),
+            Is.EqualTo(tileData),
+            "Second sprite is not expected tiles");
+    }
+
+
+    [Test]
+    public void CropTilemap()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.CropTo(32, 64, 8, 16);
+        _conv.RemoveDuplicates = false;
+        Assert.That(_conv.GetTilemapAsText().Trim(), Is.EqualTo(
+            """
+            .dw $0044
+            .dw $0064
+            """));
+    }
+
+    [Test]
+    public void SetTileRange()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        var allTiles = StripToLines(_conv.GetTilesAsText());
+        Assert.That(allTiles.Count, Is.EqualTo(263));
+        _conv.SetTileRange(10, 20);
+        Assert.That(StripToLines(_conv.GetTilesAsText()), Is.EqualTo(allTiles.Skip(10).Take(11)));
+        _conv.SetTileRange(0, 0);
+        Assert.That(StripToLines(_conv.GetTilesAsText()), Is.EqualTo(allTiles.Skip(0).Take(1)));
+        _conv.SetTileRange(262, 300);
+        Assert.That(StripToLines(_conv.GetTilesAsText()), Is.EqualTo(allTiles.Skip(262).Take(1)));
+
     }
 }

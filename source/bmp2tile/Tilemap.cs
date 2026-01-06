@@ -53,8 +53,8 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
         }
     }
 
-    public int Width { get; }
-    public int Height { get; }
+    public int Width { get; private set; }
+    public int Height { get; private set; }
 
     public Tilemap(int width, int height)
     {
@@ -94,6 +94,8 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
         }
 
         _tilemap = newTilemap;
+        Width = width;
+        Height = height;
     }
 
     public Tilemap Clone()

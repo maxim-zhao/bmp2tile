@@ -34,7 +34,7 @@ public class Converter: IDisposable
     private Bitmap _bitmap;
     private bool _optimized;
     private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
-    private readonly HashSet<byte> _paletteIndicesUsed = [];
+    private readonly HashSet<int> _paletteIndicesUsed = [];
     private int _spriteWidth;
     private int _spriteHeight;
     private (int left, int top, int width, int height) _tilemapCrop;
@@ -260,7 +260,7 @@ public class Converter: IDisposable
 
         if (_tilemapCrop.width > 0)
         {
-            Log($"Cropping tilemap to {_tilemapCrop.width}x{tilemap.Height} at {_tilemapCrop.left}, {_tilemapCrop.top}");
+            Log($"Cropping tilemap to {_tilemapCrop.width}x{_tilemapCrop.height} at {_tilemapCrop.left}, {_tilemapCrop.top}");
             tilemap.Crop(
                 _tilemapCrop.left / 8, 
                 _tilemapCrop.top / 8, 
@@ -841,7 +841,7 @@ public class Converter: IDisposable
                 throw new AppException($"Unsupported bitmap format {bitmapData.PixelFormat}");
         }
 
-        _paletteIndicesUsed.UnionWith(tileData);
+        _paletteIndicesUsed.UnionWith(tileData.Select(b => (int)b));
         return new Tile(tileData);
     }
 
@@ -941,7 +941,7 @@ public class Converter: IDisposable
         // We want to find the highest index used in the data
         // We do that by getting the tiles, as this also "corrects" mixed-palette-range tiles.
         GetTiles();
-        var highestIndexUsed = _paletteIndicesUsed.Max();
+        var highestIndexUsed = _paletteIndicesUsed.Concat(_paletteOverrides.Keys).Max();
         if (highestIndexUsed > 31)
         {
             throw new AppException($"Image uses colors up to index {highestIndexUsed} - this must be no more than 31 (0-based). There are {_paletteIndicesUsed.Count} palette entries used.");
@@ -1010,7 +1010,7 @@ public class Converter: IDisposable
         _tilemap = null;
     }
 
-    public void RearrangeSpriteSheet()
+    private void RearrangeSpriteSheet()
     {
         GetBitmap();
 
@@ -1084,20 +1084,21 @@ public class Converter: IDisposable
 
     private static void CopyBitmap(BitmapData source, BitmapData dest, int destX, int destY, int sourceX, int sourceY, int width, int height)
     {
-        var sourceOffset = source.Scan0 + sourceY * source.Stride + sourceX;
-        var destOffset = dest.Scan0 + destY * dest.Stride + destX;
-        var tempArray = new byte[width];
-        var bytes = dest.PixelFormat switch
+        Func<int, int> pixelsToBytes = dest.PixelFormat switch
         {
-            PixelFormat.Format8bppIndexed => width,
-            PixelFormat.Format4bppIndexed => width / 2,
-            PixelFormat.Format1bppIndexed => width / 8,
+            PixelFormat.Format8bppIndexed => x => x,
+            PixelFormat.Format4bppIndexed => x => x / 2,
+            PixelFormat.Format1bppIndexed => x => x / 8,
             _ => throw new AppException($"Can't handle non-paletted images. Image is {dest.PixelFormat}")
         };
+        var sourceOffset = source.Scan0 + sourceY * source.Stride + pixelsToBytes(sourceX);
+        var destOffset = dest.Scan0 + destY * dest.Stride + pixelsToBytes(destX);
+        var tempArray = new byte[width];
+        var length = pixelsToBytes(width);
         for (var i = 0; i < height; ++i)
         {
-            Marshal.Copy(sourceOffset, tempArray, 0, bytes);
-            Marshal.Copy(tempArray, 0, destOffset, bytes);
+            Marshal.Copy(sourceOffset, tempArray, 0, length);
+            Marshal.Copy(tempArray, 0, destOffset, length);
             sourceOffset += source.Stride;
             destOffset += dest.Stride;
         }
