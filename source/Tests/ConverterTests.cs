@@ -309,7 +309,7 @@ public class ConverterTests
     }
 
     [Test]
-    public void TileOffset()
+    public void TileOffsetAndExclusions()
     {
         _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
         Assert.That(
@@ -334,6 +334,14 @@ public class ConverterTests
                     "\\$([0-9A-F]+)")
                 .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
             Is.EqualTo(11));
+
+        _conv.ResetExcludedTileIndices();
+        Assert.That(
+            Regex.Matches(
+                    _conv.GetTilemapAsText(),
+                    "\\$([0-9A-F]+)")
+                .Min(x => int.Parse(x.Groups[1].Value, NumberStyles.HexNumber)),
+            Is.EqualTo(10));
     }
 
     [TestCase("akmw.bmp")]

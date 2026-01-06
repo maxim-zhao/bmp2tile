@@ -1149,4 +1149,9 @@ public class Converter: IDisposable
         _tileRangeStart = start;
         _tileRangeEnd = end;
     }
+
+    public void ResetExcludedTileIndices()
+    {
+        _excludedIndices.Clear();
+    }
 }

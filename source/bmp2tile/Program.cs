@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace BMP2Tile;
@@ -143,6 +142,10 @@ public static class Program
                         }
                     },
                     "ranges")
+                .Add(
+                    ["resetexcludeindices"],
+                    "Reset any exclusions from -excludeindices",
+                    _ => converter.ResetExcludedTileIndices())
                 .Add(
                     ["tilerange"],
                     "Inclusive range of tiles to save in the next save command, always counting from 0, e.g. 10-20",

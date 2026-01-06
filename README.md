@@ -219,7 +219,10 @@ features not yet in a released version.
 |`-chunky`                 |Output chunky tile data                      |
 |`-tileoffset <n>`         |The starting index of the first tile. :star: Default is 0. |
 |`-tilemaparea <w> <h> <x> <y>` |Crop to a tilemap area, specified in pixels (which must be multiples of 8), e.g. 256 64 0 8 |
-|`-replacefirsttilewith <n>` |Substitute the first tile with tile index `<n>` (decimal), and remove it from the tile data |`
+|`-replacefirsttilewith <n>` |Substitute the first tile with tile index `<n>` (decimal), and remove it from the tile data |
+|`-excludeindices <a>-<b>,<c>` |Forbid the tilemap from using the given tile numbers (decimal, ranges are inclusive). Can be used more than once. |
+|`-resetexcludeindices`    |Clear any previously excluded tile numbers  |
+|`-tilerange <a>-<b>`      |When saving tile data, only save the given range (0-based, decimal, inclusive). Can be amended after saving. |
 |`-spritepalette`          |Set the tilemap bit to make tiles use the sprite palette. :star: Default is to set it only if the image is a 32-colour image and the tile uses the upper palette. |
 |`-infrontofsprites`       |Set the tilemap bit to make tiles appear in front of sprites. :star: Default is unset. |
 |`-smspalette`             |:star: Output the palette in SMS colour format |
@@ -250,6 +253,12 @@ BMP2Tile started life in Delphi 7, but as of version 0.5 became written in C#.
 Most of the plugins are written in C++.
 
 # History
+
+0.65
+- Support [excluding tile indices from use in the tilemap](https://github.com/maxim-zhao/bmp2tile/issues/33)
+- Support saving only a range of tiles when saving tile data
+- Palette overrides can now extend the palette
+- Fixed bugs with spritesheet rearrangement (for 4bpp and 1mpp images) and tilemap area cropping
 
 0.64
 - Support [substituting the first tile with another index](https://github.com/maxim-zhao/bmp2tile/issues/17)
