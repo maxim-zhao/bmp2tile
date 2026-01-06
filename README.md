@@ -258,7 +258,7 @@ Most of the plugins are written in C++.
 - Support [excluding tile indices from use in the tilemap](https://github.com/maxim-zhao/bmp2tile/issues/33)
 - Support saving only a range of tiles when saving tile data
 - Palette overrides can now extend the palette
-- Fixed bugs with spritesheet rearrangement (for 4bpp and 1mpp images) and tilemap area cropping
+- Fixed bugs with spritesheet rearrangement (for 4bpp and 1bpp images), tilemap area cropping and palette overrides
 
 0.64
 - Support [substituting the first tile with another index](https://github.com/maxim-zhao/bmp2tile/issues/17)
