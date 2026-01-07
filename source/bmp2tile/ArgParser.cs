@@ -96,6 +96,10 @@ internal class ArgParser(
 
     private static string PrintInGrid(IList<IList<string>> rows)
     {
+        if (rows.Count == 0)
+        {
+            return "";
+        }
         // Get the max width of each column
         var maxCount = rows.Max(x => x.Count);
         var widths = Enumerable
@@ -126,7 +130,8 @@ internal class ArgParser(
             Console.Error.WriteLine(line);
         }
 
-        Console.Error.WriteLine("\nParameters:");
+        Console.Error.WriteLine();
+        Console.Error.WriteLine("Parameters:");
         Console.Error.WriteLine(PrintInGrid(GetArgs().ToList()));
 
         Console.Error.WriteLine(PrintInGrid(helpTextExtraHandler()));

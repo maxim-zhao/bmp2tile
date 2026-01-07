@@ -610,7 +610,7 @@ public class Converter: IDisposable
         }
     }
 
-    public void GetTilemapFromFile()
+    private void GetTilemapFromFile()
     {
         var filename = _tilemapFilename;
         var width = 1;

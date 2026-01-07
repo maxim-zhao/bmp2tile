@@ -3,6 +3,7 @@
         <OutputType>Exe</OutputType>
     </PropertyGroup>
     <ItemGroup>
+        <InternalsVisibleTo Include="bmp2tile.Tests" />
         <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     </ItemGroup>
 </Project>

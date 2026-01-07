@@ -84,14 +84,22 @@ public class ConverterTests
         _conv.FullPalette = true;
         Assert.That(_conv.GetPaletteAsText(),
             Is.EqualTo(".dw $000 $050 $055 $F00 $0A0 $0F0 $FA0 $FF0 $000 $000 $000 $000 $000 $000 $000 $000"));
+        
         _conv.FullPalette = false;
         _conv.PaletteFormat = Palette.Formats.MasterSystemConstants;
         Assert.That(_conv.GetPaletteAsText(),
             Is.EqualTo(".db cl000 cl010 cl110 cl003 cl020 cl030 cl023 cl033"));
+        
+        _conv.PaletteFormat = (Palette.Formats)int.MaxValue;
+        Assert.That(()=>_conv.GetPaletteAsText(), Throws.Exception.InstanceOf<ArgumentOutOfRangeException>());
+        Assert.That(() => _conv.GetPalettes(), Throws.Exception.InstanceOf<ArgumentOutOfRangeException>());
+
+        _conv.PaletteFormat = Palette.Formats.MasterSystem;
         var palettes = _conv.GetPalettes();
         Assert.That(palettes.Count, Is.EqualTo(2));
         Assert.That(palettes[0].Count, Is.EqualTo(8));
         Assert.That(palettes[0], Is.EqualTo(palettes[1]));
+        
         _conv.PaletteFormat = Palette.Formats.GameGear;
         palettes = _conv.GetPalettes();
         Assert.That(palettes.Count, Is.EqualTo(2));
@@ -434,5 +442,14 @@ public class ConverterTests
         Assert.That(File.ReadAllText(tilesFilename), Is.EqualTo(_conv.GetTilesAsText()));
         Assert.That(File.ReadAllText(tilemapFilename), Is.EqualTo(_conv.GetTilemapAsText()));
         Assert.That(File.ReadAllText(paletteFilename), Is.EqualTo(_conv.GetPaletteAsText()));
+
+        paletteFilename = Path.Combine(TestContext.CurrentContext.WorkDirectory, "palette.bin");
+        _conv.SavePalette(paletteFilename);
+        Assert.That(File.ReadAllBytes(paletteFilename), Is.EqualTo([0x00, 0x04, 0x05, 0x30, 0x08, 0x0C, 0x38, 0x3C, 0x02, 0x06, 0x03, 0x0B, 0x0F, 0x3A, 0x2F, 0x3F]));
+        _conv.PaletteFormat = Palette.Formats.GameGear;
+        _conv.SavePalette(paletteFilename);
+        Assert.That(File.ReadAllBytes(paletteFilename), Is.EqualTo([0x00, 0x00, 0x50, 0x00, 0x55, 0x00, 0x00, 0xF, 0xA0, 0x00, 0xF0, 0x00, 0xA0, 0x0F, 0xF0, 0x0F, 0x0A, 0x00, 0x5A, 0x00, 0x0F, 0x00, 0xAF, 0x00, 0xFF, 0x00, 0xAA, 0x0F, 0xFF, 0x0A, 0xFF, 0x0f]));
+        _conv.PaletteFormat = Palette.Formats.MasterSystemConstants;
+        Assert.That(() => _conv.SavePalette(paletteFilename), Throws.Exception);
     }
 }
