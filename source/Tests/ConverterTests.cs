@@ -452,4 +452,26 @@ public class ConverterTests
         _conv.PaletteFormat = Palette.Formats.MasterSystemConstants;
         Assert.That(() => _conv.SavePalette(paletteFilename), Throws.Exception);
     }
+
+    [Test]
+    public void ReplaceFirstTileWithIndexInExcludedRange()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        // 263 distinct tiles at first
+        Assert.That(Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count, Is.EqualTo(263));
+        // 5 of tile 0
+        Assert.That(Regex.Matches(_conv.GetTilemapAsText(), "\\$0000").Count, Is.EqualTo(5));
+        // Replace first tile with index 192, tile count drops
+        _conv.ReplaceFirstTileWith(192);
+        Assert.That(
+            Regex.Matches(_conv.GetTilesAsText(), "; Tile index ").Count,
+            Is.EqualTo(262));
+        // First tile is now 192, but it's used elsewhere too so we have 5 replacements of 0 and one existing usage
+        Assert.That(StripToLines(_conv.GetTilemapAsText()).First().StartsWith(".dw $00C0"));
+        Assert.That(Regex.Matches(_conv.GetTilemapAsText(), "\\$00C0").Count, Is.EqualTo(6));
+        // Exclude index 192 and check it's still there - but not as much since the other usage has bumped up
+        _conv.ExcludeTileIndex(192);
+        Assert.That(StripToLines(_conv.GetTilemapAsText()).First().StartsWith(".dw $00C0"));
+        Assert.That(Regex.Matches(_conv.GetTilemapAsText(), "\\$00C0").Count, Is.EqualTo(5));
+    }
 }

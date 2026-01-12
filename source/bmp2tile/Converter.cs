@@ -268,14 +268,18 @@ public class Converter: IDisposable
                 _tilemapCrop.height / 8);
         }
 
+        var tilemapEntriesWithForcedIndex = new HashSet<Tilemap.Entry>();
+
         if (_firstTileReplacement > -1)
         {
             // Change all entries using the first tile to use the replacement instead
+            var firstTileIndex = tilemap.Min(x => x.TileIndex);
             foreach (var entry in tilemap)
             {
-                if (entry.TileIndex == _tileOffset)
+                if (entry.TileIndex == firstTileIndex)
                 {
                     entry.TileIndex = _firstTileReplacement;
+                    tilemapEntriesWithForcedIndex.Add(entry);
                 }
                 else
                 {
@@ -289,9 +293,9 @@ public class Converter: IDisposable
         {
             // Any tiles using an excluded index need to be bumped to the next non-excluded,
             // and all higher numbers bumped up accordingly.
-            // The easiest way to do this (maybe not the fastest) is to increment like this.
+            // The easiest way to do this (not the fastest) is to increment like this.
             foreach (var entry in _excludedIndices
-                .SelectMany(excludedIndex => tilemap.Where(x => x.TileIndex >= excludedIndex)))
+                .SelectMany(excludedIndex => tilemap.Where(x => x.TileIndex >= excludedIndex && !tilemapEntriesWithForcedIndex.Contains(x))))
             {
                 ++entry.TileIndex;
             }
