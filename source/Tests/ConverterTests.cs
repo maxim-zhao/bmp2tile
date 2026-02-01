@@ -395,11 +395,10 @@ public class ConverterTests
     {
         _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
         _conv.CropTo(32, 64, 8, 16);
-        _conv.RemoveDuplicates = false;
         Assert.That(_conv.GetTilemapAsText().Trim(), Is.EqualTo(
             """
-            .dw $0044
-            .dw $0064
+            .dw $0001
+            .dw $000C
             """));
         Assert.That(
             () => {_conv.CropTo(1, 2, 3, 4);},

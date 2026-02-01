@@ -540,7 +540,7 @@
             Controls.Add(groupBox1);
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             Name = "Form1";
-            Text = "Bitmap to SMS/GG tile converter 0.63 by Maxim :: smspower.org";
+            Text = "Bitmap to SMS/GG tile converter 0.66 by Maxim :: smspower.org";
             FormClosed += Form1_FormClosed;
             Load += Form1_Load;
             DragDrop += Form1_DragDrop;

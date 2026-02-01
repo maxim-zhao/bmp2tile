@@ -254,6 +254,9 @@ Most of the plugins are written in C++.
 
 # History
 
+0.66
+- Fixed a bug with tilemap area cropping
+
 0.65
 - Support [excluding tile indices from use in the tilemap](https://github.com/maxim-zhao/bmp2tile/issues/33)
 - Support saving only a range of tiles when saving tile data

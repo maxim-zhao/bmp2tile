@@ -86,11 +86,16 @@ internal class Tilemap : IEnumerable<Tilemap.Entry>
     /// </summary>
     public void Crop(int left, int top, int width, int height)
     {
+        if (left + width > Width || top + height > Height)
+        {
+            throw new AppException("Tilemap crop exceeds the bounds of the tilemap");
+        }
+
         var newTilemap = new Entry[width, height];
         for (var y = 0; y < height; ++y)
         for (var x = 0; x < width; ++x)
         {
-            newTilemap[x, y] = _tilemap[x + left, y + height];
+            newTilemap[x, y] = _tilemap[x + left, y + top];
         }
 
         _tilemap = newTilemap;
