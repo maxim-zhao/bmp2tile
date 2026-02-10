@@ -1115,7 +1115,12 @@ public class Converter: IDisposable
             width % 8 != 0 ||
             height % 8 != 0)
         {
-            throw new ArgumentException("Crop area must be multiples of 8");
+            throw new ArgumentException($"Crop area {width}x{height} and location {left},{top} must be multiples of 8");
+        }
+
+        if (width <= 0 || height <= 0)
+        {
+            throw new ArgumentException($"Crop area {width}x{height} must be more than 0");
         }
 
         _tilemapCrop = (left, top, width, height);
