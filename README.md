@@ -254,6 +254,9 @@ Most of the plugins are written in C++.
 
 # History
 
+0.67
+- Added support for rotating and mirroring the tilemap
+
 0.66
 - Fixed a bug with tilemap area cropping
 

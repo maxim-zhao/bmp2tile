@@ -33,7 +33,7 @@ public class Converter: IDisposable
     private string _tilemapFilename;
     private Bitmap _bitmap;
     private bool _optimized;
-    private readonly ICompressorImpl _includeTextWriter = new IncludeTextWriter();
+    private readonly IncludeTextWriter _includeTextWriter = new();
     private readonly HashSet<int> _paletteIndicesUsed = [];
     private int _spriteWidth;
     private int _spriteHeight;
@@ -43,6 +43,7 @@ public class Converter: IDisposable
     private readonly HashSet<int> _excludedIndices = [];
     private int _tileRangeStart;
     private int _tileRangeEnd = int.MaxValue - 1;
+    private int _tilemapRotation; // 0, 90, 180, 270
 
     #endregion
 
@@ -182,6 +183,27 @@ public class Converter: IDisposable
     public Palette.Formats PaletteFormat { private get; set; }
     public string DllPath { private get; set; } = AppContext.BaseDirectory;
 
+    public int TilemapRotation
+    {
+        get => _tilemapRotation;
+        set
+        {
+            if (value != 0 && value != 90 && value != 180 && value != 270)
+            {
+                throw new ArgumentException("TilemapRotation must be 0, 90, 180, or 270");
+            }
+            _tilemapRotation = value;
+        }
+    }
+
+    public enum TilemapMirrorMode { None, Horizontal, Vertical }
+    private TilemapMirrorMode _tilemapMirror = TilemapMirrorMode.None;
+    public TilemapMirrorMode TilemapMirror
+    {
+        get => _tilemapMirror;
+        set => _tilemapMirror = value;
+    }
+
     #endregion
 
     #region Public methods
@@ -301,7 +323,92 @@ public class Converter: IDisposable
             }
         }
 
+        // Apply rotation if requested
+        if (_tilemapRotation != 0)
+        {
+            tilemap = RotateTilemap(tilemap, _tilemapRotation);
+        }
+        // Apply mirroring if requested
+        if (_tilemapMirror != TilemapMirrorMode.None)
+        {
+            tilemap = MirrorTilemap(tilemap, _tilemapMirror);
+        }
+
         return tilemap;
+    }
+
+    private static Tilemap RotateTilemap(Tilemap src, int angle)
+    {
+        if (angle == 0) return src;
+        int w = src.Width, h = src.Height;
+        Tilemap rotated;
+        switch (angle)
+        {
+            case 90:
+            {
+                rotated = new Tilemap(h, w);
+                for (var y = 0; y < h; ++y)
+                for (var x = 0; x < w; ++x)
+                {
+                    rotated[h - 1 - y, x] = src[x, y].Clone();
+                }
+                break;
+            }
+            case 180:
+            {
+                rotated = new Tilemap(w, h);
+                for (var y = 0; y < h; ++y)
+                for (var x = 0; x < w; ++x)
+                {
+                    rotated[w - 1 - x, h - 1 - y] = src[x, y].Clone();
+                }
+                break;
+            }
+            case 270:
+            {
+                rotated = new Tilemap(h, w);
+                for (var y = 0; y < h; ++y)
+                for (var x = 0; x < w; ++x)
+                {
+                    rotated[y, w - 1 - x] = src[x, y].Clone();
+                }
+                break;
+            }
+            default:
+                throw new ArgumentException("Rotation must be 0, 90, 180, or 270");
+        }
+        return rotated;
+    }
+
+    private static Tilemap MirrorTilemap(Tilemap src, TilemapMirrorMode mode)
+    {
+        int w = src.Width, h = src.Height;
+        var mirrored = new Tilemap(w, h);
+        switch (mode)
+        {
+            case TilemapMirrorMode.Horizontal:
+            {
+                for (var y = 0; y < h; ++y)
+                for (var x = 0; x < w; ++x)
+                {
+                    mirrored[w - 1 - x, y] = src[x, y].Clone();
+                }
+                break;
+            }
+            case TilemapMirrorMode.Vertical:
+            {
+                for (var y = 0; y < h; ++y)
+                for (var x = 0; x < w; ++x)
+                {
+                    mirrored[x, h - 1 - y] = src[x, y].Clone();
+                }
+                break;
+            }
+            case TilemapMirrorMode.None:
+            default:
+                return src;
+        }
+        return mirrored;
     }
 
     public string GetTilemapAsText()

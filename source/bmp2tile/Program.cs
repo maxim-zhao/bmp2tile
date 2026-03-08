@@ -241,6 +241,30 @@ public static class Program
                     "Path to search for compression DLLs. Defaults to the app directory",
                     d => converter.DllPath = d["path"],
                     "path")
+                .Add(
+                    ["rotatetilemap"],
+                    "Rotate the tilemap before saving. Parameter: 90, 180, or 270.",
+                    d =>
+                    {
+                        if (!int.TryParse(d["angle"], out var angle) || (angle != 90 && angle != 180 && angle != 270))
+                            throw new ArgumentException("--rotatetilemap must be 90, 180, or 270");
+                        converter.TilemapRotation = angle;
+                    },
+                    "angle")
+                .Add(
+                    ["mirrortilemap"],
+                    "Mirror the tilemap before saving. Parameter: h (horizontal) or v (vertical).",
+                    d =>
+                    {
+                        var mode = d["mode"].ToLowerInvariant();
+                        if (mode == "h")
+                            converter.TilemapMirror = Converter.TilemapMirrorMode.Horizontal;
+                        else if (mode == "v")
+                            converter.TilemapMirror = Converter.TilemapMirrorMode.Vertical;
+                        else
+                            throw new ArgumentException("--mirrortilemap must be 'h' or 'v'");
+                    },
+                    "mode")
                 // ReSharper restore StringLiteralTypo
                 // ReSharper restore AccessToDisposedClosure
                 .Parse(args);

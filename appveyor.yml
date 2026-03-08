@@ -1,4 +1,4 @@
-version: 0.66.{build}
+version: 0.67.{build}
 image: Visual Studio 2022
 configuration: Release
 platform: x86

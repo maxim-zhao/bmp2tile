@@ -6,6 +6,6 @@
         <Platforms>x86</Platforms>
         <PlatformTarget>x86</PlatformTarget>
         <LangVersion>latest</LangVersion>
-        <Version>0.66</Version>
+        <Version>0.67</Version>
     </PropertyGroup>
 </Project>
