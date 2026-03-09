@@ -170,6 +170,7 @@ public class ConverterTests
     public void PaletteTruncation()
     {
         // This image uses only the first entry in the palette
+        // ReSharper disable once StringLiteralTypo
         _conv.Filename = Path.Combine(_testDir, "blanktile.png");
         Assert.That(_conv.GetPaletteAsText(), Is.EqualTo(".db $00"));
         _conv.FullPalette = true;
@@ -473,4 +474,54 @@ public class ConverterTests
         Assert.That(StripToLines(_conv.GetTilemapAsText()).First().StartsWith(".dw $00C0"));
         Assert.That(Regex.Matches(_conv.GetTilemapAsText(), "\\$00C0").Count, Is.EqualTo(5));
     }
+
+    [Test]
+    public void RotatedTilemap()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        Assert.That(() => _conv.TilemapRotation = 45, Throws.TypeOf<ArgumentException>());
+        _conv.CropTo(0, 0, 16, 16);
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0000 $0001\r\n.dw $0003 $0004\r\n"));
+        _conv.TilemapRotation = 90;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0003 $0000\r\n.dw $0004 $0001\r\n"));
+        _conv.TilemapRotation = 180;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0004 $0003\r\n.dw $0001 $0000\r\n"));
+        _conv.TilemapRotation = 270;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0001 $0004\r\n.dw $0000 $0003\r\n"));
+    }
+
+
+    [TestCase(Converter.TilemapMirrorMode.Horizontal)]
+    [TestCase(Converter.TilemapMirrorMode.Vertical)]
+    public void MirroredTilemapDoesNotThrow(Converter.TilemapMirrorMode mode)
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.TilemapMirror = mode;
+        Assert.That(() => _conv.GetTilemapAsText(), Throws.Nothing, $"Mirror {mode} should not throw");
+    }
+
+    [Test]
+    public void MirroredTilemap()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.CropTo(0, 0, 16, 16);
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0000 $0001\r\n.dw $0003 $0004\r\n"));
+        _conv.TilemapMirror = Converter.TilemapMirrorMode.Horizontal;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0001 $0000\r\n.dw $0004 $0003\r\n"));
+        _conv.TilemapMirror = Converter.TilemapMirrorMode.Vertical;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0003 $0004\r\n.dw $0000 $0001\r\n"));
+    }
+
+    [Test]
+    public void TilemapMirrorAfterRotation()
+    {
+        _conv.Filename = Path.Combine(_testDir, "akmw.bmp");
+        _conv.CropTo(0, 0, 16, 16);
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0000 $0001\r\n.dw $0003 $0004\r\n"));
+        _conv.TilemapRotation = 90;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0003 $0000\r\n.dw $0004 $0001\r\n"));
+        _conv.TilemapMirror = Converter.TilemapMirrorMode.Horizontal;
+        Assert.That(_conv.GetTilemapAsText(), Is.EqualTo(".dw $0000 $0003\r\n.dw $0001 $0004\r\n"));
+    }
+
 }
