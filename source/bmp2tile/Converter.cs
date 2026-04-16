@@ -916,9 +916,13 @@ public class Converter: IDisposable
                 switch (tileData.Max())
                 {
                     case > 31:
-                        throw new AppException("Image uses more than the first 32 palette indices");
+                        throw new AppException($"Image uses more than the first 32 palette indices in the tile at {coordinate}");
                     case > 15:
-                        SelectTilePalette(tileData);
+                        if (!SelectTilePalette(tileData))
+                        {
+                            throw new AppException($"Image uses colours from both palettes in the tile at {coordinate}");
+                        }
+
                         break;
                 }
 
@@ -956,30 +960,30 @@ public class Converter: IDisposable
         return new Tile(tileData);
     }
 
-    private void SelectTilePalette(IList<byte> tileData)
+    private bool SelectTilePalette(IList<byte> tileData)
     {
         // If all indices are high, we are good
         if (tileData.Min() > 15)
         {
-            return;
+            return true;
         }
 
         // Else we try to remap to either the low or high palette.
         var palettes = _bitmap.Palette.Entries.Take(32).ToList();
         if (RestrictTilePalette(tileData, palettes, 16, 31))
         {
-            // It fits in the high 16, so we return true to indicate to use the sprite palette
-            return;
+            // It fits in the high 16
+            return true;
         }
 
         if (RestrictTilePalette(tileData, palettes, 0, 15))
         {
-            // It fits in the low 16, so we return false to indicate not to use the sprite palette
-            return;
+            // It fits in the low 16
+            return true;
         }
 
         // Else it's a failure
-        throw new AppException("Image uses colors from both palettes");
+        return false;
     }
 
     private static bool RestrictTilePalette(IList<byte> tileData, List<Color> palette, int minimumIndex, int maximumIndex)
