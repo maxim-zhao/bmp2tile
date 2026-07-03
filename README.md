@@ -256,6 +256,8 @@ Most of the plugins are written in C++.
 
 0.67
 - Added support for rotating and mirroring the tilemap
+- Fixed a bug when saving tilemap areas when the area was defined after saving the tiles
+- When loading raw tilemap data with no width information, make it super wide to avoid STMcompr doing bad things
 
 0.66
 - Fixed a bug with tilemap area cropping
