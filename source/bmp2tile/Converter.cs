@@ -1236,6 +1236,7 @@ public class Converter: IDisposable
 
         _tilemapCrop = (left, top, width, height);
         _tilemap = null;
+        _tiles = null;
     }
 
     public void ReplaceFirstTileWith(int index)
