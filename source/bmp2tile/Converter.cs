@@ -724,6 +724,7 @@ public class Converter: IDisposable
     private void GetTilemapFromFile()
     {
         var filename = _tilemapFilename;
+        var haveWidth = false;
         var width = 1;
         // Filename might be a filename, or might be <filename>:<width>, where <width> is the tilemap width
         var m = Regex.Match(filename, "^(?<filename>.+):(?<width>\\d+)$");
@@ -731,6 +732,7 @@ public class Converter: IDisposable
         {
             filename = m.Groups["filename"].Value;
             width = Convert.ToInt32(m.Groups["width"].Value);
+            haveWidth = true;
         }
 
         Log($"Loading {filename}...");
@@ -741,6 +743,12 @@ public class Converter: IDisposable
         }
 
         var numEntries = data.Length / 2;
+        if (!haveWidth)
+        {
+            // We make it super wide, as this is safer than super tall for plugins that support rectangles
+            width = numEntries;
+        }
+
         var height = numEntries / width;
         // Sanity-check the width
         if (width * height != numEntries)
